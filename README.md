@@ -9,6 +9,8 @@ Preact client. Tested against Fastmail.
 - **Develop:** [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Design:** [docs/design/](docs/design/) — the visual design and its reference renders.
 
+![Wilco's three-column layout: the unified inbox mixing mail from three accounts, each marked by its color and code, beside an open conversation](docs/screenshot.png)
+
 ## How it works
 
 The server holds every JMAP token (sealed with a master key) and syncs each
