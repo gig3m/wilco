@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f5;--panel:#ffffff;--panel2:#fafbfb;--ink:#191b1e;--muted:#5f666e;--faint:#959ba3;--line:#dde0e3;--line2:#eaecee;--accent:#5b6ee0;--accent-ink:#ffffff;--hover:#eef0f2;--sel:#e8eafa;--row-pad:9px;--scrim:rgba(18,20,24,.36)}
+[data-theme="dark"]{--bg:#121316;--panel:#1a1c1f;--panel2:#16171a;--ink:#e6e8ea;--muted:#9aa0a7;--faint:#686e75;--line:#2b2e32;--line2:#222428;--accent:#7b8cf0;--accent-ink:#141519;--hover:#222428;--sel:#262a3c;--scrim:rgba(0,0,0,.55)}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+*{box-sizing:border-box}
+input,textarea,select,button{font-family:inherit;color:inherit}
+::placeholder{color:var(--faint)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;border-radius:2px}
+select option{background:var(--panel);color:var(--ink)}
+#print-area{display:none}
+@media print{
+  html,body{background:#fff!important;color:#000!important;height:auto!important;overflow:visible!important}
+  #app-root{display:none!important}
+  #print-area{display:block!important;color:#000!important;background:#fff!important}
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:3px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+<div id="app-root" style="display:flex; height:100vh; min-height:600px; background:var(--bg); overflow:hidden">
+
+  <!-- ══ Sidebar: stacked accounts ══ -->
+  <nav style="width:242px; flex:none; display:flex; flex-direction:column; border-right:1px solid var(--line); background:var(--panel2)">
+    <div style="display:flex; align-items:center; gap:8px; padding:12px 12px 10px; border-bottom:1px solid var(--line2)">
+      <span style="width:20px; height:20px; flex:none; border-radius:3px; background:var(--ink); color:var(--bg); display:grid; place-items:center; font-weight:700; font-size:12px">W</span>
+      <span style="flex:1; font-size:13px; font-weight:700; letter-spacing:.01em">Wilco</span>
+      <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ totalUnread }} unread</span>
+    </div>
+    <div style="padding:10px 10px 8px">
+      <button onClick="{{ openCompose }}" style="width:100%; padding:8px 12px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center" style-hover="filter: brightness(1.06)"><span style="flex:1; text-align:left">Compose</span><span style="opacity:.6; font-family:'IBM Plex Mono',monospace; font-weight:400; font-size:10.5px">C</span></button>
+    </div>
+
+    <div style="flex:1; overflow-y:auto; padding:0 6px 8px">
+      <button onClick="{{ selectAll }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:6px 8px; border:none; border-radius:3px; background: {{ allBg }}; cursor:pointer; text-align:left; margin-bottom:2px" style-hover="background: var(--hover)">
+        <span style="font-size:12px; width:14px; text-align:center; color:var(--muted)">▤</span>
+        <span style="flex:1; font-size:12.5px; font-weight:600">All inboxes</span>
+        <span style="font-size:10.5px; color:var(--accent); font-family:'IBM Plex Mono',monospace; font-weight:600">{{ totalUnread }}</span>
+      </button>
+
+      <sc-for list="{{ acctBlocks }}" as="a" hint-placeholder-count="4">
+        <div style="margin-top:8px">
+          <button onClick="{{ a.toggle }}" style="width:100%; display:flex; align-items:center; gap:7px; padding:5px 8px 5px 6px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+            <span style="width:3px; height:14px; flex:none; border-radius:1px; background: {{ a.color }}"></span>
+            <span style="flex:1; min-width:0; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ a.name }}</span>
+            <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ a.code }}</span>
+            <sc-if value="{{ a.syncing }}" hint-placeholder-val="{{ false }}"><span title="Syncing" style="font-size:10px; color:var(--faint); display:inline-block; animation:spin 1.2s linear infinite">⟳</span></sc-if>
+            <sc-if value="{{ a.error }}" hint-placeholder-val="{{ false }}"><span title="Authentication expired" style="font-size:10px; color:#c9903a; font-weight:700">⚠</span></sc-if>
+            <sc-if value="{{ a.pending }}" hint-placeholder-val="{{ false }}"><span title="IMAP support coming" style="font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:0 3px">soon</span></sc-if>
+            <span style="font-size:9px; color:var(--faint); width:10px; text-align:center">{{ a.chev }}</span>
+          </button>
+          <sc-if value="{{ a.expanded }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column">
+              <sc-for list="{{ a.folders }}" as="f" hint-placeholder-count="4">
+                <button onClick="{{ f.select }}" onContextMenu="{{ f.ctx }}" onDragOver="{{ f.dragOver }}" onDragLeave="{{ f.dragLeave }}" onDrop="{{ f.drop }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:4.5px 8px 4.5px 17px; border:none; border-radius:3px; background: {{ f.bg }}; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+                  <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">{{ f.icon }}</span>
+                  <span style="flex:1; min-width:0; font-size:12.5px; font-weight: {{ f.weight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ f.name }}</span>
+                  <span style="font-size:10.5px; color: {{ f.countColor }}; font-family:'IBM Plex Mono',monospace">{{ f.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <button onClick="{{ openOnboard }}" style="width:100%; display:flex; align-items:center; gap:7px; padding:5px 8px 5px 9px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left; margin-top:8px; color:var(--faint)" style-hover="background: var(--hover)">
+        <span style="font-size:11px; width:14px; text-align:center">＋</span>
+        <span style="font-size:12px">Add account</span>
+      </button>
+      <div style="padding:14px 8px 4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Saved searches</div>
+      <sc-for list="{{ savedSearches }}" as="ss" hint-placeholder-count="3">
+        <button onClick="{{ ss.select }}" onContextMenu="{{ ss.ctx }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:4.5px 8px; border:none; border-radius:3px; background: {{ ss.bg }}; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+          <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">◎</span>
+          <span style="flex:1; font-size:12px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'IBM Plex Mono',monospace">{{ ss.label }}</span>
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ ss.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="border-top:1px solid var(--line); padding:6px 12px; display:flex; align-items:center; gap:6px">
+      <span style="width:6px; height:6px; flex:none; border-radius:50%; background: {{ statusDot }}"></span>
+      <span style="flex:1; font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ statusLine }}</span>
+    </div>
+    <div style="border-top:1px solid var(--line); padding:6px; display:flex; gap:3px">
+      <button onClick="{{ openSettings }}" style="flex:1; padding:6px 10px; border:none; border-radius:3px; background: {{ settingsBg }}; cursor:pointer; font-size:12px; color:var(--muted); text-align:left" style-hover="background: var(--hover)">⚙ Settings</button>
+      <button onClick="{{ toggleTheme }}" title="Toggle theme (t)" style="width:30px; padding:6px 0; border:none; border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">{{ themeIcon }}</button>
+      <button onClick="{{ toggleShortcuts }}" title="Shortcuts (?)" style="width:30px; padding:6px 0; border:none; border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">?</button>
+    </div>
+  </nav>
+
+  <!-- ══ Settings ══ -->
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <main style="flex:1; overflow-y:auto; background:var(--bg)">
+      <div style="max-width:640px; margin:0 auto; padding:36px 32px 80px">
+        <sc-if value="{{ settingsHome }}" hint-placeholder-val="{{ true }}">
+        <div>
+        <h1 style="margin:0 0 4px; font-size:20px; font-weight:700">Settings</h1>
+        <p style="margin:0 0 24px; font-size:13px; color:var(--muted)">Accounts, identity, and behavior.</p>
+        <h2 style="margin:0 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Accounts</h2>
+        <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel); margin-bottom:10px">
+          <sc-for list="{{ accountRows }}" as="a" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid {{ a.divider }}">
+              <span style="width:3px; height:26px; flex:none; border-radius:1px; background: {{ a.color }}"></span>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:13px; font-weight:600">{{ a.name }} <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-left:4px">{{ a.code }}</span></div>
+                <div style="font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ a.email }}</div>
+              </div>
+              <span style="font-size:10px; font-weight:600; letter-spacing:.05em; padding:2px 7px; border-radius:2px; border:1px solid var(--line); color: {{ a.protoColor }}; font-family:'IBM Plex Mono',monospace">{{ a.proto }}</span>
+              <span style="font-size:10.5px; font-family:'IBM Plex Mono',monospace; color: {{ a.statusColor }}">{{ a.statusLabel }}</span>
+              <sc-if value="{{ a.needsAuth }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ a.reauth }}" style="padding:5px 11px; border:none; border-radius:3px; background:#c9903a; color:#fff; cursor:pointer; font-size:11.5px; font-weight:600">Reauthorize</button>
+              </sc-if>
+              <sc-if value="{{ a.noAuth }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ a.manage }}" style="padding:5px 11px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Manage</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ openOnboard }}" style="padding:8px 14px; border:1px dashed var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12.5px; color:var(--muted); width:100%" style-hover="border-color: var(--faint)">＋ Add account — JMAP now, IMAP coming</button>
+
+        <sc-for list="{{ prefSections }}" as="sec" hint-placeholder-count="4">
+          <div>
+            <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">{{ sec.title }}</h2>
+            <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+              <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 14px; border-bottom:1px solid {{ row.divider }}">
+                  <div style="min-width:0"><div style="font-size:13px; font-weight:600">{{ row.label }}</div><div style="font-size:11.5px; color:var(--muted)">{{ row.sub }}</div></div>
+                  <sc-if value="{{ row.isToggle }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ row.flip }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ row.togBg }}; position:relative; cursor:pointer; padding:0">
+                      <span style="position:absolute; top:2px; left: {{ row.knobLeft }}; width:14px; height:14px; border-radius:1px; background: {{ row.knobBg }}; transition:left .12s ease"></span>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ row.isSeg }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; gap:3px; padding:2px; background:var(--bg); border-radius:3px; flex:none">
+                      <sc-for list="{{ row.opts }}" as="op" hint-placeholder-count="2">
+                        <button onClick="{{ op.pick }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ op.bg }}; color: {{ op.color }}; font-weight:500; white-space:nowrap">{{ op.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.isText }}" hint-placeholder-val="{{ false }}">
+                    <span style="flex:none; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ row.value }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <button onClick="{{ closeSettings }}" style="margin-top:24px; padding:8px 16px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12.5px" style-hover="background: var(--hover)">← Back to mail</button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ aeOpen }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <button onClick="{{ aeBack }}" style="padding:5px 10px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); margin-bottom:18px" style-hover="background: var(--hover)">← Settings</button>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
+            <span style="width:4px; height:36px; flex:none; border-radius:1px; background: {{ aeColor }}"></span>
+            <div style="flex:1; min-width:0">
+              <h1 style="margin:0; font-size:20px; font-weight:700">{{ aeName }}</h1>
+              <div style="font-size:12px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ aeEmail }} · {{ aeStatus }}</div>
+            </div>
+          </div>
+
+          <h2 style="margin:0 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Identity</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Display name</div><div style="font-size:11.5px; color:var(--muted)">Shown as the sender</div></div>
+              <input value="{{ aeName }}" onChange="{{ aeSetName }}" style="width:200px; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg); outline:none; font-size:12.5px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Color</div><div style="font-size:11.5px; color:var(--muted)">Edge on every row from this account</div></div>
+              <sc-for list="{{ aeColors }}" as="ac" hint-placeholder-count="6">
+                <button onClick="{{ ac.pick }}" style="width:20px; height:20px; padding:0; border:2px solid {{ ac.ring }}; border-radius:3px; background: {{ ac.c }}; cursor:pointer"></button>
+              </sc-for>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-left:6px">code {{ aeCode }}</span>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Send-as aliases</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel); padding:12px 14px">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px">
+              <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--muted); border:1px solid var(--line2); border-radius:2px; padding:4px 9px; background:var(--bg)">{{ aeEmail }} · primary</span>
+              <sc-for list="{{ aeAliases }}" as="al" hint-placeholder-count="2">
+                <span style="display:inline-flex; align-items:center; gap:7px; font-size:11px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:4px 9px">{{ al.email }}<button onClick="{{ al.remove }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:10px; padding:0; line-height:1">✕</button></span>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:10px">
+              <input value="{{ aeNewAlias }}" onChange="{{ aeSetNewAlias }}" placeholder="alias@{{ aeDomain }}" style="flex:1; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg); outline:none; font-size:12px; font-family:'IBM Plex Mono',monospace"></input>
+              <button onClick="{{ aeAddAlias }}" style="padding:6px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Add</button>
+            </div>
+            <div style="font-size:10.5px; color:var(--faint); margin-top:8px">Aliases appear in the compose from-menu. The server must accept them as send-as identities.</div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Server</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">{{ aeProtoLabel }}</div><div style="font-size:11.5px; color:var(--muted)">Session endpoint</div></div>
+              <span style="font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ aeServer }}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Sync</div><div style="font-size:11.5px; color:var(--muted)">{{ aeSyncSub }}</div></div>
+              <button onClick="{{ aeResync }}" style="padding:5px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Resync now</button>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Signature</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Format</div><div style="font-size:11.5px; color:var(--muted)">Plain text travels everywhere; HTML carries styling</div></div>
+              <div style="display:flex; gap:3px; padding:2px; background:var(--bg); border-radius:3px; flex:none">
+                <button onClick="{{ aeSigText }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ aeSigTextBg }}; color: {{ aeSigTextColor }}; font-weight:500">Plain text</button>
+                <button onClick="{{ aeSigHtml }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ aeSigHtmlBg }}; color: {{ aeSigHtmlColor }}; font-weight:500">HTML</button>
+              </div>
+            </div>
+            <textarea value="{{ aeSigSrc }}" onChange="{{ aeSetSig }}" spellCheck="{{ false }}" style="display:block; width:100%; border:none; border-bottom:1px solid var(--line2); background:var(--bg); outline:none; resize:vertical; padding:12px 14px; font-size:12px; line-height:1.6; height:96px; font-family:'IBM Plex Mono',monospace; box-sizing:border-box"></textarea>
+            <sc-if value="{{ aeSigIsHtml }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:12px 14px; border-bottom:1px solid var(--line2)">
+                <div style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:8px">preview</div>
+                {{ aeSigPreview }}
+              </div>
+            </sc-if>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Append to new messages</div></div>
+              <button onClick="{{ aeFlipNew }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ aeNewBg }}; position:relative; cursor:pointer; padding:0"><span style="position:absolute; top:2px; left: {{ aeNewLeft }}; width:14px; height:14px; border-radius:1px; background: {{ aeNewKnob }}; transition:left .12s ease"></span></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Include in replies</div></div>
+              <button onClick="{{ aeFlipReplies }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ aeRepBg }}; position:relative; cursor:pointer; padding:0"><span style="position:absolute; top:2px; left: {{ aeRepLeft }}; width:14px; height:14px; border-radius:1px; background: {{ aeRepKnob }}; transition:left .12s ease"></span></button>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#cf222e">Danger</h2>
+          <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="flex:1"><div style="font-size:13px; font-weight:600">Remove account</div><div style="font-size:11.5px; color:var(--muted)">Local index is deleted; the server keeps your mail</div></div>
+            <button onClick="{{ aeRemove }}" style="padding:6px 12px; border:1px solid #cf222e; border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:#cf222e; font-weight:600" style-hover="background: rgba(207,34,46,.08)">Remove</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ══ Mail ══ -->
+  <sc-if value="{{ mailOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1; min-width:0; display:flex; flex-direction: {{ layoutDir }}">
+    <section style="flex:none; display:flex; flex-direction:column; background:var(--panel); width: {{ listW }}; height: {{ listH }}; border-right: {{ listBR }}; border-bottom: {{ listBB }}; min-height:0">
+      <header style="padding:10px 12px 0; flex:none">
+        <sc-if value="{{ noneChecked }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:baseline; gap:8px; padding:0 2px 9px">
+            <h1 style="flex:1; margin:0; font-size:14px; font-weight:700">{{ listTitle }}</h1>
+            <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ listMeta }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ anyChecked }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:4px; padding:0 0 9px">
+            <span style="flex:1; font-size:12.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--accent)">{{ checkedCount }} selected</span>
+            <button onClick="{{ checkAll }}" style="padding:4px 9px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">All</button>
+            <button onClick="{{ bulkRead }}" style="padding:4px 9px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Mark read</button>
+            <button onClick="{{ bulkArchive }}" style="padding:4px 9px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:11.5px; font-weight:600" style-hover="filter: brightness(1.06)">Archive</button>
+            <button onClick="{{ clearChecked }}" title="Clear selection (esc)" style="padding:4px 7px; border:none; border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--faint)" style-hover="background: var(--hover)">✕</button>
+          </div>
+        </sc-if>
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 9px; border:1px solid var(--line); border-radius:3px; background:var(--bg)" style-focus="border-color: var(--accent)">
+          <span style="color:var(--faint); font-size:12px">⌕</span>
+          <input value="{{ searchQ }}" onChange="{{ onSearch }}" onKeyDown="{{ searchKey }}" placeholder="Search — from:mira has:attachment after:fri" style="flex:1; border:none; background:none; outline:none; font-size:12.5px; min-width:0"></input>
+          <sc-if value="{{ searchActive }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearSearch }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:0">✕</button>
+          </sc-if>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 4px">⌘K</span>
+        </div>
+        <sc-if value="{{ searchActive }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; padding:8px 0 0">
+            <sc-for list="{{ chipSuggestions }}" as="ch" hint-placeholder-count="3">
+              <button onClick="{{ ch.add }}" style="padding:2px 8px; border:1px solid var(--line); border-radius:2px; background: {{ ch.bg }}; cursor:pointer; font-size:11px; font-family:'IBM Plex Mono',monospace; color: {{ ch.color }}" style-hover="border-color: var(--accent)">{{ ch.label }}</button>
+            </sc-for>
+            <span style="flex:1"></span>
+            <button onClick="{{ saveSearch }}" style="padding:2px 9px; border:none; border-radius:2px; background:var(--sel); cursor:pointer; font-size:11px; color:var(--accent); font-weight:600">{{ saveLabel }}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ bannerError }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; margin-top:9px; padding:7px 10px; border:1px solid rgba(201,144,58,.45); border-radius:3px; background:rgba(201,144,58,.1)">
+            <span style="font-size:11px; color:#c9903a; font-weight:700">⚠</span>
+            <span style="flex:1; min-width:0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ bannerErrorText }}</span>
+            <button onClick="{{ reauth }}" style="flex:none; padding:3px 10px; border:none; border-radius:2px; background:#c9903a; color:#fff; cursor:pointer; font-size:11px; font-weight:600">Reauthorize</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ bannerPending }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; margin-top:9px; padding:7px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg)">
+            <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">IMAP</span>
+            <span style="flex:1; min-width:0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Support coming — showing imported snapshot, not syncing.</span>
+          </div>
+        </sc-if>
+        <div style="height:9px"></div>
+      </header>
+      <div style="flex:1; overflow-y:auto; border-top:1px solid var(--line2)">
+        <sc-if value="{{ emptyList }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:48px 24px; text-align:center; color:var(--faint); font-size:12.5px">{{ emptyTitle }}<br><span style="font-family:'IBM Plex Mono',monospace; font-size:11px">{{ emptySub }}</span></div>
+        </sc-if>
+        <sc-if value="{{ trashMode }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--line2); background:var(--panel2)">
+            <span style="flex:1; font-size:11px; color:var(--faint)">Deleted mail is kept 30 days, then gone.</span>
+            <button onClick="{{ emptyTrash }}" style="padding:3px 10px; border:1px solid #cf222e; border-radius:2px; background:none; cursor:pointer; font-size:11px; color:#cf222e; font-weight:600" style-hover="background: rgba(207,34,46,.08)">Empty trash</button>
+          </div>
+        </sc-if>
+        <sc-for list="{{ threads }}" as="t" hint-placeholder-count="10">
+          <sc-if value="{{ t.isHeader }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:7px 12px 4px; font-size:9.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); font-family:'IBM Plex Mono',monospace; border-bottom:1px solid var(--line2); background:var(--panel2)">{{ t.label }}</div>
+          </sc-if>
+          <sc-if value="{{ t.wide }}" hint-placeholder-val="{{ false }}">
+            <article onClick="{{ t.open }}" onContextMenu="{{ t.ctx }}" draggable="{{ true }}" onDragStart="{{ t.drag }}" style="display:flex; align-items:center; gap:10px; padding:6px 14px 6px 9px; border-bottom:1px solid var(--line2); cursor:pointer; background: {{ t.bg }}; border-left:3px solid {{ t.dot }}" style-hover="background: var(--hover)">
+              <button onClick="{{ t.check }}" title="Select (x)" style="flex:none; width:14px; height:14px; padding:0; border:1px solid {{ t.boxBorder }}; border-radius:2px; background: {{ t.boxBg }}; cursor:pointer; color:var(--accent-ink); font-size:10px; line-height:1; display:grid; place-items:center" style-hover="border-color: var(--accent)">{{ t.boxMark }}</button>
+              <span title="{{ t.accountName }}" style="flex:none; width:32px; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ t.dot }}; font-family:'IBM Plex Mono',monospace">{{ t.code }}</span>
+              <span style="flex:none; width:168px; min-width:0; font-size:12.5px; font-weight: {{ t.fromWeight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.from }}</span>
+              <span style="flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"><span style="font-size:12.5px; font-weight: {{ t.subjWeight }}; color: {{ t.subjColor }}">{{ t.subject }}</span><span style="font-size:12px; color:var(--faint)">&nbsp;&nbsp;—&nbsp;&nbsp;{{ t.snippet }}</span></span>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
+              <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
+              <span style="flex:none; width:38px; text-align:right; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.time }}</span>
+            </article>
+          </sc-if>
+          <sc-if value="{{ t.tall }}" hint-placeholder-val="{{ true }}">
+          <article onClick="{{ t.open }}" onContextMenu="{{ t.ctx }}" draggable="{{ true }}" onDragStart="{{ t.drag }}" style="display:flex; gap:8px; padding: var(--row-pad) 12px var(--row-pad) 9px; border-bottom:1px solid var(--line2); cursor:pointer; background: {{ t.bg }}; border-left:3px solid {{ t.dot }}" style-hover="background: var(--hover)">
+            <button onClick="{{ t.check }}" title="Select (x)" style="flex:none; width:14px; height:14px; margin-top:3px; padding:0; border:1px solid {{ t.boxBorder }}; border-radius:2px; background: {{ t.boxBg }}; cursor:pointer; color:var(--accent-ink); font-size:10px; line-height:1; display:grid; place-items:center" style-hover="border-color: var(--accent)">{{ t.boxMark }}</button>
+            <div style="flex:1; min-width:0">
+            <div style="display:flex; align-items:baseline; gap:8px">
+              <span style="flex:1; min-width:0; font-size:13px; font-weight: {{ t.fromWeight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.from }}</span>
+              <span title="{{ t.accountName }}" style="flex:none; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ t.dot }}; font-family:'IBM Plex Mono',monospace">{{ t.code }}</span>
+              <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.time }}</span>
+            </div>
+            <div style="font-size:12.5px; font-weight: {{ t.subjWeight }}; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: {{ t.subjColor }}">{{ t.subject }}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:1px">
+              <span style="flex:1; min-width:0; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.snippet }}</span>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
+              <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
+            </div>
+            </div>
+          </article>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ loadMore }}" style="width:100%; padding:9px 12px; border:none; border-top:1px solid var(--line2); background:var(--panel2); cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-align:center" style-hover="background: var(--hover)">{{ moreLabel }}</button>
+        </sc-if>
+        <sc-if value="{{ syncFooterOn }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 12px 14px; text-align:center; font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ syncFooter }}</div>
+        </sc-if>
+      </div>
+    </section>
+    <div onMouseDown="{{ dragStart }}" style="display:none" style-hover="background: var(--accent); opacity:.35"></div>
+    <main style="flex:1; min-width:0; display:flex; flex-direction:column; background:var(--panel2)">
+      <!-- ── Compose: first-class main pane ── -->
+      <sc-if value="{{ composeOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1; display:flex; flex-direction:column; background:var(--bg); animation:fadein .1s ease; padding:18px 22px; min-height:0">
+          <div style="flex:1; display:flex; flex-direction:column; width:100%; max-width:880px; margin:0 auto; min-height:0; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--accent); border-radius:4px; box-shadow:0 16px 48px rgba(0,0,0,.12); overflow:hidden">
+          <header style="flex:none; display:flex; align-items:center; gap:8px; padding:11px 20px; border-bottom:1px solid var(--line); background:var(--panel2)">
+            <h2 style="flex:1; min-width:140px; margin:0; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ composeTitle }}</h2>
+            <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap">draft saved · esc</span>
+            <button onClick="{{ closeCompose }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:2px 4px">✕</button>
+          </header>
+          <div style="flex:1; display:flex; flex-direction:column; width:100%; min-height:0">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">from</span>
+              <select value="{{ composeFromVal }}" onChange="{{ onComposeFrom }}" style="flex:1; border:none; background:none; outline:none; font-size:13px; cursor:pointer">
+                <sc-for list="{{ fromOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.val }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">to</span>
+              <div style="flex:1; position:relative; min-width:0">
+                <input value="{{ draftTo }}" onChange="{{ setDraftTo }}" onFocus="{{ toFocusOn }}" onBlur="{{ toFocusOff }}" placeholder="name@domain.com" style="width:100%; border:none; background:none; outline:none; font-size:13px"></input>
+                <sc-if value="{{ acOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:none">
+                    <sc-for list="{{ acItems }}" as="ac" hint-placeholder-count="3">
+                      <button onMouseDown="{{ ac.pick }}" style="width:100%; display:flex; align-items:baseline; gap:8px; padding:6px 10px; border:none; border-radius:2px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+                        <span style="font-size:12.5px; font-weight:600; white-space:nowrap">{{ ac.name }}</span>
+                        <span style="flex:1; min-width:0; font-size:11px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ ac.email }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <button onClick="{{ toggleCc }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; font-family:'IBM Plex Mono',monospace">cc/bcc</button>
+            </div>
+            <sc-if value="{{ showCc }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+                  <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">cc</span>
+                  <input value="{{ draftCc }}" onChange="{{ setDraftCc }}" placeholder="" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+                  <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">bcc</span>
+                  <input value="{{ draftBcc }}" onChange="{{ setDraftBcc }}" placeholder="" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">subject</span>
+              <input value="{{ draftSubject }}" onChange="{{ setDraftSubject }}" placeholder="Subject" style="flex:1; border:none; background:none; outline:none; font-size:13px; font-weight:600"></input>
+            </div>
+            <div style="flex:none; display:flex; align-items:center; gap:2px; padding:6px 20px; border-bottom:1px solid var(--line2)">
+              <button onClick="{{ fmtBold }}" title="Bold" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; font-weight:700; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">B</button>
+              <button onClick="{{ fmtItalic }}" title="Italic" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; font-style:italic; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">i</button>
+              <button onClick="{{ fmtCode }}" title="Code" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">&lt;&gt;</button>
+              <button onClick="{{ fmtLink }}" title="Link" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">[]</button>
+              <button onClick="{{ fmtQuote }}" title="Quote" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">&gt;</button>
+              <span style="flex:1"></span>
+              <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">markdown → sent as text/html + text/plain</span>
+            </div>
+            <textarea id="compose-body" value="{{ draftBody }}" onChange="{{ setDraftBody }}" placeholder="Write…" style="flex:1; border:none; background:none; outline:none; resize:none; padding:14px 20px; font-size:13.5px; line-height:1.65; min-height:0"></textarea>
+            <sc-if value="{{ hasDraftFiles }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; display:flex; gap:6px; flex-wrap:wrap; padding:0 20px 10px">
+                <sc-for list="{{ draftFiles }}" as="df" hint-placeholder-count="1">
+                  <span style="display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:3px; padding:5px 9px; font-size:11px; font-family:'IBM Plex Mono',monospace">{{ df.name }}<span style="color:var(--faint)">{{ df.size }}</span><button onClick="{{ df.remove }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:10px; padding:0; line-height:1">✕</button></span>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ composeSigOn }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; margin:0 20px 12px; padding:9px 13px; border:1px dashed var(--line); border-radius:3px">
+                <div style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:5px">signature · {{ composeSigMode }} · {{ composeSigAcct }}</div>
+                {{ composeSigNode }}
+              </div>
+            </sc-if>
+            <sc-if value="{{ composeQuote }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; margin:0 20px 14px; max-height:220px; overflow-y:auto">
+                <button onClick="{{ toggleComposeQuote }}" style="border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:2px 10px; font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">{{ composeQuoteLabel }}</button>
+                <sc-if value="{{ composeQuoteOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px; display:flex; flex-direction:column; gap:12px">
+                    <sc-for list="{{ quoteChain }}" as="q" hint-placeholder-count="2">
+                      <div>
+                        <div style="font-size:11px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:4px">On {{ q.time }}, {{ q.from }} &lt;{{ q.email }}&gt; wrote:</div>
+                        <div style="border-left:2px solid var(--line); padding:2px 14px; color:var(--faint); font-size:12.5px; line-height:1.6; white-space:pre-line">{{ q.body }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+            <div style="flex:none; display:flex; align-items:center; gap:8px; padding:12px 20px; border-top:1px solid var(--line)">
+              <button onClick="{{ sendMsg }}" style="padding:7px 20px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Send</button>
+              <button onClick="{{ addFile }}" style="padding:7px 11px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">Attach</button>
+              <span style="flex:1"></span>
+              <button onClick="{{ discardDraft }}" style="padding:7px 11px; border:none; border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--faint)" style-hover="background: var(--hover)">Discard</button>
+              <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">⌘⏎ send</span>
+            </div>
+          </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ── Reading ── -->
+      <sc-if value="{{ readingOpen }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1; display:grid; place-items:center; color:var(--faint)">
+            <div style="text-align:center">
+              <div style="font-size:14px; margin-bottom:6px">Nothing selected</div>
+              <div style="font-size:11.5px; font-family:'IBM Plex Mono',monospace">j / k to move · ⏎ to open · ⌘K for anything</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+          <header style="flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:11px 20px; border-bottom:1px solid var(--line)">
+            <div style="flex:1; min-width:200px">
+              <h2 style="margin:0; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ selSubject }}</h2>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:2px">
+                <span style="width:8px; height:8px; border-radius:1px; background: {{ selColor }}"></span>
+                <span style="font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ selMeta }}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:flex-end; min-width:0">
+              <button title="Previous (k)" onClick="{{ prevThread }}" style="width:28px; padding:6px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">↑</button>
+              <button title="Next (j)" onClick="{{ nextThread }}" style="width:28px; padding:6px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">↓</button>
+              <button title="Flag (s)" onClick="{{ toggleStarSel }}" style="width:28px; padding:5px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:13px; color: {{ starColor }}; line-height:1" style-hover="background: var(--hover)">{{ starGlyph }}</button>
+              <button title="Archive (e)" onClick="{{ archiveSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Archive</button>
+              <button title="Mark spam" onClick="{{ spamSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Spam</button>
+              <button title="Delete (#)" onClick="{{ deleteSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Delete</button>
+              <button title="Forward (f)" onClick="{{ openForward }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Forward</button>
+              <button title="Reply (r)" onClick="{{ openReply }}" style="padding:6px 13px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:12px; font-weight:600" style-hover="filter: brightness(1.06)">Reply</button>
+            </div>
+          </header>
+          <div style="flex:1; overflow-y:auto; padding:18px 20px 40px">
+            <div style="max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:10px">
+              <sc-for list="{{ selMsgs }}" as="m" hint-placeholder-count="2">
+                <sc-if value="{{ m.collapsed }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ m.toggle }}" style="display:flex; align-items:center; gap:10px; padding:9px 16px; background:var(--panel); border:1px solid var(--line); border-radius:4px; cursor:pointer; text-align:left; width:100%; opacity:.75" style-hover="opacity: 1">
+                    <span style="width:20px; height:20px; flex:none; border-radius:3px; background:var(--line); color:var(--muted); display:grid; place-items:center; font-size:10px; font-weight:600">{{ m.initial }}</span>
+                    <span style="flex:none; font-size:12.5px; font-weight:600; white-space:nowrap">{{ m.from }}</span>
+                    <span style="flex:1; min-width:0; font-size:12px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.preview }}</span>
+                    <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap">{{ m.time }}</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ m.open }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--panel); border:1px solid var(--line); border-radius:4px; overflow:hidden">
+                  <div onClick="{{ m.toggle }}" style="display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 16px; border-bottom:1px solid var(--line2); cursor:pointer">
+                    <span style="width:26px; height:26px; flex:none; border-radius:3px; background: {{ m.avatarBg }}; color:#fff; display:grid; place-items:center; font-size:11.5px; font-weight:600">{{ m.initial }}</span>
+                    <div style="flex:1; min-width:140px; position:relative; display:flex; align-items:baseline; gap:8px">
+                      <span onMouseEnter="{{ m.cardOn }}" onMouseLeave="{{ m.cardOff }}" style="position:relative; display:inline-block; flex:0 1 auto; min-width:40px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                        <span style="font-size:12.5px; font-weight:600; border-bottom:1px dotted var(--faint)">{{ m.from }}</span>
+                        <sc-if value="{{ m.cardOpen }}" hint-placeholder-val="{{ false }}">
+                          <span onClick="{{ stop }}" style="position:absolute; z-index:50; top:100%; left:0; padding-top:6px; display:block; cursor:default">
+                            <span style="display:block; width:264px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 12px 36px rgba(0,0,0,.2); padding:12px 14px; animation:pop .1s ease">
+                              <span style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
+                                <span style="width:30px; height:30px; flex:none; border-radius:3px; background: {{ m.avatarBg }}; color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600">{{ m.initial }}</span>
+                                <span style="min-width:0">
+                                  <span style="display:block; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.from }}</span>
+                                  <span style="display:block; font-size:10.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.email }}</span>
+                                </span>
+                              </span>
+                              <span style="display:block; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:10px">{{ m.cardMeta }}</span>
+                              <span style="display:flex; gap:5px">
+                                <button onClick="{{ m.cardSearch }}" style="flex:1; padding:5px 0; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">from:{{ m.cardDomainless }}</button>
+                                <button onClick="{{ m.cardCompose }}" style="flex:none; padding:5px 12px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:11px; font-weight:600">Compose</button>
+                              </span>
+                            </span>
+                          </span>
+                        </sc-if>
+                      </span>
+                      <span style="flex:1; min-width:0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.email }}</span>
+                    </div>
+                    <span style="flex:none; font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line2); border-radius:2px; padding:1px 5px">{{ m.ctype }}</span>
+                    <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ m.time }}</span>
+                    <button onClick="{{ m.menu }}" title="Message actions" style="flex:none; width:22px; padding:2px 0; border:none; border-radius:2px; background:none; cursor:pointer; color:var(--faint); font-size:12px; line-height:1" style-hover="background: var(--hover)">···</button>
+                  </div>
+                  <sc-if value="{{ m.isHtml }}" hint-placeholder-val="{{ false }}">{{ m.htmlNode }}</sc-if>
+                  <sc-if value="{{ m.isText }}" hint-placeholder-val="{{ true }}"><div style="padding:14px 18px; font-size:13.5px; line-height:1.65; white-space:pre-line; max-width:640px">{{ m.body }}</div></sc-if>
+                  <sc-if value="{{ m.hasQuote }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:0 18px 14px">
+                      <button onClick="{{ m.toggleQuote }}" title="Show quoted text" style="border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:1px 8px; letter-spacing:.1em; font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">···</button>
+                      <sc-if value="{{ m.quoteOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:10px; border-left:2px solid var(--line); padding:2px 14px; color:var(--faint); font-size:12.5px; line-height:1.6; white-space:pre-line">{{ m.quote }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.hasFiles }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; padding:0 18px 14px">
+                      <sc-for list="{{ m.files }}" as="fl" hint-placeholder-count="1">
+                        <span onClick="{{ fl.open }}" style="display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:3px; padding:6px 10px; font-size:11.5px; font-family:'IBM Plex Mono',monospace; cursor:pointer" style-hover="background: var(--hover)"><span style="color:var(--accent)">▾</span>{{ fl.name }}<span style="color:var(--faint)">{{ fl.size }}</span></span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                </sc-if>
+              </sc-for>
+              <button onClick="{{ openReply }}" style="align-self:flex-start; padding:8px 15px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12.5px; color:var(--muted)" style-hover="background: var(--hover)">↩ Reply to {{ selReplyTo }}…</button>
+            </div>
+          </div>
+        </sc-if>
+      </sc-if>
+    </main>
+    </div>
+  </sc-if>
+
+  <!-- ══ Add account ══ -->
+  <sc-if value="{{ obOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeOnboard }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:460px; max-width:calc(100vw - 40px); align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--accent); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:13px 18px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:14px; font-weight:700">Add account</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ obStepLabel }}</span>
+          <button onClick="{{ closeOnboard }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+
+        <sc-if value="{{ obStep1 }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:16px 18px 18px">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:12px">How does this account speak?</div>
+            <button onClick="{{ obPickJmap }}" style="width:100%; display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; text-align:left; margin-bottom:8px" style-hover="border-color: var(--accent)">
+              <span style="font-size:11px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--accent); border:1px solid var(--accent); border-radius:2px; padding:2px 6px">JMAP</span>
+              <span style="flex:1; min-width:0">
+                <span style="display:block; font-size:13px; font-weight:600">Native</span>
+                <span style="display:block; font-size:11.5px; color:var(--muted)">Push, server-side search, one round trip. Fastmail and friends.</span>
+              </span>
+              <span style="color:var(--faint); font-size:11px">→</span>
+            </button>
+            <div style="width:100%; display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px dashed var(--line); border-radius:3px; opacity:.55">
+              <span style="font-size:11px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--faint); border:1px solid var(--line); border-radius:2px; padding:2px 6px">IMAP</span>
+              <span style="flex:1; min-width:0">
+                <span style="display:block; font-size:13px; font-weight:600">Everything else</span>
+                <span style="display:block; font-size:11.5px; color:var(--muted)">Via the Wilco bridge. On the roadmap.</span>
+              </span>
+              <span style="font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 4px">soon</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ obStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:6px 0 0">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">address</span>
+              <input autoFocus="{{ true }}" value="{{ obEmail }}" onChange="{{ obSetEmail }}" placeholder="you@domain.com" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">server</span>
+              <input value="{{ obUrl }}" onChange="{{ obSetUrl }}" placeholder="{{ obUrlPlaceholder }}" style="flex:1; border:none; background:none; outline:none; font-size:12.5px; font-family:'IBM Plex Mono',monospace"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">token</span>
+              <input type="password" placeholder="API token" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:12px 18px">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">color</span>
+              <sc-for list="{{ obColors }}" as="oc" hint-placeholder-count="6">
+                <button onClick="{{ oc.pick }}" style="width:20px; height:20px; padding:0; border:2px solid {{ oc.ring }}; border-radius:3px; background: {{ oc.c }}; cursor:pointer"></button>
+              </sc-for>
+              <span style="flex:1"></span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">code {{ obCode }}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; padding:12px 18px; border-top:1px solid var(--line)">
+              <button onClick="{{ obConnect }}" style="padding:7px 18px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer; opacity: {{ obConnectOpacity }}" style-hover="filter: brightness(1.06)">Connect</button>
+              <button onClick="{{ obBack }}" style="padding:7px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">Back</button>
+              <span style="flex:1"></span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">discovery via .well-known/jmap</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ obStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 18px 18px">
+            <div style="display:flex; flex-direction:column; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted); min-height:96px">
+              <sc-for list="{{ obLog }}" as="ln" hint-placeholder-count="2">
+                <div style="display:flex; gap:8px"><span style="color: {{ ln.c }}">{{ ln.mark }}</span><span>{{ ln.text }}</span></div>
+              </sc-for>
+              <sc-if value="{{ obConnecting }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex; gap:8px"><span style="display:inline-block; animation:spin 1.2s linear infinite; width:12px">⟳</span></div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ obDone }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ obFinish }}" style="margin-top:12px; padding:7px 18px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Open inbox</button>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Context menu ══ -->
+  <sc-if value="{{ ctxOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeCtx }}" onContextMenu="{{ closeCtx }}" style="display:none">
+      <div onClick="{{ stop }}" style="display:none">
+        <sc-for list="{{ ctxItems }}" as="ci" hint-placeholder-count="5">
+          <sc-if value="{{ ci.divider }}" hint-placeholder-val="{{ false }}"><div style="height:1px; background:var(--line2); margin:4px 6px"></div></sc-if>
+          <sc-if value="{{ ci.item }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ ci.run }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:6px 9px; border:none; border-radius:2px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="flex:1; font-size:12.5px; color: {{ ci.color }}">{{ ci.label }}</span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ ci.hint }}</span>
+            </button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Move picker ══ -->
+  <sc-if value="{{ movePickOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMovePick }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:340px; align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:11px 14px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700">Move to</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ moveAcct }}</span>
+        </div>
+        <div style="padding:5px; max-height:280px; overflow-y:auto">
+          <sc-for list="{{ moveFolders }}" as="mf" hint-placeholder-count="5">
+            <button onClick="{{ mf.run }}" style="width:100%; display:flex; align-items:center; gap:9px; padding:7px 10px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">{{ mf.icon }}</span>
+              <span style="flex:1; font-size:12.5px">{{ mf.name }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Attachment preview ══ -->
+  <sc-if value="{{ fpOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeFp }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:520px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700; font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ fpName }}</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ fpSize }}</span>
+          <button onClick="{{ closeFp }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+        <div style="height:240px; display:grid; place-items:center; background:repeating-linear-gradient(45deg, var(--bg), var(--bg) 10px, var(--panel2) 10px, var(--panel2) 20px)">
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:4px 10px">{{ fpKind }} preview</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid var(--line2)">
+          <button onClick="{{ fpDownload }}" style="padding:7px 16px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Download</button>
+          <span style="flex:1"></span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">scanned · clean</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Raw source ══ -->
+  <sc-if value="{{ rawOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeRaw }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:680px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700">Raw message</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ rawId }}</span>
+          <button onClick="{{ closeRaw }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+        <pre style="margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:11px; line-height:1.7; color:var(--muted); max-height:60vh; overflow:auto; white-space:pre-wrap; word-break:break-all">{{ rawText }}</pre>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Undo toast ══ -->
+  <sc-if value="{{ undoOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="display:none">
+      <span style="font-size:12.5px; font-weight:500">{{ undoLabel }}</span>
+      <button onClick="{{ doUndo }}" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:12.5px; font-weight:700; padding:0">Undo</button>
+      <span style="font-size:10px; opacity:.5; font-family:'IBM Plex Mono',monospace">z</span>
+    </div>
+  </sc-if>
+
+  <!-- ══ Notifications ══ -->
+  <div style="display:none">
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="0">
+      <div onClick="{{ n.open }}" style="pointer-events:auto; cursor:pointer; background:var(--panel); border:1px solid var(--line); border-left:3px solid {{ n.color }}; border-radius:3px; box-shadow:0 8px 28px rgba(0,0,0,.18); animation:pop .14s ease; padding:10px 12px" style-hover="border-color: var(--faint)">
+        <div style="display:flex; align-items:baseline; gap:8px">
+          <span style="flex:1; min-width:0; font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.from }}</span>
+          <span style="flex:none; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ n.color }}; font-family:'IBM Plex Mono',monospace">{{ n.code }}</span>
+          <button onClick="{{ n.dismiss }}" style="flex:none; border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:0 0 0 2px; line-height:1">✕</button>
+        </div>
+        <div style="font-size:12px; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.subject }}</div>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.snippet }}</div>
+        <div style="display:flex; align-items:center; gap:4px; margin-top:8px">
+          <button onClick="{{ n.reply }}" style="padding:3px 10px; border:1px solid var(--line); border-radius:2px; background:none; cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">Reply</button>
+          <button onClick="{{ n.archive }}" style="padding:3px 10px; border:1px solid var(--line); border-radius:2px; background:none; cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">Archive</button>
+          <span style="flex:1"></span>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">now · {{ n.viaLabel }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- ══ Command palette ══ -->
+  <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closePalette }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:580px; max-width:calc(100vw - 40px); align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:5px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .12s ease; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="color:var(--faint); font-size:13px">⌕</span>
+          <input autoFocus="{{ true }}" value="{{ paletteQ }}" onChange="{{ onPaletteQ }}" placeholder="Search mail or type a command…" style="flex:1; border:none; background:none; outline:none; font-size:14px"></input>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 5px">esc</span>
+        </div>
+        <div style="max-height:340px; overflow-y:auto; padding:5px">
+          <sc-for list="{{ paletteItems }}" as="p" hint-placeholder-count="6">
+            <button onClick="{{ p.run }}" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 11px; border:none; border-radius:3px; background:transparent; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="width:18px; text-align:center; font-size:12.5px; color:var(--muted)">{{ p.icon }}</span>
+              <span style="flex:1; min-width:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ p.label }}</span>
+              <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ p.hint }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="padding:7px 16px; border-top:1px solid var(--line2); font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">try: from:mira · has:attachment · is:flagged · after:fri · before:mon · acct:wil</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Shortcuts ══ -->
+  <sc-if value="{{ shortcutsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ toggleShortcuts }}" style="display:none">
+      <div onClick="{{ stop }}" style="width:620px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:5px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .12s ease; padding:22px 26px">
+        <div style="display:flex; align-items:baseline; margin-bottom:16px">
+          <h2 style="flex:1; margin:0; font-size:15px; font-weight:700">Keyboard shortcuts</h2>
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">? to toggle</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px 36px">
+          <sc-for list="{{ shortcuts }}" as="k" hint-placeholder-count="10">
+            <div style="display:flex; align-items:center; gap:10px; padding:4px 0">
+              <span style="flex:1; font-size:12.5px; color:var(--muted)">{{ k.what }}</span>
+              <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 7px; background:var(--bg)">{{ k.key }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+<div id="print-area" style="font-family:Georgia,serif; padding:24px; max-width:680px">
+  <h1 style="font-size:18px; margin:0 0 4px">{{ printSubject }}</h1>
+  <div style="font-size:11px; color:#555; font-family:monospace; margin-bottom:18px">{{ printMeta }}</div>
+  <sc-for list="{{ printMsgs }}" as="pm" hint-placeholder-count="1">
+    <div style="border-top:1px solid #ccc; padding:12px 0 16px">
+      <div style="font-size:12px; margin-bottom:8px"><strong>{{ pm.from }}</strong> &lt;{{ pm.email }}&gt; · {{ pm.time }}</div>
+      <div style="font-size:12.5px; line-height:1.6; white-space:pre-line">{{ pm.plain }}</div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+
+</body>
+</html>

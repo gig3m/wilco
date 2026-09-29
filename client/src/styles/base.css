@@ -1,0 +1,101 @@
+/*
+ * Base stylesheet, transcribed verbatim from the design's own <style> block
+ * (docs/design/Wilco.dc.html, around line 14) -- the reset, focus-visible
+ * rings and scrollbar styling every screen in the design relies on.
+ * Deliberately not "cleaned up": the design has TWO focus-visible rules
+ * (one covering `a`, with a -1px offset and a border-radius; a later one,
+ * same specificity, without `a` and with a +1px offset and no radius) --
+ * both are transcribed in the same order so the cascade behaves exactly as
+ * it does in the design, rather than being "fixed" into one rule this file
+ * did not invent.
+ *
+ * tokens.css already carries the `*, *::before, *::after { box-sizing }`
+ * reset and the html/body margin-padding-height reset, so those are not
+ * repeated here.
+ */
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+::placeholder {
+  color: var(--faint);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
+select option {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+#print-area {
+  display: none;
+}
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  #app-root,
+  #app {
+    display: none !important;
+  }
+  #print-area {
+    display: block !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Second focus-visible rule from the design, verbatim -- see the note above. */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 5px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

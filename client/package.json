@@ -1,0 +1,23 @@
+{
+  "name": "wilco-client",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "harness": "vite --config harness/vite.config.ts",
+    "test": "./run-tests.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-preact": "0.469.0",
+    "preact": "10.24.3"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.9.1",
+    "happy-dom": "15.7.4",
+    "typescript": "5.6.3",
+    "vite": "5.4.10",
+    "vitest": "2.1.4"
+  }
+}

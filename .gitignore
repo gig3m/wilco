@@ -1,0 +1,14 @@
+node_modules/
+/dist/
+client/node_modules/
+client/dist/
+.env
+.env.bak-*
+db-snapshot/
+*.db
+*.db-wal
+*.db-shm
+.superpowers/
+secrets/
+CLAUDE.md
+__pycache__/

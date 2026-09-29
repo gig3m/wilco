@@ -1,0 +1,30 @@
+# The HARNESS instance: a second Wilco, same image, own database and own
+# master key, holding ONLY the two test accounts. The confidence board runs
+# against it (harness/run.sh), so a mutant, an unproven build or a fixture
+# reset never touches the owner's client. Selected by COMPOSE_FILE in the
+# maintainer's .env; a user's compose never loads this file.
+services:
+  wilco-harness:
+    image: ${WILCO_IMAGE:-wilco:local}
+    container_name: wilco-harness
+    restart: unless-stopped
+    ports:
+      - "${WILCO_BIND:-127.0.0.1}:${WILCO_HARNESS_HOST_PORT:-8797}:8794"
+    environment:
+      TZ: ${TZ:-UTC}
+      WILCO_DB_PATH: /data/wilco.db
+      WILCO_BLOB_DIR: /data/blobs
+      WILCO_PORT: "8794"
+      WILCO_BASE_URL: ${WILCO_HARNESS_BASE_URL:?set WILCO_HARNESS_BASE_URL in .env}
+      WILCO_BODY_BASE_URL: ${WILCO_HARNESS_BODY_BASE_URL:?set WILCO_HARNESS_BODY_BASE_URL in .env}
+      WILCO_MASTER_KEY_FILE: /run/secrets/wilco-master-key
+      WILCO_CREDENTIAL_STORE: db
+    env_file:
+      - .env
+    volumes:
+      - wilco-harness-data:/data
+      - ${WILCO_HARNESS_MASTER_KEY_PATH:-./secrets/master-key-harness}:/run/secrets/wilco-master-key:ro
+    command: ["node", "src/server/main.ts"]
+
+volumes:
+  wilco-harness-data:

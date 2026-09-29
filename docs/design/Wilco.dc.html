@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f5;--panel:#ffffff;--panel2:#fafbfb;--ink:#191b1e;--muted:#5f666e;--faint:#959ba3;--line:#dde0e3;--line2:#eaecee;--accent:#5b6ee0;--accent-ink:#ffffff;--hover:#eef0f2;--sel:#e8eafa;--row-pad:9px;--scrim:rgba(18,20,24,.36)}
+[data-theme="dark"]{--bg:#121316;--panel:#1a1c1f;--panel2:#16171a;--ink:#e6e8ea;--muted:#9aa0a7;--faint:#686e75;--line:#2b2e32;--line2:#222428;--accent:#7b8cf0;--accent-ink:#141519;--hover:#222428;--sel:#262a3c;--scrim:rgba(0,0,0,.55)}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+*{box-sizing:border-box}
+input,textarea,select,button{font-family:inherit;color:inherit}
+::placeholder{color:var(--faint)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;border-radius:2px}
+select option{background:var(--panel);color:var(--ink)}
+#print-area{display:none}
+@media print{
+  html,body{background:#fff!important;color:#000!important;height:auto!important;overflow:visible!important}
+  #app-root{display:none!important}
+  #print-area{display:block!important;color:#000!important;background:#fff!important}
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:3px solid transparent;background-clip:content-box}::-webkit-scrollbar-track{background:transparent}
+</style>
+</helmet>
+<div id="app-root" style="display:flex; height:100vh; min-height:600px; background:var(--bg); overflow:hidden">
+
+  <!-- ══ Sidebar: stacked accounts ══ -->
+  <nav style="width:242px; flex:none; display:flex; flex-direction:column; border-right:1px solid var(--line); background:var(--panel2)">
+    <div style="display:flex; align-items:center; gap:8px; padding:12px 12px 10px; border-bottom:1px solid var(--line2)">
+      <span style="width:20px; height:20px; flex:none; border-radius:3px; background:var(--ink); color:var(--bg); display:grid; place-items:center; font-weight:700; font-size:12px">W</span>
+      <span style="flex:1; font-size:13px; font-weight:700; letter-spacing:.01em">Wilco</span>
+      <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ totalUnread }} unread</span>
+    </div>
+    <div style="padding:10px 10px 8px">
+      <button onClick="{{ openCompose }}" style="width:100%; padding:8px 12px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center" style-hover="filter: brightness(1.06)"><span style="flex:1; text-align:left">Compose</span><span style="opacity:.6; font-family:'IBM Plex Mono',monospace; font-weight:400; font-size:10.5px">C</span></button>
+    </div>
+
+    <div style="flex:1; overflow-y:auto; padding:0 6px 8px">
+      <button onClick="{{ selectAll }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:6px 8px; border:none; border-radius:3px; background: {{ allBg }}; cursor:pointer; text-align:left; margin-bottom:2px" style-hover="background: var(--hover)">
+        <span style="font-size:12px; width:14px; text-align:center; color:var(--muted)">▤</span>
+        <span style="flex:1; font-size:12.5px; font-weight:600">All inboxes</span>
+        <span style="font-size:10.5px; color:var(--accent); font-family:'IBM Plex Mono',monospace; font-weight:600">{{ totalUnread }}</span>
+      </button>
+
+      <sc-for list="{{ acctBlocks }}" as="a" hint-placeholder-count="4">
+        <div style="margin-top:8px">
+          <button onClick="{{ a.toggle }}" style="width:100%; display:flex; align-items:center; gap:7px; padding:5px 8px 5px 6px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+            <span style="width:3px; height:14px; flex:none; border-radius:1px; background: {{ a.color }}"></span>
+            <span style="flex:1; min-width:0; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ a.name }}</span>
+            <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ a.code }}</span>
+            <sc-if value="{{ a.syncing }}" hint-placeholder-val="{{ false }}"><span title="Syncing" style="font-size:10px; color:var(--faint); display:inline-block; animation:spin 1.2s linear infinite">⟳</span></sc-if>
+            <sc-if value="{{ a.error }}" hint-placeholder-val="{{ false }}"><span title="Authentication expired" style="font-size:10px; color:#c9903a; font-weight:700">⚠</span></sc-if>
+            <sc-if value="{{ a.pending }}" hint-placeholder-val="{{ false }}"><span title="IMAP support coming" style="font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:0 3px">soon</span></sc-if>
+            <span style="font-size:9px; color:var(--faint); width:10px; text-align:center">{{ a.chev }}</span>
+          </button>
+          <sc-if value="{{ a.expanded }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column">
+              <sc-for list="{{ a.folders }}" as="f" hint-placeholder-count="4">
+                <button onClick="{{ f.select }}" onContextMenu="{{ f.ctx }}" onDragOver="{{ f.dragOver }}" onDragLeave="{{ f.dragLeave }}" onDrop="{{ f.drop }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:4.5px 8px 4.5px 17px; border:none; border-radius:3px; background: {{ f.bg }}; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+                  <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">{{ f.icon }}</span>
+                  <span style="flex:1; min-width:0; font-size:12.5px; font-weight: {{ f.weight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ f.name }}</span>
+                  <span style="font-size:10.5px; color: {{ f.countColor }}; font-family:'IBM Plex Mono',monospace">{{ f.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <button onClick="{{ openOnboard }}" style="width:100%; display:flex; align-items:center; gap:7px; padding:5px 8px 5px 9px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left; margin-top:8px; color:var(--faint)" style-hover="background: var(--hover)">
+        <span style="font-size:11px; width:14px; text-align:center">＋</span>
+        <span style="font-size:12px">Add account</span>
+      </button>
+      <div style="padding:14px 8px 4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Saved searches</div>
+      <sc-for list="{{ savedSearches }}" as="ss" hint-placeholder-count="3">
+        <button onClick="{{ ss.select }}" onContextMenu="{{ ss.ctx }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:4.5px 8px; border:none; border-radius:3px; background: {{ ss.bg }}; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+          <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">◎</span>
+          <span style="flex:1; font-size:12px; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'IBM Plex Mono',monospace">{{ ss.label }}</span>
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ ss.count }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="border-top:1px solid var(--line); padding:6px 12px; display:flex; align-items:center; gap:6px">
+      <span style="width:6px; height:6px; flex:none; border-radius:50%; background: {{ statusDot }}"></span>
+      <span style="flex:1; font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ statusLine }}</span>
+    </div>
+    <div style="border-top:1px solid var(--line); padding:6px; display:flex; gap:3px">
+      <button onClick="{{ openSettings }}" style="flex:1; padding:6px 10px; border:none; border-radius:3px; background: {{ settingsBg }}; cursor:pointer; font-size:12px; color:var(--muted); text-align:left" style-hover="background: var(--hover)">⚙ Settings</button>
+      <button onClick="{{ toggleTheme }}" title="Toggle theme (t)" style="width:30px; padding:6px 0; border:none; border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">{{ themeIcon }}</button>
+      <button onClick="{{ toggleShortcuts }}" title="Shortcuts (?)" style="width:30px; padding:6px 0; border:none; border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">?</button>
+    </div>
+  </nav>
+
+  <!-- ══ Settings ══ -->
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <main style="flex:1; overflow-y:auto; background:var(--bg)">
+      <div style="max-width:640px; margin:0 auto; padding:36px 32px 80px">
+        <sc-if value="{{ settingsHome }}" hint-placeholder-val="{{ true }}">
+        <div>
+        <h1 style="margin:0 0 4px; font-size:20px; font-weight:700">Settings</h1>
+        <p style="margin:0 0 24px; font-size:13px; color:var(--muted)">Accounts, identity, and behavior.</p>
+        <h2 style="margin:0 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Accounts</h2>
+        <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel); margin-bottom:10px">
+          <sc-for list="{{ accountRows }}" as="a" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid {{ a.divider }}">
+              <span style="width:3px; height:26px; flex:none; border-radius:1px; background: {{ a.color }}"></span>
+              <div style="flex:1; min-width:0">
+                <div style="font-size:13px; font-weight:600">{{ a.name }} <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-left:4px">{{ a.code }}</span></div>
+                <div style="font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ a.email }}</div>
+              </div>
+              <span style="font-size:10px; font-weight:600; letter-spacing:.05em; padding:2px 7px; border-radius:2px; border:1px solid var(--line); color: {{ a.protoColor }}; font-family:'IBM Plex Mono',monospace">{{ a.proto }}</span>
+              <span style="font-size:10.5px; font-family:'IBM Plex Mono',monospace; color: {{ a.statusColor }}">{{ a.statusLabel }}</span>
+              <sc-if value="{{ a.needsAuth }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ a.reauth }}" style="padding:5px 11px; border:none; border-radius:3px; background:#c9903a; color:#fff; cursor:pointer; font-size:11.5px; font-weight:600">Reauthorize</button>
+              </sc-if>
+              <sc-if value="{{ a.noAuth }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ a.manage }}" style="padding:5px 11px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Manage</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ openOnboard }}" style="padding:8px 14px; border:1px dashed var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12.5px; color:var(--muted); width:100%" style-hover="border-color: var(--faint)">＋ Add account — JMAP now, IMAP coming</button>
+
+        <sc-for list="{{ prefSections }}" as="sec" hint-placeholder-count="4">
+          <div>
+            <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">{{ sec.title }}</h2>
+            <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+              <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 14px; border-bottom:1px solid {{ row.divider }}">
+                  <div style="min-width:0"><div style="font-size:13px; font-weight:600">{{ row.label }}</div><div style="font-size:11.5px; color:var(--muted)">{{ row.sub }}</div></div>
+                  <sc-if value="{{ row.isToggle }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ row.flip }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ row.togBg }}; position:relative; cursor:pointer; padding:0">
+                      <span style="position:absolute; top:2px; left: {{ row.knobLeft }}; width:14px; height:14px; border-radius:1px; background: {{ row.knobBg }}; transition:left .12s ease"></span>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ row.isSeg }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; gap:3px; padding:2px; background:var(--bg); border-radius:3px; flex:none">
+                      <sc-for list="{{ row.opts }}" as="op" hint-placeholder-count="2">
+                        <button onClick="{{ op.pick }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ op.bg }}; color: {{ op.color }}; font-weight:500; white-space:nowrap">{{ op.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ row.isText }}" hint-placeholder-val="{{ false }}">
+                    <span style="flex:none; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ row.value }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <button onClick="{{ closeSettings }}" style="margin-top:24px; padding:8px 16px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12.5px" style-hover="background: var(--hover)">← Back to mail</button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ aeOpen }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <button onClick="{{ aeBack }}" style="padding:5px 10px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); margin-bottom:18px" style-hover="background: var(--hover)">← Settings</button>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
+            <span style="width:4px; height:36px; flex:none; border-radius:1px; background: {{ aeColor }}"></span>
+            <div style="flex:1; min-width:0">
+              <h1 style="margin:0; font-size:20px; font-weight:700">{{ aeName }}</h1>
+              <div style="font-size:12px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ aeEmail }} · {{ aeStatus }}</div>
+            </div>
+          </div>
+
+          <h2 style="margin:0 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Identity</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Display name</div><div style="font-size:11.5px; color:var(--muted)">Shown as the sender</div></div>
+              <input value="{{ aeName }}" onChange="{{ aeSetName }}" style="width:200px; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg); outline:none; font-size:12.5px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Color</div><div style="font-size:11.5px; color:var(--muted)">Edge on every row from this account</div></div>
+              <sc-for list="{{ aeColors }}" as="ac" hint-placeholder-count="6">
+                <button onClick="{{ ac.pick }}" style="width:20px; height:20px; padding:0; border:2px solid {{ ac.ring }}; border-radius:3px; background: {{ ac.c }}; cursor:pointer"></button>
+              </sc-for>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-left:6px">code {{ aeCode }}</span>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Send-as aliases</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel); padding:12px 14px">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px">
+              <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--muted); border:1px solid var(--line2); border-radius:2px; padding:4px 9px; background:var(--bg)">{{ aeEmail }} · primary</span>
+              <sc-for list="{{ aeAliases }}" as="al" hint-placeholder-count="2">
+                <span style="display:inline-flex; align-items:center; gap:7px; font-size:11px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:4px 9px">{{ al.email }}<button onClick="{{ al.remove }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:10px; padding:0; line-height:1">✕</button></span>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:10px">
+              <input value="{{ aeNewAlias }}" onChange="{{ aeSetNewAlias }}" placeholder="alias@{{ aeDomain }}" style="flex:1; padding:6px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg); outline:none; font-size:12px; font-family:'IBM Plex Mono',monospace"></input>
+              <button onClick="{{ aeAddAlias }}" style="padding:6px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Add</button>
+            </div>
+            <div style="font-size:10.5px; color:var(--faint); margin-top:8px">Aliases appear in the compose from-menu. The server must accept them as send-as identities.</div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Server</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">{{ aeProtoLabel }}</div><div style="font-size:11.5px; color:var(--muted)">Session endpoint</div></div>
+              <span style="font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace">{{ aeServer }}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Sync</div><div style="font-size:11.5px; color:var(--muted)">{{ aeSyncSub }}</div></div>
+              <button onClick="{{ aeResync }}" style="padding:5px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Resync now</button>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)">Signature</h2>
+          <div style="border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Format</div><div style="font-size:11.5px; color:var(--muted)">Plain text travels everywhere; HTML carries styling</div></div>
+              <div style="display:flex; gap:3px; padding:2px; background:var(--bg); border-radius:3px; flex:none">
+                <button onClick="{{ aeSigText }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ aeSigTextBg }}; color: {{ aeSigTextColor }}; font-weight:500">Plain text</button>
+                <button onClick="{{ aeSigHtml }}" style="padding:4px 12px; border:none; border-radius:2px; cursor:pointer; font-size:12px; background: {{ aeSigHtmlBg }}; color: {{ aeSigHtmlColor }}; font-weight:500">HTML</button>
+              </div>
+            </div>
+            <textarea value="{{ aeSigSrc }}" onChange="{{ aeSetSig }}" spellCheck="{{ false }}" style="display:block; width:100%; border:none; border-bottom:1px solid var(--line2); background:var(--bg); outline:none; resize:vertical; padding:12px 14px; font-size:12px; line-height:1.6; height:96px; font-family:'IBM Plex Mono',monospace; box-sizing:border-box"></textarea>
+            <div style="padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:8px">preview · {{ aeSigModeLabel }}</div>
+              <div style="background:var(--bg); border:1px solid var(--line2); border-radius:3px; padding:10px 12px">{{ aeSigPreview }}</div>
+              <div style="display:flex; align-items:center; gap:10px; margin-top:10px">
+                <span style="font-size:10.5px; font-family:'IBM Plex Mono',monospace; color: {{ aeSigStatColor }}">{{ aeSigStat }}</span>
+                <span style="flex:1"></span>
+                <button onClick="{{ aeSigSave }}" style="padding:5px 14px; border: {{ aeSigSaveBorder }}; border-radius:3px; background: {{ aeSigSaveBg }}; color: {{ aeSigSaveColor }}; cursor:pointer; font-size:11.5px; font-weight:600">Save signature</button>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border-bottom:1px solid var(--line2)">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Append to new messages</div></div>
+              <button onClick="{{ aeFlipNew }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ aeNewBg }}; position:relative; cursor:pointer; padding:0"><span style="position:absolute; top:2px; left: {{ aeNewLeft }}; width:14px; height:14px; border-radius:1px; background: {{ aeNewKnob }}; transition:left .12s ease"></span></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:16px; padding:12px 14px">
+              <div style="flex:1"><div style="font-size:13px; font-weight:600">Include in replies</div></div>
+              <button onClick="{{ aeFlipReplies }}" style="flex:none; width:32px; height:18px; border:none; border-radius:2px; background: {{ aeRepBg }}; position:relative; cursor:pointer; padding:0"><span style="position:absolute; top:2px; left: {{ aeRepLeft }}; width:14px; height:14px; border-radius:1px; background: {{ aeRepKnob }}; transition:left .12s ease"></span></button>
+            </div>
+          </div>
+
+          <h2 style="margin:28px 0 8px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#cf222e">Danger</h2>
+          <div style="display:flex; align-items:center; gap:16px; padding:12px 14px; border:1px solid var(--line); border-radius:4px; background:var(--panel)">
+            <div style="flex:1"><div style="font-size:13px; font-weight:600">Remove account</div><div style="font-size:11.5px; color:var(--muted)">Local index is deleted; the server keeps your mail</div></div>
+            <button onClick="{{ aeRemove }}" style="padding:6px 12px; border:1px solid #cf222e; border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:#cf222e; font-weight:600" style-hover="background: rgba(207,34,46,.08)">Remove</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </main>
+  </sc-if>
+
+  <!-- ══ Mail ══ -->
+  <sc-if value="{{ mailOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1; min-width:0; display:flex; flex-direction: {{ layoutDir }}">
+    <section style="flex:none; display:flex; flex-direction:column; background:var(--panel); width: {{ listW }}; height: {{ listH }}; border-right: {{ listBR }}; border-bottom: {{ listBB }}; min-height:0">
+      <header style="padding:10px 12px 0; flex:none">
+        <sc-if value="{{ noneChecked }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; align-items:baseline; gap:8px; padding:0 2px 9px">
+            <h1 style="flex:1; margin:0; font-size:14px; font-weight:700">{{ listTitle }}</h1>
+            <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ listMeta }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ anyChecked }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:4px; padding:0 0 9px">
+            <span style="flex:1; font-size:12.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--accent)">{{ checkedCount }} selected</span>
+            <button onClick="{{ checkAll }}" style="padding:4px 9px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">All</button>
+            <button onClick="{{ bulkRead }}" style="padding:4px 9px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Mark read</button>
+            <button onClick="{{ bulkArchive }}" style="padding:4px 9px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:11.5px; font-weight:600" style-hover="filter: brightness(1.06)">Archive</button>
+            <button onClick="{{ clearChecked }}" title="Clear selection (esc)" style="padding:4px 7px; border:none; border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--faint)" style-hover="background: var(--hover)">✕</button>
+          </div>
+        </sc-if>
+        <div style="display:flex; align-items:center; gap:8px; padding:6px 9px; border:1px solid var(--line); border-radius:3px; background:var(--bg)" style-focus="border-color: var(--accent)">
+          <span style="color:var(--faint); font-size:12px">⌕</span>
+          <input value="{{ searchQ }}" onChange="{{ onSearch }}" onKeyDown="{{ searchKey }}" placeholder="Search — from:mira has:attachment after:fri" style="flex:1; border:none; background:none; outline:none; font-size:12.5px; min-width:0"></input>
+          <sc-if value="{{ searchActive }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ clearSearch }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:0">✕</button>
+          </sc-if>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 4px">⌘K</span>
+        </div>
+        <sc-if value="{{ searchActive }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap; padding:8px 0 0">
+            <sc-for list="{{ chipSuggestions }}" as="ch" hint-placeholder-count="3">
+              <button onClick="{{ ch.add }}" style="padding:2px 8px; border:1px solid var(--line); border-radius:2px; background: {{ ch.bg }}; cursor:pointer; font-size:11px; font-family:'IBM Plex Mono',monospace; color: {{ ch.color }}" style-hover="border-color: var(--accent)">{{ ch.label }}</button>
+            </sc-for>
+            <span style="flex:1"></span>
+            <button onClick="{{ saveSearch }}" style="padding:2px 9px; border:none; border-radius:2px; background:var(--sel); cursor:pointer; font-size:11px; color:var(--accent); font-weight:600">{{ saveLabel }}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ bannerError }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; margin-top:9px; padding:7px 10px; border:1px solid rgba(201,144,58,.45); border-radius:3px; background:rgba(201,144,58,.1)">
+            <span style="font-size:11px; color:#c9903a; font-weight:700">⚠</span>
+            <span style="flex:1; min-width:0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ bannerErrorText }}</span>
+            <button onClick="{{ reauth }}" style="flex:none; padding:3px 10px; border:none; border-radius:2px; background:#c9903a; color:#fff; cursor:pointer; font-size:11px; font-weight:600">Reauthorize</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ bannerPending }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; margin-top:9px; padding:7px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg)">
+            <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">IMAP</span>
+            <span style="flex:1; min-width:0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Support coming — showing imported snapshot, not syncing.</span>
+          </div>
+        </sc-if>
+        <div style="height:9px"></div>
+      </header>
+      <div style="flex:1; overflow-y:auto; border-top:1px solid var(--line2)">
+        <sc-if value="{{ emptyList }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:48px 24px; text-align:center; color:var(--faint); font-size:12.5px">{{ emptyTitle }}<br><span style="font-family:'IBM Plex Mono',monospace; font-size:11px">{{ emptySub }}</span></div>
+        </sc-if>
+        <sc-if value="{{ trashMode }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--line2); background:var(--panel2)">
+            <span style="flex:1; font-size:11px; color:var(--faint)">Deleted mail is kept 30 days, then gone.</span>
+            <button onClick="{{ emptyTrash }}" style="padding:3px 10px; border:1px solid #cf222e; border-radius:2px; background:none; cursor:pointer; font-size:11px; color:#cf222e; font-weight:600" style-hover="background: rgba(207,34,46,.08)">Empty trash</button>
+          </div>
+        </sc-if>
+        <sc-for list="{{ threads }}" as="t" hint-placeholder-count="10">
+          <sc-if value="{{ t.isHeader }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:7px 12px 4px; font-size:9.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); font-family:'IBM Plex Mono',monospace; border-bottom:1px solid var(--line2); background:var(--panel2)">{{ t.label }}</div>
+          </sc-if>
+          <sc-if value="{{ t.wide }}" hint-placeholder-val="{{ false }}">
+            <article onClick="{{ t.open }}" onContextMenu="{{ t.ctx }}" draggable="{{ true }}" onDragStart="{{ t.drag }}" style="display:flex; align-items:center; gap:10px; padding:6px 14px 6px 9px; border-bottom:1px solid var(--line2); cursor:pointer; background: {{ t.bg }}; border-left:3px solid {{ t.dot }}" style-hover="background: var(--hover)">
+              <button onClick="{{ t.check }}" title="Select (x)" style="flex:none; width:14px; height:14px; padding:0; border:1px solid {{ t.boxBorder }}; border-radius:2px; background: {{ t.boxBg }}; cursor:pointer; color:var(--accent-ink); font-size:10px; line-height:1; display:grid; place-items:center" style-hover="border-color: var(--accent)">{{ t.boxMark }}</button>
+              <span title="{{ t.accountName }}" style="flex:none; width:32px; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ t.dot }}; font-family:'IBM Plex Mono',monospace">{{ t.code }}</span>
+              <span style="flex:none; width:168px; min-width:0; font-size:12.5px; font-weight: {{ t.fromWeight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.from }}</span>
+              <sc-if value="{{ t.multi }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.msgCount }}</span></sc-if>
+              <span style="flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"><span style="font-size:12.5px; font-weight: {{ t.subjWeight }}; color: {{ t.subjColor }}">{{ t.subject }}</span><span style="font-size:12px; color:var(--faint)">&nbsp;&nbsp;—&nbsp;&nbsp;{{ t.snippet }}</span></span>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
+              <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
+              <span style="flex:none; width:38px; text-align:right; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.time }}</span>
+            </article>
+          </sc-if>
+          <sc-if value="{{ t.tall }}" hint-placeholder-val="{{ true }}">
+          <article onClick="{{ t.open }}" onContextMenu="{{ t.ctx }}" draggable="{{ true }}" onDragStart="{{ t.drag }}" style="display:flex; gap:8px; padding: var(--row-pad) 12px var(--row-pad) 9px; border-bottom:1px solid var(--line2); cursor:pointer; background: {{ t.bg }}; border-left:3px solid {{ t.dot }}" style-hover="background: var(--hover)">
+            <button onClick="{{ t.check }}" title="Select (x)" style="flex:none; width:14px; height:14px; margin-top:3px; padding:0; border:1px solid {{ t.boxBorder }}; border-radius:2px; background: {{ t.boxBg }}; cursor:pointer; color:var(--accent-ink); font-size:10px; line-height:1; display:grid; place-items:center" style-hover="border-color: var(--accent)">{{ t.boxMark }}</button>
+            <div style="flex:1; min-width:0">
+            <div style="display:flex; align-items:baseline; gap:8px">
+              <span style="flex:1; min-width:0; font-size:13px; font-weight: {{ t.fromWeight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.from }}</span>
+              <sc-if value="{{ t.multi }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.msgCount }}</span></sc-if>
+              <span title="{{ t.accountName }}" style="flex:none; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ t.dot }}; font-family:'IBM Plex Mono',monospace">{{ t.code }}</span>
+              <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.time }}</span>
+            </div>
+            <div style="font-size:12.5px; font-weight: {{ t.subjWeight }}; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: {{ t.subjColor }}">{{ t.subject }}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:1px">
+              <span style="flex:1; min-width:0; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.snippet }}</span>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
+              <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
+            </div>
+            </div>
+          </article>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ loadMore }}" style="width:100%; padding:9px 12px; border:none; border-top:1px solid var(--line2); background:var(--panel2); cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-align:center" style-hover="background: var(--hover)">{{ moreLabel }}</button>
+        </sc-if>
+        <sc-if value="{{ syncFooterOn }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 12px 14px; text-align:center; font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ syncFooter }}</div>
+        </sc-if>
+      </div>
+    </section>
+    <div onMouseDown="{{ dragStart }}" style="flex:none; z-index:5; width: {{ dividerW }}; height: {{ dividerH }}; margin: {{ dividerMargin }}; cursor: {{ dividerCursor }}" style-hover="background: var(--accent); opacity:.35"></div>
+    <main style="flex:1; min-width:0; display:flex; flex-direction:column; background:var(--panel2)">
+      <!-- ── Compose: first-class main pane ── -->
+      <sc-if value="{{ composeOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1; display:flex; flex-direction:column; background:var(--bg); animation:fadein .1s ease; padding:18px 22px; min-height:0">
+          <div style="flex:1; display:flex; flex-direction:column; width:100%; max-width:880px; margin:0 auto; min-height:0; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--accent); border-radius:4px; box-shadow:0 16px 48px rgba(0,0,0,.12); overflow:hidden">
+          <header style="flex:none; display:flex; align-items:center; gap:8px; padding:11px 20px; border-bottom:1px solid var(--line); background:var(--panel2)">
+            <h2 style="flex:1; min-width:140px; margin:0; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ composeTitle }}</h2>
+            <span style="flex:none; font-size:10.5px; color: {{ composeStatColor }}; font-family:'IBM Plex Mono',monospace; white-space:nowrap">{{ composeStatus }}</span>
+            <button onClick="{{ closeCompose }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:2px 4px">✕</button>
+          </header>
+          <div style="flex:1; display:flex; flex-direction:column; width:100%; min-height:0">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">from</span>
+              <select value="{{ composeFromVal }}" onChange="{{ onComposeFrom }}" style="flex:1; border:none; background:none; outline:none; font-size:13px; cursor:pointer">
+                <sc-for list="{{ fromOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.val }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">to</span>
+              <div style="flex:1; position:relative; min-width:0">
+                <input value="{{ draftTo }}" onChange="{{ setDraftTo }}" onFocus="{{ toFocusOn }}" onBlur="{{ toFocusOff }}" placeholder="name@domain.com" style="width:100%; border:none; background:none; outline:none; font-size:13px"></input>
+                <sc-if value="{{ acOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; top:24px; left:0; z-index:40; min-width:280px; background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 8px 28px rgba(0,0,0,.18); padding:3px; animation:pop .08s ease">
+                    <sc-for list="{{ acItems }}" as="ac" hint-placeholder-count="3">
+                      <button onMouseDown="{{ ac.pick }}" style="width:100%; display:flex; align-items:baseline; gap:8px; padding:6px 10px; border:none; border-radius:2px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+                        <span style="font-size:12.5px; font-weight:600; white-space:nowrap">{{ ac.name }}</span>
+                        <span style="flex:1; min-width:0; font-size:11px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ ac.email }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+              <button onClick="{{ toggleCc }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; font-family:'IBM Plex Mono',monospace">cc/bcc</button>
+            </div>
+            <sc-if value="{{ showCc }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+                  <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">cc</span>
+                  <input value="{{ draftCc }}" onChange="{{ setDraftCc }}" placeholder="" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+                  <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">bcc</span>
+                  <input value="{{ draftBcc }}" onChange="{{ setDraftBcc }}" placeholder="" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 20px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11.5px; color:var(--faint); width:52px; font-family:'IBM Plex Mono',monospace">subject</span>
+              <input value="{{ draftSubject }}" onChange="{{ setDraftSubject }}" placeholder="Subject" style="flex:1; border:none; background:none; outline:none; font-size:13px; font-weight:600"></input>
+            </div>
+            <div style="flex:none; display:flex; align-items:center; gap:2px; padding:6px 20px; border-bottom:1px solid var(--line2)">
+              <button onClick="{{ fmtBold }}" title="Bold" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; font-weight:700; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">B</button>
+              <button onClick="{{ fmtItalic }}" title="Italic" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; font-style:italic; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">i</button>
+              <button onClick="{{ fmtCode }}" title="Code" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">&lt;&gt;</button>
+              <button onClick="{{ fmtLink }}" title="Link" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">[]</button>
+              <button onClick="{{ fmtQuote }}" title="Quote" style="width:26px; padding:3px 0; border:none; border-radius:2px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">&gt;</button>
+              <span style="flex:1"></span>
+              <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">markdown → sent as text/html + text/plain</span>
+            </div>
+            <textarea id="compose-body" value="{{ draftBody }}" onChange="{{ setDraftBody }}" placeholder="Write…" style="flex:1; border:none; background:none; outline:none; resize:none; padding:14px 20px; font-size:13.5px; line-height:1.65; min-height:0"></textarea>
+            <sc-if value="{{ hasDraftFiles }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; display:flex; gap:6px; flex-wrap:wrap; padding:0 20px 10px">
+                <sc-for list="{{ draftFiles }}" as="df" hint-placeholder-count="1">
+                  <sc-if value="{{ df.up }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:inline-flex; align-items:center; gap:7px; border:1px dashed var(--line); border-radius:3px; padding:5px 9px; font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--muted)"><span style="display:inline-block; animation:spin 1.1s linear infinite; color:var(--accent)">⟳</span>{{ df.name }}<span style="color:var(--faint)">{{ df.pctLabel }}</span></span>
+                  </sc-if>
+                  <sc-if value="{{ df.err }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:inline-flex; align-items:center; gap:7px; border:1px solid #cf222e; border-radius:3px; padding:5px 9px; font-size:11px; font-family:'IBM Plex Mono',monospace; color:#cf222e">{{ df.name }}<span>· failed</span><button onClick="{{ df.retry }}" title="Retry upload" style="border:none; background:none; cursor:pointer; color:#cf222e; font-size:11px; padding:0; line-height:1; font-weight:700">↻</button><button onClick="{{ df.remove }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:10px; padding:0; line-height:1">✕</button></span>
+                  </sc-if>
+                  <sc-if value="{{ df.ok }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:3px; padding:5px 9px; font-size:11px; font-family:'IBM Plex Mono',monospace">{{ df.name }}<span style="color:var(--faint)">{{ df.size }}</span><button onClick="{{ df.remove }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:10px; padding:0; line-height:1">✕</button></span>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ composeSigOn }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; margin:0 20px 12px; padding:9px 13px; border:1px dashed var(--line); border-radius:3px">
+                <div style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:5px">signature · {{ composeSigMode }} · {{ composeSigAcct }}</div>
+                {{ composeSigNode }}
+              </div>
+            </sc-if>
+            <sc-if value="{{ composeQuote }}" hint-placeholder-val="{{ false }}">
+              <div style="flex:none; margin:0 20px 14px; max-height:220px; overflow-y:auto">
+                <button onClick="{{ toggleComposeQuote }}" style="border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:2px 10px; font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">{{ composeQuoteLabel }}</button>
+                <sc-if value="{{ composeQuoteOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px; display:flex; flex-direction:column; gap:12px">
+                    <sc-for list="{{ quoteChain }}" as="q" hint-placeholder-count="2">
+                      <div>
+                        <div style="font-size:11px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:4px">On {{ q.time }}, {{ q.from }} &lt;{{ q.email }}&gt; wrote:</div>
+                        <div style="border-left:2px solid var(--line); padding:2px 14px; color:var(--faint); font-size:12.5px; line-height:1.6; white-space:pre-line">{{ q.body }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+            <div style="flex:none; display:flex; align-items:center; gap:8px; padding:12px 20px; border-top:1px solid var(--line)">
+              <button onClick="{{ sendMsg }}" style="padding:7px 20px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Send</button>
+              <button onClick="{{ addFile }}" style="padding:7px 11px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">Attach</button>
+              <span style="flex:1"></span>
+              <button onClick="{{ discardDraft }}" style="padding:7px 11px; border:none; border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--faint)" style-hover="background: var(--hover)">Discard</button>
+              <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">⌘⏎ send</span>
+            </div>
+          </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ── Reading ── -->
+      <sc-if value="{{ readingOpen }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ noSel }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1; display:grid; place-items:center; color:var(--faint)">
+            <div style="text-align:center">
+              <div style="font-size:14px; margin-bottom:6px">Nothing selected</div>
+              <div style="font-size:11.5px; font-family:'IBM Plex Mono',monospace">j / k to move · ⏎ to open · ⌘K for anything</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ true }}">
+          <header style="flex:none; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:11px 20px; border-bottom:1px solid var(--line)">
+            <div style="flex:1; min-width:200px">
+              <h2 style="margin:0; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ selSubject }}</h2>
+              <div style="display:flex; align-items:center; gap:6px; margin-top:2px">
+                <span style="width:8px; height:8px; border-radius:1px; background: {{ selColor }}"></span>
+                <span style="font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ selMeta }}</span>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; justify-content:flex-end; min-width:0">
+              <button title="Previous (k)" onClick="{{ prevThread }}" style="width:28px; padding:6px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">↑</button>
+              <button title="Next (j)" onClick="{{ nextThread }}" style="width:28px; padding:6px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">↓</button>
+              <button title="Flag (s)" onClick="{{ toggleStarSel }}" style="width:28px; padding:5px 0; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:13px; color: {{ starColor }}; line-height:1" style-hover="background: var(--hover)">{{ starGlyph }}</button>
+              <button title="Archive (e)" onClick="{{ archiveSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Archive</button>
+              <button title="Mark spam" onClick="{{ spamSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Spam</button>
+              <button title="Delete (#)" onClick="{{ deleteSel }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Delete</button>
+              <button title="Forward (f)" onClick="{{ openForward }}" style="padding:6px 11px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12px" style-hover="background: var(--hover)">Forward</button>
+              <button title="Reply (r)" onClick="{{ openReply }}" style="padding:6px 13px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:12px; font-weight:600" style-hover="filter: brightness(1.06)">Reply</button>
+            </div>
+          </header>
+          <div style="flex:1; overflow-y:auto; padding:18px 20px 40px">
+            <div style="max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:10px">
+              <sc-for list="{{ selMsgs }}" as="m" hint-placeholder-count="2">
+                <sc-if value="{{ m.collapsed }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ m.toggle }}" style="display:flex; align-items:center; gap:10px; padding:9px 16px; background:var(--panel); border:1px solid var(--line); border-radius:4px; cursor:pointer; text-align:left; width:100%; opacity:.75" style-hover="opacity: 1">
+                    <span style="width:20px; height:20px; flex:none; border-radius:3px; background:var(--line); color:var(--muted); display:grid; place-items:center; font-size:10px; font-weight:600">{{ m.initial }}</span>
+                    <span style="flex:none; font-size:12.5px; font-weight:600; white-space:nowrap">{{ m.from }}</span>
+                    <span style="flex:1; min-width:0; font-size:12px; color:var(--faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.preview }}</span>
+                    <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; white-space:nowrap">{{ m.time }}</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ m.open }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--panel); border:1px solid var(--line); border-radius:4px; overflow:hidden">
+                  <div onClick="{{ m.toggle }}" style="display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 16px; border-bottom:1px solid var(--line2); cursor:pointer">
+                    <span style="width:26px; height:26px; flex:none; border-radius:3px; background: {{ m.avatarBg }}; color:#fff; display:grid; place-items:center; font-size:11.5px; font-weight:600">{{ m.initial }}</span>
+                    <div style="flex:1; min-width:140px; position:relative; display:flex; align-items:baseline; gap:8px">
+                      <span onMouseEnter="{{ m.cardOn }}" onMouseLeave="{{ m.cardOff }}" style="position:relative; display:inline-block; flex:0 1 auto; min-width:40px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                        <span style="font-size:12.5px; font-weight:600; border-bottom:1px dotted var(--faint)">{{ m.from }}</span>
+                        <sc-if value="{{ m.cardOpen }}" hint-placeholder-val="{{ false }}">
+                          <span onClick="{{ stop }}" style="position:absolute; z-index:50; top:100%; left:0; padding-top:6px; display:block; cursor:default">
+                            <span style="display:block; width:264px; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 12px 36px rgba(0,0,0,.2); padding:12px 14px; animation:pop .1s ease">
+                              <span style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
+                                <span style="width:30px; height:30px; flex:none; border-radius:3px; background: {{ m.avatarBg }}; color:#fff; display:grid; place-items:center; font-size:13px; font-weight:600">{{ m.initial }}</span>
+                                <span style="min-width:0">
+                                  <span style="display:block; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.from }}</span>
+                                  <span style="display:block; font-size:10.5px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.email }}</span>
+                                </span>
+                              </span>
+                              <span style="display:block; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; margin-bottom:10px">{{ m.cardMeta }}</span>
+                              <span style="display:flex; gap:5px">
+                                <button onClick="{{ m.cardSearch }}" style="flex:1; padding:5px 0; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">from:{{ m.cardDomainless }}</button>
+                                <button onClick="{{ m.cardCompose }}" style="flex:none; padding:5px 12px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); cursor:pointer; font-size:11px; font-weight:600">Compose</button>
+                              </span>
+                            </span>
+                          </span>
+                        </sc-if>
+                      </span>
+                      <span style="flex:1; min-width:0; font-size:11px; color:var(--muted); font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ m.email }}</span>
+                    </div>
+                    <button onClick="{{ m.flipView }}" title="{{ m.flipTitle }}" style="flex:none; font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line2); border-radius:2px; padding:1px 5px; background:none; cursor: {{ m.flipCursor }}; line-height:1.4" style-hover="border-color: var(--faint)">{{ m.ctype }}</button>
+                    <span style="flex:none; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ m.time }}</span>
+                    <button onClick="{{ m.menu }}" title="Message actions" style="flex:none; width:22px; padding:2px 0; border:none; border-radius:2px; background:none; cursor:pointer; color:var(--faint); font-size:12px; line-height:1" style-hover="background: var(--hover)">···</button>
+                  </div>
+                  <sc-if value="{{ m.imgBar }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; align-items:center; gap:10px; padding:5px 18px; background:var(--panel2); border-bottom:1px solid var(--line2); font-size:10.5px; font-family:'IBM Plex Mono',monospace; color:var(--muted)">
+                      <sc-if value="{{ m.imgBlocked }}" hint-placeholder-val="{{ false }}">
+                        <span style="flex:1">◻ remote images blocked</span>
+                        <button onClick="{{ m.loadImgs }}" style="flex:none; padding:2px 9px; border:1px solid var(--line); border-radius:2px; background:var(--panel); cursor:pointer; font-size:10.5px; color:var(--ink); font-family:'IBM Plex Mono',monospace" style-hover="border-color: var(--accent)">Load images</button>
+                        <button onClick="{{ m.loadImgsAlways }}" style="flex:none; padding:2px 4px; border:none; background:none; cursor:pointer; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace" style-hover="color: var(--muted)">Always from this sender</button>
+                      </sc-if>
+                      <sc-if value="{{ m.imgDone }}" hint-placeholder-val="{{ false }}"><span style="flex:1; color:var(--faint)">✓ {{ m.imgDoneLabel }}</span></sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.isHtml }}" hint-placeholder-val="{{ false }}">{{ m.htmlNode }}</sc-if>
+                  <sc-if value="{{ m.isText }}" hint-placeholder-val="{{ true }}"><div style="padding:14px 18px; font-size:13.5px; line-height:1.65; white-space:pre-line; max-width:640px">{{ m.body }}</div></sc-if>
+                  <sc-if value="{{ m.truncBar }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; align-items:center; gap:10px; padding:5px 18px; background:var(--panel2); border-top:1px solid var(--line2); font-size:10.5px; font-family:'IBM Plex Mono',monospace; color:var(--muted)">
+                      <span style="flex:1">✂ message truncated · showing 64 KB of 412 KB</span>
+                      <button onClick="{{ m.loadFull }}" style="flex:none; padding:2px 9px; border:1px solid var(--line); border-radius:2px; background:var(--panel); cursor:pointer; font-size:10.5px; color:var(--ink); font-family:'IBM Plex Mono',monospace" style-hover="border-color: var(--accent)">Load full message</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.hasQuote }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:0 18px 14px">
+                      <button onClick="{{ m.toggleQuote }}" title="Show quoted text" style="border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:1px 8px; letter-spacing:.1em; font-family:'IBM Plex Mono',monospace" style-hover="background: var(--hover)">···</button>
+                      <sc-if value="{{ m.quoteOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:10px; border-left:2px solid var(--line); padding:2px 14px; color:var(--faint); font-size:12.5px; line-height:1.6; white-space:pre-line">{{ m.quote }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.hasFiles }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; padding:0 18px 14px">
+                      <sc-for list="{{ m.files }}" as="fl" hint-placeholder-count="1">
+                        <span onClick="{{ fl.open }}" style="display:inline-flex; align-items:center; gap:7px; border:1px solid var(--line); border-radius:3px; padding:6px 10px; font-size:11.5px; font-family:'IBM Plex Mono',monospace; cursor:pointer" style-hover="background: var(--hover)"><span style="color:var(--accent)">▾</span>{{ fl.name }}<span style="color:var(--faint)">{{ fl.size }}</span></span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+                </sc-if>
+              </sc-for>
+              <button onClick="{{ openReply }}" style="align-self:flex-start; padding:8px 15px; border:1px solid var(--line); border-radius:3px; background:var(--panel); cursor:pointer; font-size:12.5px; color:var(--muted)" style-hover="background: var(--hover)">↩ Reply to {{ selReplyTo }}…</button>
+            </div>
+          </div>
+        </sc-if>
+      </sc-if>
+    </main>
+    </div>
+  </sc-if>
+
+  <!-- ══ Add account ══ -->
+  <sc-if value="{{ obOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeOnboard }}" style="position:fixed; inset:0; z-index:90; background:var(--scrim); animation:fadein .08s ease; display:flex; justify-content:center; padding-top:12vh">
+      <div onClick="{{ stop }}" style="width:460px; max-width:calc(100vw - 40px); align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--accent); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:13px 18px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:14px; font-weight:700">Add account</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ obStepLabel }}</span>
+          <button onClick="{{ closeOnboard }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+
+        <sc-if value="{{ obStep1 }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:16px 18px 18px">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:12px">How does this account speak?</div>
+            <button onClick="{{ obPickJmap }}" style="width:100%; display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; text-align:left; margin-bottom:8px" style-hover="border-color: var(--accent)">
+              <span style="font-size:11px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--accent); border:1px solid var(--accent); border-radius:2px; padding:2px 6px">JMAP</span>
+              <span style="flex:1; min-width:0">
+                <span style="display:block; font-size:13px; font-weight:600">Native</span>
+                <span style="display:block; font-size:11.5px; color:var(--muted)">Push, server-side search, one round trip. Fastmail and friends.</span>
+              </span>
+              <span style="color:var(--faint); font-size:11px">→</span>
+            </button>
+            <div style="width:100%; display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px dashed var(--line); border-radius:3px; opacity:.55">
+              <span style="font-size:11px; font-weight:600; font-family:'IBM Plex Mono',monospace; color:var(--faint); border:1px solid var(--line); border-radius:2px; padding:2px 6px">IMAP</span>
+              <span style="flex:1; min-width:0">
+                <span style="display:block; font-size:13px; font-weight:600">Everything else</span>
+                <span style="display:block; font-size:11.5px; color:var(--muted)">Via the Wilco bridge. On the roadmap.</span>
+              </span>
+              <span style="font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 4px">soon</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ obStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:6px 0 0">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">address</span>
+              <input autoFocus="{{ true }}" value="{{ obEmail }}" onChange="{{ obSetEmail }}" placeholder="you@domain.com" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">server</span>
+              <input value="{{ obUrl }}" onChange="{{ obSetUrl }}" placeholder="{{ obUrlPlaceholder }}" style="flex:1; border:none; background:none; outline:none; font-size:12.5px; font-family:'IBM Plex Mono',monospace"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 18px; border-bottom:1px solid var(--line2)">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">token</span>
+              <input type="password" placeholder="API token" style="flex:1; border:none; background:none; outline:none; font-size:13px"></input>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; padding:12px 18px">
+              <span style="font-size:11px; color:var(--faint); width:56px; font-family:'IBM Plex Mono',monospace">color</span>
+              <sc-for list="{{ obColors }}" as="oc" hint-placeholder-count="6">
+                <button onClick="{{ oc.pick }}" style="width:20px; height:20px; padding:0; border:2px solid {{ oc.ring }}; border-radius:3px; background: {{ oc.c }}; cursor:pointer"></button>
+              </sc-for>
+              <span style="flex:1"></span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">code {{ obCode }}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; padding:12px 18px; border-top:1px solid var(--line)">
+              <button onClick="{{ obConnect }}" style="padding:7px 18px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer; opacity: {{ obConnectOpacity }}" style-hover="filter: brightness(1.06)">Connect</button>
+              <button onClick="{{ obBack }}" style="padding:7px 12px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:12px; color:var(--muted)" style-hover="background: var(--hover)">Back</button>
+              <span style="flex:1"></span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">discovery via .well-known/jmap</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ obStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 18px 18px">
+            <div style="display:flex; flex-direction:column; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--muted); min-height:96px">
+              <sc-for list="{{ obLog }}" as="ln" hint-placeholder-count="2">
+                <div style="display:flex; gap:8px"><span style="color: {{ ln.c }}">{{ ln.mark }}</span><span>{{ ln.text }}</span></div>
+              </sc-for>
+              <sc-if value="{{ obConnecting }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex; gap:8px"><span style="display:inline-block; animation:spin 1.2s linear infinite; width:12px">⟳</span></div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ obDone }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ obFinish }}" style="margin-top:12px; padding:7px 18px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12.5px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Open inbox</button>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Context menu ══ -->
+  <sc-if value="{{ ctxOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeCtx }}" onContextMenu="{{ closeCtx }}" style="position:fixed; inset:0; z-index:90">
+      <div onClick="{{ stop }}" style="position:fixed; left: {{ ctxX }}; top: {{ ctxY }}; width:198px; background:var(--panel); border:1px solid var(--line); border-radius:3px; box-shadow:0 12px 36px rgba(0,0,0,.22); padding:4px; animation:pop .08s ease">
+        <sc-for list="{{ ctxItems }}" as="ci" hint-placeholder-count="5">
+          <sc-if value="{{ ci.divider }}" hint-placeholder-val="{{ false }}"><div style="height:1px; background:var(--line2); margin:4px 6px"></div></sc-if>
+          <sc-if value="{{ ci.item }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ ci.run }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:6px 9px; border:none; border-radius:2px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="flex:1; font-size:12.5px; color: {{ ci.color }}">{{ ci.label }}</span>
+              <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ ci.hint }}</span>
+            </button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Move picker ══ -->
+  <sc-if value="{{ movePickOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMovePick }}" style="position:fixed; inset:0; z-index:90; background:var(--scrim); animation:fadein .08s ease; display:flex; justify-content:center; padding-top:18vh">
+      <div onClick="{{ stop }}" style="width:340px; align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:11px 14px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700">Move to</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ moveAcct }}</span>
+        </div>
+        <div style="padding:5px; max-height:280px; overflow-y:auto">
+          <sc-for list="{{ moveFolders }}" as="mf" hint-placeholder-count="5">
+            <button onClick="{{ mf.run }}" style="width:100%; display:flex; align-items:center; gap:9px; padding:7px 10px; border:none; border-radius:3px; background:none; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="font-size:11px; width:14px; text-align:center; color:var(--faint)">{{ mf.icon }}</span>
+              <span style="flex:1; font-size:12.5px">{{ mf.name }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Attachment preview ══ -->
+  <sc-if value="{{ fpOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeFp }}" style="position:fixed; inset:0; z-index:90; background:var(--scrim); animation:fadein .08s ease; display:grid; place-items:center">
+      <div onClick="{{ stop }}" style="width:520px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700; font-family:'IBM Plex Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ fpName }}</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ fpSize }}</span>
+          <button onClick="{{ closeFp }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+        <div style="height:240px; display:grid; place-items:center; background:repeating-linear-gradient(45deg, var(--bg), var(--bg) 10px, var(--panel2) 10px, var(--panel2) 20px)">
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:4px 10px">{{ fpKind }} preview</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid var(--line2)">
+          <button onClick="{{ fpDownload }}" style="padding:7px 16px; border:none; border-radius:3px; background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:600; cursor:pointer" style-hover="filter: brightness(1.06)">Download</button>
+          <span style="flex:1"></span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">scanned · clean</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Raw source ══ -->
+  <sc-if value="{{ rawOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeRaw }}" style="position:fixed; inset:0; z-index:90; background:var(--scrim); animation:fadein .08s ease; display:grid; place-items:center">
+      <div onClick="{{ stop }}" style="width:680px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:4px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .1s ease; overflow:hidden">
+        <div style="display:flex; align-items:baseline; gap:8px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="flex:1; font-size:13px; font-weight:700">Raw message</span>
+          <span style="font-size:10px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ rawId }}</span>
+          <button onClick="{{ closeRaw }}" style="border:none; background:none; cursor:pointer; color:var(--faint); font-size:13px; padding:0 0 0 6px">✕</button>
+        </div>
+        <pre style="margin:0; padding:16px; font-family:'IBM Plex Mono',monospace; font-size:11px; line-height:1.7; color:var(--muted); max-height:60vh; overflow:auto; white-space:pre-wrap; word-break:break-all">{{ rawText }}</pre>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Undo toast ══ -->
+  <sc-if value="{{ undoOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; z-index:85; bottom:18px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:12px; background:var(--ink); color:var(--bg); border-radius:3px; padding:9px 14px; box-shadow:0 10px 32px rgba(0,0,0,.28); animation:pop .12s ease">
+      <span style="font-size:12.5px; font-weight:500">{{ undoLabel }}</span>
+      <button onClick="{{ doUndo }}" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:12.5px; font-weight:700; padding:0">Undo</button>
+      <span style="font-size:10px; opacity:.5; font-family:'IBM Plex Mono',monospace">z</span>
+    </div>
+  </sc-if>
+
+  <!-- ══ Notifications ══ -->
+  <div style="position:fixed; z-index:80; top:14px; right:14px; width:340px; display:flex; flex-direction:column; gap:6px; pointer-events:none">
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="0">
+      <div onClick="{{ n.open }}" style="pointer-events:auto; cursor:pointer; background:var(--panel); border:1px solid var(--line); border-left:3px solid {{ n.color }}; border-radius:3px; box-shadow:0 8px 28px rgba(0,0,0,.18); animation:pop .14s ease; padding:10px 12px" style-hover="border-color: var(--faint)">
+        <div style="display:flex; align-items:baseline; gap:8px">
+          <span style="flex:1; min-width:0; font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.from }}</span>
+          <span style="flex:none; font-size:9px; font-weight:600; letter-spacing:.05em; color: {{ n.color }}; font-family:'IBM Plex Mono',monospace">{{ n.code }}</span>
+          <button onClick="{{ n.dismiss }}" style="flex:none; border:none; background:none; cursor:pointer; color:var(--faint); font-size:11px; padding:0 0 0 2px; line-height:1">✕</button>
+        </div>
+        <div style="font-size:12px; font-weight:600; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.subject }}</div>
+        <div style="font-size:11.5px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ n.snippet }}</div>
+        <div style="display:flex; align-items:center; gap:4px; margin-top:8px">
+          <button onClick="{{ n.reply }}" style="padding:3px 10px; border:1px solid var(--line); border-radius:2px; background:none; cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">Reply</button>
+          <button onClick="{{ n.archive }}" style="padding:3px 10px; border:1px solid var(--line); border-radius:2px; background:none; cursor:pointer; font-size:11px; color:var(--muted)" style-hover="background: var(--hover)">Archive</button>
+          <span style="flex:1"></span>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">now · {{ n.viaLabel }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- ══ Command palette ══ -->
+  <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closePalette }}" style="position:fixed; inset:0; z-index:70; background:var(--scrim); animation:fadein .1s ease; display:flex; justify-content:center; padding-top:13vh">
+      <div onClick="{{ stop }}" style="width:580px; max-width:calc(100vw - 40px); align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:5px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .12s ease; overflow:hidden">
+        <div style="display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line2)">
+          <span style="color:var(--faint); font-size:13px">⌕</span>
+          <input autoFocus="{{ true }}" value="{{ paletteQ }}" onChange="{{ onPaletteQ }}" placeholder="Search mail or type a command…" style="flex:1; border:none; background:none; outline:none; font-size:14px"></input>
+          <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 5px">esc</span>
+        </div>
+        <div style="max-height:340px; overflow-y:auto; padding:5px">
+          <sc-for list="{{ paletteItems }}" as="p" hint-placeholder-count="6">
+            <button onClick="{{ p.run }}" style="width:100%; display:flex; align-items:center; gap:10px; padding:8px 11px; border:none; border-radius:3px; background:transparent; cursor:pointer; text-align:left" style-hover="background: var(--hover)">
+              <span style="width:18px; text-align:center; font-size:12.5px; color:var(--muted)">{{ p.icon }}</span>
+              <span style="flex:1; min-width:0; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ p.label }}</span>
+              <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ p.hint }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="padding:7px 16px; border-top:1px solid var(--line2); font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">try: from:mira · has:attachment · is:flagged · after:fri · before:mon · acct:wil</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ══ Shortcuts ══ -->
+  <sc-if value="{{ shortcutsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ toggleShortcuts }}" style="position:fixed; inset:0; z-index:70; background:var(--scrim); animation:fadein .1s ease; display:grid; place-items:center">
+      <div onClick="{{ stop }}" style="width:620px; max-width:calc(100vw - 40px); background:var(--panel); border:1px solid var(--line); border-radius:5px; box-shadow:0 24px 70px rgba(0,0,0,.3); animation:pop .12s ease; padding:22px 26px">
+        <div style="display:flex; align-items:baseline; margin-bottom:16px">
+          <h2 style="flex:1; margin:0; font-size:15px; font-weight:700">Keyboard shortcuts</h2>
+          <span style="font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">? to toggle</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px 36px">
+          <sc-for list="{{ shortcuts }}" as="k" hint-placeholder-count="10">
+            <div style="display:flex; align-items:center; gap:10px; padding:4px 0">
+              <span style="flex:1; font-size:12.5px; color:var(--muted)">{{ k.what }}</span>
+              <span style="font-size:11px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:1px 7px; background:var(--bg)">{{ k.key }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+<div id="print-area" style="font-family:Georgia,serif; padding:24px; max-width:680px">
+  <h1 style="font-size:18px; margin:0 0 4px">{{ printSubject }}</h1>
+  <div style="font-size:11px; color:#555; font-family:monospace; margin-bottom:18px">{{ printMeta }}</div>
+  <sc-for list="{{ printMsgs }}" as="pm" hint-placeholder-count="1">
+    <div style="border-top:1px solid #ccc; padding:12px 0 16px">
+      <div style="font-size:12px; margin-bottom:8px"><strong>{{ pm.from }}</strong> &lt;{{ pm.email }}&gt; · {{ pm.time }}</div>
+      <div style="font-size:12.5px; line-height:1.6; white-space:pre-line">{{ pm.plain }}</div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;light&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b6ee0&quot;,&quot;options&quot;:[&quot;#5b6ee0&quot;,&quot;#2a9d6e&quot;,&quot;#c96a3a&quot;,&quot;#a35bc9&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'comfortable'|'compact'&quot;,&quot;section&quot;:&quot;List&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;columns&quot;,&quot;options&quot;:[&quot;columns&quot;,&quot;rows&quot;],&quot;tsType&quot;:&quot;'columns'|'rows'&quot;,&quot;section&quot;:&quot;List&quot;}}">
+class Component extends DCLogic {
+  state = {
+    scope: 'all', folder: 'inbox', selId: 3, searchQ: '', settingsOpen: false,
+    composeOpen: false, composeMode: 'new',
+    paletteOpen: false, paletteQ: '', shortcutsOpen: false,
+    theme: null, savedCustom: [], archived: [], collapsed: [], notifs: [], removedSaved: [],
+    msgToggles: {}, quoteShown: {}, composeQuoteOpen: false,
+    checked: [], readIds: [], undo: null,
+    ctx: null, movePick: null, moves: {}, unreadForced: [],
+    acctStatus: { work: 'syncing', wilco: 'syncing', mer: 'syncing', gmail: 'pending' },
+    ob: null, layout: null, density: null, acctEdit: null, composeFrom: 'work', composeAlias: null,
+    starred: [], drafts: [], draft: null, showCc: false, lastCheck: null,
+    imgLoaded: {}, fullMsg: {}, msgView: {}, sigDirty: {}, sigSaved: {}, draftStat: null, draftSavedAt: '',
+    listPx: 392, listPct: 42, toFocus: false, listCap: 12,
+    recent: [], hoverKey: null, dragTarget: null, rawView: null, outbox: [], filePreview: null,
+    prefs: { markRead: '2s', images: 'ask', convos: true, sendDelay: '10s', replyAll: false, quoteReply: true, notifDesktop: true, notifHumanOnly: true, notifSound: false, archiveOnReply: true, unifiedLaunch: true },
+  };
+  setPref(k, v) { this.setState(s => ({ prefs: { ...s.prefs, [k]: v } })); }
+  sigs = {
+    work: { mode: 'text', text: '— Kai Halden\nHalden Co · kai@halden.example', html: '<div>— <b>Kai Halden</b></div><div style="color:#888">Halden Co · kai@halden.example</div>', inNew: true, inReplies: false },
+    wilco: { mode: 'html', text: '— Kai\nWilco — mail, but yours', html: '<div>— Kai</div><div style="color:#888">Wilco — mail, but yours · <a href="#">wilco.dev</a></div>', inNew: true, inReplies: true },
+    mer: { mode: 'text', text: '— Kai · consulting\nkai@meridianlabs.io', html: '<div>— Kai · consulting</div>', inNew: true, inReplies: false },
+    gmail: { mode: 'text', text: 'Kai', html: '<div>Kai</div>', inNew: false, inReplies: false },
+  };
+  sigFor(id) { return this.sigs[id] || (this.sigs[id] = { mode: 'text', text: '— ' + ((this.accounts.find(a => a.id === id) || {}).name || ''), html: '', inNew: true, inReplies: false }); }
+  patchSig(id, p) { this.sigs[id] = { ...this.sigFor(id), ...p }; this.forceUpdate(); }
+  curLayout() { return this.state.layout ?? this.props.layout ?? 'columns'; }
+  toggleLayout = () => this.setState({ layout: this.curLayout() === 'columns' ? 'rows' : 'columns' });
+  obStart = () => this.setState({ ob: { step: 1, email: '', url: '', color: '#4a9bb8', log: [], done: false } });
+  obPatch(p) { this.setState(s => ({ ob: { ...s.ob, ...p } })); }
+  obConnect = () => {
+    if (!(this.state.ob.email || '').includes('@')) return;
+    this.obPatch({ step: 3, log: [], done: false });
+    const lines = [
+      { mark: '·', c: 'var(--faint)', text: 'resolving ' + (this.state.ob.url || this.obUrlGuess()) },
+      { mark: '✓', c: '#2a9d6e', text: 'session established · JMAP 1.0' },
+      { mark: '✓', c: '#2a9d6e', text: 'capabilities: mail, submission, push' },
+      { mark: '✓', c: '#2a9d6e', text: '6 mailboxes · syncing headers first' },
+    ];
+    lines.forEach((ln, i) => setTimeout(() => this.obPatch({ log: [...this.state.ob.log, ln] }), 450 + i * 620));
+    setTimeout(() => this.obPatch({ done: true }), 450 + lines.length * 620);
+  };
+  obUrlGuess() {
+    const dom = (this.state.ob.email.split('@')[1] || 'domain.com');
+    return 'https://' + dom + '/.well-known/jmap';
+  }
+  obFinish = () => {
+    const ob = this.state.ob;
+    const dom = ob.email.split('@')[1] || 'new';
+    const name = dom.split('.')[0].replace(/^./, c => c.toUpperCase());
+    const id = 'a' + Date.now();
+    this.accounts.push({ id, name, code: this.obCode(), email: ob.email, color: ob.color, proto: 'JMAP', custom: [] });
+    this.setState(s => ({ ob: null, scope: id, folder: 'inbox', settingsOpen: false, searchQ: '', acctStatus: { ...s.acctStatus, [id]: 'syncing' } }));
+    setTimeout(() => this.setStatus(id, 'ok'), 2000);
+  };
+  obCode() {
+    const dom = (this.state.ob.email.split('@')[1] || 'NEW');
+    return dom.replace(/[^a-z]/gi, '').slice(0, 3).toUpperCase() || 'NEW';
+  }
+  setStatus(id, st) { this.setState(s => ({ acctStatus: { ...s.acctStatus, [id]: st } })); }
+  reauth = (id) => { this.setStatus(id, 'syncing'); setTimeout(() => this.setStatus(id, 'ok'), 1800); };
+  isUnread(t) { return (t.unread || this.state.unreadForced.includes(t.id)) && !this.state.readIds.includes(t.id); }
+  effFolder(t) { return this.state.moves[t.id] ?? t.folder; }
+  moveThread(id, fid, fname) {
+    const prev = this.effFolder(this.threads.find(t => t.id === id));
+    this.setState(s => ({ moves: { ...s.moves, [id]: fid }, movePick: null, ctx: null }));
+    this.pushUndo('Moved to ' + fname, () => this.setState(s => ({ moves: { ...s.moves, [id]: prev }, undo: null })));
+  }
+  pushUndo(label, restore, ttl) {
+    clearTimeout(this.undoTimer); clearInterval(this.undoTick);
+    const until = ttl ? Date.now() + ttl : null;
+    if (until) this.undoTick = setInterval(() => this.forceUpdate(), 500);
+    this.setState({ undo: { label, restore, until } });
+    this.undoTimer = setTimeout(() => { clearInterval(this.undoTick); this.setState({ undo: null }); }, ttl || 7000);
+  }
+  bulkArchive = () => {
+    const ids = [...this.state.checked];
+    if (!ids.length) return;
+    const prevSel = this.state.selId;
+    const prevMoves = {};
+    ids.forEach(id => { const t = this.threads.find(x => x.id === id); if (t) prevMoves[id] = this.effFolder(t); });
+    this.setState(s => { const m = { ...s.moves }; ids.forEach(id => m[id] = 'archive'); return { moves: m, checked: [], selId: ids.includes(s.selId) ? null : s.selId }; });
+    this.pushUndo('Archived ' + ids.length, () => this.setState(s => ({ moves: { ...s.moves, ...prevMoves }, selId: prevSel, undo: null })));
+  };
+  emptyTrash = () => {
+    const ids = this.threads.filter(t => this.effFolder(t) === 'trash' && !this.state.archived.includes(t.id)).map(t => t.id);
+    if (!ids.length) return;
+    this.setState(s => ({ archived: [...s.archived, ...ids] }));
+    this.pushUndo('Emptied trash — ' + ids.length + ' gone', () => this.setState(s => ({ archived: s.archived.filter(x => !ids.includes(x)), undo: null })));
+  };
+  bulkRead = () => {
+    const ids = [...this.state.checked];
+    if (!ids.length) return;
+    this.setState(s => ({ readIds: [...new Set([...s.readIds, ...ids])], checked: [] }));
+    this.pushUndo('Marked ' + ids.length + ' read', () => this.setState(s => ({ readIds: s.readIds.filter(x => !ids.includes(x)), undo: null })));
+  };
+  incoming = [
+    { acct: 'wilco', from: 'Priya Raman', email: 'priya@wilco.dev', subject: 'Bridge spec — comments merged', snippet: 'Took your notes on \\Recent. v2 is up, one open question on keyword casing.', time: 'now', unread: true, folder: 'inbox', msgs: [{ from: 'Priya Raman', email: 'priya@wilco.dev', time: 'Just now', body: 'Took your notes on \\Recent. v2 is up, one open question on keyword casing — JMAP says lowercase, half the IMAP servers disagree.' }] },
+    { acct: 'work', from: 'Mira Chen', email: 'mira@halden.example', subject: 'Re: Q4 infra budget review', snippet: 'Perfect, that unblocks me. Ignore the earlier ping.', time: 'now', unread: true, folder: 'inbox', msgs: [{ from: 'Mira Chen', email: 'mira@halden.example', time: 'Just now', body: 'Perfect, that unblocks me. Ignore the earlier ping.' }] },
+    { acct: 'mer', from: 'DocuSign', email: 'dse@docusign.net', subject: 'Completed: SOW amendment — Q4 scope', snippet: 'All parties have signed. A copy is attached for your records.', time: 'now', unread: true, folder: 'inbox', attach: true, msgs: [{ from: 'DocuSign', email: 'dse@docusign.net', time: 'Just now', html: '<div style="background:#e8f5ec;border:1px solid #b7dfc3;border-radius:4px;padding:12px 16px;margin-bottom:16px;color:#1a6b34;font-size:12.5px;font-weight:600">Completed — all parties have signed.</div><div style="font-size:14px;font-weight:700;margin-bottom:4px">SOW Amendment — Q4 Scope.pdf</div><div style="color:var(--muted);font-size:12.5px;margin-bottom:16px">Meridian Labs · signed Sep 2, 2026</div><a href="#" style="display:inline-block;background:#4c00ff;color:#fff;padding:8px 20px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Download copy</a>', files: [{ name: 'sow-amendment-q4-signed.pdf', size: '410 KB' }] }] },
+    { acct: 'gmail', from: 'Mom', email: 'mom@example.net', subject: 'Re: Sunday?', snippet: 'Make it 12:30, your brother has a thing.', time: 'now', unread: true, folder: 'inbox', msgs: [{ from: 'Mom', email: 'mom@example.net', time: 'Just now', body: 'Make it 12:30, your brother has a thing.' }] },
+  ];
+  nextId = 100;
+  simulateMail = () => {
+    const src = this.incoming[(this.nextId - 100) % this.incoming.length];
+    const id = this.nextId++;
+    const t = { ...src, id };
+    this.threads.unshift(t);
+    const machine = /@(github|docusign|linear|calendly|airbnb|united|stripe|fastmail)\./.test(t.email) || t.email.startsWith('no');
+    const { notifDesktop, notifHumanOnly } = this.state.prefs;
+    if (!notifDesktop || (notifHumanOnly && machine)) { this.forceUpdate(); return; }
+    this.setState(s => ({ notifs: [...s.notifs, { nid: id }] }));
+    setTimeout(() => this.setState(s => ({ notifs: s.notifs.filter(n => n.nid !== id) })), 9000);
+  };
+  sendMsg = () => {
+    const delay = this.state.prefs.sendDelay;
+    const d = { ...this.state.draft, from: this.state.composeFrom };
+    this.setState(s => ({ composeOpen: false, draft: null, drafts: d.did ? s.drafts.filter(x => x.did !== d.did) : s.drafts }));
+    if (delay === 'off') {
+      this.deliver(d);
+      const tid = this.threads[0].id;
+      this.pushUndo('Sent', () => { this.threads = this.threads.filter(t => t.id !== tid); this.setState({ composeOpen: true, draft: d, undo: null }); });
+      return;
+    }
+    const oid = 'o' + Date.now();
+    const ms = parseInt(delay) * 1000;
+    const timer = setTimeout(() => { this.deliver(d); this.setState(s => ({ outbox: s.outbox.filter(o => o.oid !== oid) })); }, ms);
+    this.setState(s => ({ outbox: [...s.outbox, { oid, to: d.to, timer }] }));
+    this.pushUndo('Sending in', () => {
+      clearTimeout(timer); clearInterval(this.undoTick);
+      this.setState(s => ({ outbox: s.outbox.filter(o => o.oid !== oid), composeOpen: true, draft: d, undo: null }));
+    }, ms);
+  };
+  accounts = [
+    { id: 'work', name: 'Halden', code: 'HAL', email: 'kai@halden.example', color: '#5b6ee0', proto: 'JMAP', custom: [['clients', 'Clients'], ['receipts', 'Receipts']], aliases: ['press@halden.example', 'kai+lists@halden.example'] },
+    { id: 'wilco', name: 'Wilco', code: 'WIL', email: 'kai@wilco.dev', color: '#2a9d6e', proto: 'JMAP', custom: [['github', 'GitHub'], ['linear', 'Linear']], aliases: ['hello@wilco.dev'] },
+    { id: 'mer', name: 'Meridian', code: 'MER', email: 'kai@meridianlabs.io', color: '#c9903a', proto: 'JMAP', custom: [['invoices', 'Invoices']] },
+    { id: 'gmail', name: 'Personal', code: 'GML', email: 'kai.personal@example.net', color: '#b05fc9', proto: 'IMAP · soon', custom: [['travel', 'Travel']] },
+  ];
+  threads = [
+    { id: 1, acct: 'work', from: 'Mira Chen', email: 'mira@halden.example', subject: 'Q4 infra budget review', snippet: 'Before Thursday — can you sanity-check the JMAP hosting line? It doubled and I want to know why before finance asks.', time: '9:41', unread: true, folder: 'inbox',
+      msgs: [{ from: 'Mira Chen', email: 'mira@halden.example', time: 'Today 9:41', body: 'Before Thursday — can you sanity-check the JMAP hosting line? It doubled and I want to know why before finance asks.\n\nSheet is in the usual folder. Flag anything that looks off.' }] },
+    { id: 2, acct: 'wilco', from: 'GitHub', email: 'notifications@github.com', subject: '[wilco/core] PR #412: JMAP session caching', snippet: 'dana-o requested your review. 14 files changed, +612 −88.', time: '9:12', unread: true, folder: 'inbox',
+      msgs: [{ from: 'GitHub', email: 'notifications@github.com', time: 'Today 9:12', html: '<div style="font-size:11px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;margin-bottom:8px">wilco/core</div><a href="#" style="font-size:16px;font-weight:700">JMAP session caching <span style="color:var(--faint);font-weight:400">#412</span></a><div style="color:var(--muted);margin:8px 0 10px">dana-o requested your review.</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;margin-bottom:14px"><span style="color:#2da44e">+612</span> <span style="color:#cf222e">−88</span> <span style="color:var(--faint)">· 14 files changed</span></div><div style="border-left:3px solid var(--line);padding:2px 12px;color:var(--muted);margin-bottom:16px">Caches Session objects per account and invalidates on sessionState change. Cuts cold-start round trips from 4 to 1.</div><a href="#" style="display:inline-block;background:#2da44e;color:#fff;padding:7px 16px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Review changes</a>' }] },
+    { id: 3, acct: 'work', from: 'Dana Okafor', email: 'dana@halden.example', subject: 'Re: Lisbon offsite dates', snippet: 'Second week of November works for everyone except Tomás — he can join remote for day one.', time: '8:55', unread: false, folder: 'inbox',
+      msgs: [
+        { from: 'You', email: 'kai@halden.example', time: 'Yesterday 17:20', body: 'Poll closed — looks like early or mid November. Dana, can you confirm with the Lisbon folks before I book anything?' },
+        { from: 'Dana Okafor', email: 'dana@halden.example', time: 'Yesterday 18:02', body: 'On it — pinging the Lisbon folks tonight. Tomás is the only maybe, he\u2019s at a conference that week.' },
+        { from: 'You', email: 'kai@halden.example', time: 'Today 8:10', body: 'Any word? I need to book flights this week or prices jump.', quote: 'On it — pinging the Lisbon folks tonight. Tomás is the only maybe, he\u2019s at a conference that week.' },
+        { from: 'Dana Okafor', email: 'dana@halden.example', time: 'Today 8:55', body: 'Second week of November works for everyone except Tomás — he can join remote for day one.\n\nVenue options:\n· Village Underground — big room, flaky wifi\n· LX Factory studio — smaller, solid network, cheaper\n\nI lean LX. Say the word and I\u2019ll put a hold on it.', quote: 'Any word? I need to book flights this week or prices jump.' },
+      ] },
+    { id: 12, acct: 'mer', from: 'Ana Duarte', email: 'ana@meridianlabs.io', subject: 'SOW amendment — Q4 scope', snippet: 'Legal signed off. Countersign by Friday and we can start the search-relevance work on the 1st.', time: '8:20', unread: true, folder: 'inbox',
+      msgs: [{ from: 'Ana Duarte', email: 'ana@meridianlabs.io', time: 'Today 8:20', body: 'Legal signed off. Countersign by Friday and we can start the search-relevance work on the 1st.\n\nDocuSign link expires in 7 days.' }, { from: 'DocuSign', email: 'dse@docusign.net', time: 'Today 8:21', html: '<div style="background:#fff8d6;border:1px solid #e8d98a;border-radius:4px;padding:12px 16px;margin-bottom:16px;color:#5c4d00;font-size:12.5px;font-weight:600">Ana Duarte has sent you a document to review and sign.</div><div style="font-size:14px;font-weight:700;margin-bottom:4px">SOW Amendment — Q4 Scope.pdf</div><div style="color:var(--muted);font-size:12.5px;margin-bottom:16px">Meridian Labs · 6 pages · expires Sep 9</div><a href="#" style="display:inline-block;background:#4c00ff;color:#fff;padding:8px 20px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Review document</a><div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line2);color:var(--faint);font-size:10.5px">Do not share this email. This link is unique to you.</div>' }] },
+    { id: 4, acct: 'wilco', from: 'Fastmail', email: 'noreply@fastmail.com', subject: 'Your JMAP API token was rotated', snippet: 'A new token was issued for kai@wilco.dev at 07:32 UTC. If this wasn\u2019t you, revoke it now.', time: '7:32', unread: false, folder: 'inbox',
+      msgs: [{ from: 'Fastmail', email: 'noreply@fastmail.com', time: 'Today 7:32', html: '<div style="font-size:15px;font-weight:700;margin-bottom:10px">Your JMAP API token was rotated</div><div style="color:var(--muted);margin-bottom:6px">A new API token was issued for <span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--ink)">kai@wilco.dev</span> at 07:32 UTC.</div><div style="color:var(--muted);margin-bottom:16px">If this wasn\u2019t you, revoke it immediately.</div><a href="#" style="display:inline-block;background:#0067b9;color:#fff;padding:7px 18px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Manage tokens</a><div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line2);color:var(--faint);font-size:10.5px">Fastmail · Settings → Privacy &amp; Security → Integrations</div>' }] },
+    { id: 13, acct: 'gmail', from: 'United Airlines', email: 'receipts@united.com', subject: 'eTicket — SFO → LIS, Nov 8', snippet: 'Confirmation NX4T7Q. Seat 21C. Check in opens 24 hours before departure.', time: '7:05', unread: true, folder: 'inbox',
+      msgs: [{ from: 'United Airlines', email: 'receipts@united.com', time: 'Today 7:05', html: '<div style="font-size:11px;color:var(--faint);font-family:\'IBM Plex Mono\',monospace;margin-bottom:10px">CONFIRMATION NX4T7Q</div><div style="display:flex;align-items:baseline;gap:14px;font-family:\'IBM Plex Mono\',monospace;margin-bottom:14px"><span style="font-size:26px;font-weight:600">SFO</span><span style="color:var(--faint)">→</span><span style="font-size:26px;font-weight:600">LIS</span></div><table style="border-collapse:collapse;font-size:12.5px;margin-bottom:16px"><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Departs</td><td>Nov 8, 17:40 · Gate F12</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Seat</td><td>21C · Economy Plus</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Duration</td><td>10h 45m · nonstop</td></tr></table><a href="#" style="display:inline-block;background:#005daa;color:#fff;padding:7px 18px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Check in</a><div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line2);color:var(--faint);font-size:10.5px">Check-in opens 24 hours before departure · MileagePlus KR-882-104</div>' }] },
+    { id: 5, acct: 'work', from: 'Sam Alvarez', email: 'sam@halden.example', subject: 'Design tokens for compose view', snippet: 'Attached the updated spacing scale. The 4px grid holds everywhere except the chip row — see notes.', time: 'Mon', unread: false, attach: true, folder: 'inbox',
+      msgs: [{ from: 'Sam Alvarez', email: 'sam@halden.example', time: 'Mon 16:04', body: 'Attached the updated spacing scale. The 4px grid holds everywhere except the chip row — see notes in the file.', files: [{ name: 'tokens-compose-v3.json', size: '4 KB' }] }] },
+    { id: 6, acct: 'wilco', from: 'Linear', email: 'notifications@linear.app', subject: '12 issues updated in WIL — Sprint 34', snippet: 'WIL-291 moved to Done · WIL-302 assigned to you · WIL-307 blocked on IMAP bridge spec.', time: 'Mon', unread: false, folder: 'linear',
+      msgs: [{ from: 'Linear', email: 'notifications@linear.app', time: 'Mon 14:30', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">12 issues updated in <span style="font-family:\'IBM Plex Mono\',monospace;font-size:12.5px">WIL — Sprint 34</span></div><div style="display:flex;flex-direction:column;gap:1px;border:1px solid var(--line2);border-radius:4px;overflow:hidden;margin-bottom:14px"><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-291</span><span style="flex:1;font-size:12.5px">Search result ranking</span><span style="font-size:10.5px;font-weight:600;color:#2da44e">Done</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-302</span><span style="flex:1;font-size:12.5px">Chip parser edge cases</span><span style="font-size:10.5px;font-weight:600;color:#5b6ee0">Assigned to you</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-307</span><span style="flex:1;font-size:12.5px">Offline queue</span><span style="font-size:10.5px;font-weight:600;color:#cf222e">Blocked</span></div></div><a href="#" style="font-size:12.5px;font-weight:600">View all in Linear →</a>' }] },
+    { id: 14, acct: 'mer', from: 'Meridian Billing', email: 'billing@meridianlabs.io', subject: 'Remittance advice — invoice #8841', snippet: '$2,400.00 sent via ACH, expect settlement in 1–2 business days.', time: 'Mon', unread: false, folder: 'invoices',
+      msgs: [{ from: 'Meridian Billing', email: 'billing@meridianlabs.io', time: 'Mon 11:00', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">Remittance advice</div><table style="border-collapse:collapse;font-size:12.5px;margin-bottom:14px"><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Invoice</td><td style="font-family:\'IBM Plex Mono\',monospace;font-size:12px">#8841</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Amount</td><td style="font-family:\'IBM Plex Mono\',monospace;font-size:12px">$2,400.00 USD</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Method</td><td>ACH · settles in 1–2 business days</td></tr></table><div style="color:var(--faint);font-size:10.5px;border-top:1px solid var(--line2);padding-top:12px">Meridian Labs · Accounts Payable</div>' }] },
+    { id: 7, acct: 'gmail', from: 'Mom', email: 'mom@example.net', subject: 'Sunday?', snippet: 'Roast at 1. Bring the good bread from that place near you. Dad says hi.', time: 'Sun', unread: false, folder: 'inbox',
+      msgs: [{ from: 'Mom', email: 'mom@example.net', time: 'Sun 19:02', body: 'Roast at 1. Bring the good bread from that place near you.\n\nDad says hi.' }] },
+    { id: 8, acct: 'work', from: 'Stripe', email: 'receipts@stripe.com', subject: 'Invoice #8841 paid — $2,400.00', snippet: 'Payment received from Meridian Labs for consulting, September.', time: 'Sun', unread: false, folder: 'receipts',
+      msgs: [{ from: 'Stripe', email: 'receipts@stripe.com', time: 'Sun 09:15', html: '<div style="font-size:11px;color:var(--faint);font-family:\'IBM Plex Mono\',monospace;margin-bottom:8px">INVOICE #8841 · PAID</div><div style="font-size:24px;font-weight:700;font-family:\'IBM Plex Mono\',monospace;margin-bottom:14px">$2,400.00</div><table style="border-collapse:collapse;font-size:12.5px;margin-bottom:16px"><tr><td style="color:var(--muted);padding:3px 24px 3px 0">From</td><td>Meridian Labs</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">For</td><td>Consulting, September</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Paid</td><td>Aug 31, 2026</td></tr></table><a href="#" style="display:inline-block;background:#635bff;color:#fff;padding:7px 18px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">View invoice</a>' }] },
+    { id: 9, acct: 'wilco', from: 'Priya Raman', email: 'priya@wilco.dev', subject: 'Re: IMAP bridge spec', snippet: 'Draft is ready. The tricky part is mapping IMAP flags onto JMAP keywords without lying to the client.', time: 'Sat', unread: true, folder: 'inbox',
+      msgs: [{ from: 'Priya Raman', email: 'priya@wilco.dev', time: 'Sat 11:47', big: true, more: '\n\nAppendix — IMAP→JMAP flag map:\n\\Seen → $seen\n\\Answered → $answered\n\\Flagged → $flagged\n\\Deleted → moves to Trash\n\\Recent → dropped (documented)\n\n(remaining 380 lines of the spec follow)', body: 'Draft is ready. The tricky part is mapping IMAP flags onto JMAP keywords without lying to the client — \\Recent has no honest JMAP equivalent, so I propose we drop it and document why.\n\nSpec: notion/wilco/imap-bridge-v1. Comments by Wednesday please.' }] },
+    { id: 10, acct: 'gmail', from: 'Calendly', email: 'no-reply@calendly.com', subject: 'New event: user interview — Thu 15:00', snippet: 'Jordan P. booked "Wilco early access chat" · 30 min · Google Meet.', time: 'Sat', unread: false, folder: 'inbox',
+      msgs: [{ from: 'Calendly', email: 'no-reply@calendly.com', time: 'Sat 10:20', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">New event scheduled</div><div style="border:1px solid var(--line2);border-left:3px solid #006bff;border-radius:4px;padding:12px 16px;margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:2px">Wilco early access chat — Jordan P.</div><div style="font-size:12px;color:var(--muted)">Thursday · 15:00–15:30 · Google Meet</div><div style="font-size:12px;color:var(--muted);margin-top:6px">Agenda: search habits, multi-account setup</div></div><a href="#" style="display:inline-block;background:#006bff;color:#fff;padding:7px 18px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">Join meeting</a>' }] },
+    { id: 15, acct: 'work', from: 'Noor Haddad', email: 'noor@bramble.studio', subject: 'Re: brand refresh — round 2', snippet: 'Wordmark options attached. The condensed cut reads better at 16px, which I know matters to you.', time: 'Sat', unread: false, attach: true, folder: 'clients',
+      msgs: [{ from: 'Noor Haddad', email: 'noor@bramble.studio', time: 'Sat 09:40', body: 'Wordmark options attached. The condensed cut reads better at 16px, which I know matters to you.', files: [{ name: 'wilco-wordmark-r2.pdf', size: '1.2 MB' }] }] },
+    { id: 16, acct: 'wilco', from: 'GitHub', email: 'notifications@github.com', subject: '[wilco/core] Issue #398: search index cold start', snippet: 'p95 first-search latency is 2.1s on accounts over 100k messages. Proposal inside.', time: 'Fri', unread: false, folder: 'github',
+      msgs: [{ from: 'GitHub', email: 'notifications@github.com', time: 'Fri 15:12', html: '<div style="font-size:11px;color:var(--muted);font-family:\'IBM Plex Mono\',monospace;margin-bottom:8px">wilco/core</div><a href="#" style="font-size:16px;font-weight:700">Search index cold start <span style="color:var(--faint);font-weight:400">#398</span></a><div style="color:var(--muted);margin:8px 0 12px">priya-r opened this issue.</div><div style="border-left:3px solid var(--line);padding:2px 12px;color:var(--muted);margin-bottom:16px">p95 first-search latency is 2.1s on accounts over 100k messages. Proposal: warm the index from the JMAP query cache on session start.</div><a href="#" style="display:inline-block;border:1px solid var(--line);padding:7px 16px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none;color:var(--ink)">View issue</a>' }] },
+    { id: 17, acct: 'mer', from: 'Tom Reyes', email: 'tom@meridianlabs.io', subject: 'Kickoff agenda — search relevance', snippet: 'Monday 10:00 PT. Bring the ranking notes from the Wilco side if you can share them.', time: 'Fri', unread: false, folder: 'inbox',
+      msgs: [{ from: 'Tom Reyes', email: 'tom@meridianlabs.io', time: 'Fri 13:05', body: 'Monday 10:00 PT. Bring the ranking notes from the Wilco side if you can share them.\n\nAgenda: goals, eval set, first milestone.' }] },
+    { id: 18, acct: 'gmail', from: 'Airbnb', email: 'automated@airbnb.com', subject: 'Reservation confirmed — Alfama loft, Nov 8–14', snippet: 'Check-in after 15:00. Your host Rui will send the door code the day before.', time: 'Fri', unread: false, folder: 'travel',
+      msgs: [{ from: 'Airbnb', email: 'automated@airbnb.com', time: 'Fri 10:30', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">Reservation confirmed</div><div style="border:1px solid var(--line2);border-radius:4px;padding:14px 16px;margin-bottom:14px"><div style="font-size:13px;font-weight:600;margin-bottom:2px">Alfama loft — Lisbon</div><div style="font-size:12px;color:var(--muted)">Nov 8–14 · 2 guests · host Rui</div><div style="font-size:12px;color:var(--muted);margin-top:6px">Check-in after 15:00 · door code arrives the day before</div></div><a href="#" style="display:inline-block;background:#ff385c;color:#fff;padding:7px 18px;border-radius:4px;font-weight:600;font-size:12.5px;text-decoration:none">View itinerary</a>' }] },
+    { id: 11, acct: 'work', from: 'You → Mira Chen', email: 'kai@halden.example', subject: 'Hosting line breakdown', snippet: 'Pulled the numbers — the doubling is the new EU replica, not a billing error. Breakdown attached.', time: 'Mon', unread: false, attach: true, folder: 'sent',
+      msgs: [{ from: 'You', email: 'kai@halden.example', time: 'Mon 10:12', body: 'Pulled the numbers — the doubling is the new EU replica, not a billing error. Breakdown attached.', files: [{ name: 'hosting-q4.csv', size: '2 KB' }] }] },
+    { id: 19, acct: 'mer', from: 'You → Ana Duarte', email: 'kai@meridianlabs.io', subject: 'Re: SOW amendment — Q4 scope', snippet: 'Signed. Calendar hold sent for the kickoff Monday.', time: 'Today', unread: false, folder: 'sent',
+      msgs: [{ from: 'You', email: 'kai@meridianlabs.io', time: 'Today 8:45', body: 'Signed. Calendar hold sent for the kickoff Monday.' }] },
+  ];
+  baseSaved = [
+    { id: 's1', label: 'from:mira', query: 'from:mira' },
+    { id: 's2', label: 'has:attachment', query: 'has:attachment' },
+    { id: 's3', label: 'is:unread', query: 'is:unread' },
+    { id: 's4', label: 'is:flagged', query: 'is:flagged' },
+  ];
+  componentDidMount() {
+    this.applyTheme();
+    this.keyHandler = (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState(s => ({ paletteOpen: !s.paletteOpen, paletteQ: '' })); return; }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && this.state.composeOpen) { this.setState({ composeOpen: false }); return; }
+      if (e.key === 'Escape') { if (this.state.composeOpen) this.closeComposeSave(); this.setState({ paletteOpen: false, shortcutsOpen: false, checked: [], ctx: null, movePick: null, ob: null, rawView: null, filePreview: null }); return; }
+      if (typing) return;
+      if (this.pendingG) {
+        this.pendingG = false;
+        clearTimeout(this.gTimer);
+        const goF = (fid) => this.setState({ folder: fid, searchQ: '', settingsOpen: false });
+        if (e.key === 'i') goF('inbox');
+        if (e.key === 'd') goF('drafts');
+        if (e.key === 's') goF('sent');
+        if (e.key === 't') goF('trash');
+        if (e.key === 'a') goF('archive');
+        if (e.key === 'f') this.setState({ searchQ: 'is:flagged', settingsOpen: false });
+        return;
+      }
+      if (e.key === 'g') { this.pendingG = true; this.gTimer = setTimeout(() => { this.pendingG = false; }, 900); return; }
+      const vis = this.visibleThreads();
+      const idx = vis.findIndex(t => t.id === this.state.selId);
+      if (e.key === 'j') this.select((vis[Math.min(idx + 1, vis.length - 1)] || {}).id ?? this.state.selId);
+      if (e.key === 'k') this.select((vis[Math.max(idx - 1, 0)] || {}).id ?? this.state.selId);
+      if (e.key === 'c') this.startDraft('new');
+      if (e.key === 'r') this.startDraft('reply');
+      if (e.key === 'f') this.startDraft('forward');
+      if (e.key === 'a') this.replyAll(this.threads.find(t => t.id === this.state.selId));
+      if (e.key === 's') this.toggleStar(this.state.selId);
+      if (e.key === '#') this.trashSel();
+      if (e.key === 'e') this.archive();
+      if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[placeholder^="Search"]'); if (el) el.focus(); }
+      if (e.key === '?') this.setState(s => ({ shortcutsOpen: !s.shortcutsOpen }));
+      if (e.key === 'u') this.setState({ scope: 'all', folder: 'inbox', settingsOpen: false });
+      if (e.key === 't') this.toggleTheme();
+      if (e.key === 'v') this.toggleLayout();
+      if (e.key === 'n') this.simulateMail();
+      if (e.key === 'x' && this.state.selId != null) this.setState(s => ({ checked: s.checked.includes(s.selId) ? s.checked.filter(x => x !== s.selId) : [...s.checked, s.selId] }));
+      if (e.key === 'z' && this.state.undo) this.state.undo.restore();
+    };
+    window.addEventListener('keydown', this.keyHandler);
+    this.demoTimer = setTimeout(this.simulateMail, 2500);
+    this.syncTimers = [setTimeout(() => this.setStatus('work', 'ok'), 900), setTimeout(() => this.setStatus('wilco', 'ok'), 1600), setTimeout(() => this.setStatus('mer', 'error'), 2100)];
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this.keyHandler); clearTimeout(this.demoTimer); }
+  componentDidUpdate() { this.applyTheme(); }
+  applyTheme() {
+    const t = this.state.theme ?? this.props.theme ?? 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    if (this.props.accent) document.documentElement.style.setProperty('--accent', this.props.accent);
+    document.documentElement.style.setProperty('--row-pad', ((this.state.density ?? this.props.density) === 'compact') ? '5px' : '9px');
+  }
+  curTheme() { return this.state.theme ?? this.props.theme ?? 'light'; }
+  toggleTheme = () => this.setState({ theme: this.curTheme() === 'light' ? 'dark' : 'light' });
+  dayOf(t) { const m = { 'now': 0, 'Today': 0, 'Tue': 1, 'Mon': 2, 'Sun': 3, 'Sat': 4, 'Fri': 5, 'Thu': 6 }; return t.time.includes(':') ? 0 : (m[t.time] ?? 7); }
+  dayIdx(name) { const m = { today: 0, yesterday: 1, tue: 1, tuesday: 1, mon: 2, monday: 2, sun: 3, sunday: 3, sat: 4, saturday: 4, fri: 5, friday: 5, thu: 6, thursday: 6 }; return m[name] ?? null; }
+  recordSearch(q) {
+    q = (q || '').trim();
+    if (!q) return;
+    this.setState(s => ({ recent: [q, ...s.recent.filter(x => x !== q)].slice(0, 5) }));
+  }
+  daysAgo(t) {
+    const tm = t.time || '';
+    if (tm.includes(':') || tm === 'now' || tm === 'Today') return 0;
+    return ({ Mon: 2, Sun: 3, Sat: 4, Fri: 5, Thu: 6 })[tm] ?? 7;
+  }
+  contacts() {
+    const seen = {};
+    this.threads.forEach(t => {
+      t.msgs.forEach(m => { if (m.from !== 'You' && !seen[m.email]) seen[m.email] = m.from; });
+      if (!t.from.startsWith('You') && !seen[t.email]) seen[t.email] = t.from;
+    });
+    return Object.entries(seen).map(([email, name]) => ({ email, name }));
+  }
+  matches(t, q) {
+    const codeById = Object.fromEntries(this.accounts.map(a => [a.id, a.code.toLowerCase()]));
+    const toks = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return toks.every(tok => {
+      if (tok.startsWith('before:')) { const i = this.dayIdx(tok.slice(7)); return i == null ? true : this.dayOf(t) > i; }
+      if (tok.startsWith('after:')) { const i = this.dayIdx(tok.slice(6)); return i == null ? true : this.dayOf(t) <= i; }
+      if (tok.startsWith('from:')) return (t.from + ' ' + t.email).toLowerCase().includes(tok.slice(5));
+      if (tok.startsWith('in:')) return this.effFolder(t) === tok.slice(3);
+      if (tok.startsWith('acct:')) return codeById[t.acct] === tok.slice(5) || t.acct === tok.slice(5);
+      if (tok.startsWith('has:')) return tok.slice(4) === 'attachment' ? !!t.attach : true;
+      if (tok.startsWith('is:')) { const v = tok.slice(3); if (v === 'unread') return this.isUnread(t); if (v === 'flagged' || v === 'starred') return this.state.starred.includes(t.id); return true; }
+      if (tok.startsWith('newer_than:') || tok.startsWith('older_than:')) {
+        const m = tok.split(':')[1].match(/^(\d+)d$/);
+        if (!m) return true;
+        const days = this.daysAgo(t);
+        return tok.startsWith('newer_than:') ? days < +m[1] : days >= +m[1];
+      }
+      return (t.from + ' ' + t.subject + ' ' + t.snippet).toLowerCase().includes(tok);
+    });
+  }
+  visibleThreads() {
+    const { scope, folder, searchQ, archived } = this.state;
+    return this.threads.filter(t => {
+      if (archived.includes(t.id)) return false;
+      if (searchQ.trim()) return this.matches(t, searchQ);
+      if (scope !== 'all' && t.acct !== scope) return false;
+      return this.effFolder(t) === folder;
+    });
+  }
+  sendTo(fid, label) {
+    const vis = this.visibleThreads();
+    const idx = vis.findIndex(t => t.id === this.state.selId);
+    if (idx < 0) return;
+    const id = this.state.selId;
+    const t = this.threads.find(x => x.id === id);
+    const prev = this.effFolder(t);
+    const next = vis[idx + 1] || vis[idx - 1];
+    this.setState(s => ({ moves: { ...s.moves, [id]: fid }, selId: next ? next.id : null }));
+    this.pushUndo(label, () => this.setState(s => ({ moves: { ...s.moves, [id]: prev }, selId: id, undo: null })));
+  }
+  archive = () => this.sendTo('archive', 'Archived 1');
+  trashSel = () => this.sendTo('trash', 'Deleted 1');
+  toggleStar = (id) => { if (id == null) return; this.setState(s => ({ starred: s.starred.includes(id) ? s.starred.filter(x => x !== id) : [...s.starred, id] })); };
+  select(id, extra) {
+    clearTimeout(this.readTimer);
+    const t = this.threads.find(x => x.id === id);
+    const mark = () => this.setState(s => ({ readIds: s.readIds.includes(id) ? s.readIds : [...s.readIds, id], unreadForced: s.unreadForced.filter(x => x !== id) }));
+    const mr = this.state.prefs.markRead;
+    if (t && this.isUnread(t)) { if (mr === 'now') mark(); else if (mr === '2s') this.readTimer = setTimeout(mark, 2000); }
+    this.setState({ selId: id, ...(extra || {}) });
+  }
+  wrapSel(pre, post) {
+    const el = document.getElementById('compose-body');
+    if (!el) return;
+    const a = el.selectionStart, b = el.selectionEnd, v = el.value;
+    this.patchDraft({ body: v.slice(0, a) + pre + v.slice(a, b) + post + v.slice(b) });
+    setTimeout(() => { el.focus(); el.setSelectionRange(a + pre.length, b + pre.length); }, 0);
+  }
+  startDraft(mode, selOverride) {
+    const S = this.state;
+    const sel = selOverride ?? this.threads.find(t => t.id === S.selId && !S.archived.includes(t.id));
+    const acctOk = (aid) => { const a = this.accounts.find(x => x.id === aid); return a && a.proto === 'JMAP'; };
+    const d = { to: '', cc: '', bcc: '', subject: '', body: '', files: [], did: null };
+    let from = S.composeFrom;
+    if (sel && (mode === 'reply' || mode === 'forward') && acctOk(sel.acct)) from = sel.acct;
+    if (mode === 'reply' && sel) {
+      const last = sel.msgs[sel.msgs.length - 1];
+      d.to = last.email; d.subject = 'Re: ' + sel.subject.replace(/^(Re|Fwd): /, '');
+    }
+    if (mode === 'forward' && sel) {
+      const last = sel.msgs[sel.msgs.length - 1];
+      const plain = last.body || (last.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      d.subject = 'Fwd: ' + sel.subject.replace(/^(Re|Fwd): /, '');
+      d.body = '\n\n---------- Forwarded message ----------\nFrom: ' + last.from + ' <' + last.email + '>\nDate: ' + last.time + '\nSubject: ' + sel.subject + '\n\n' + plain;
+      d.files = (last.files || []).map(f => ({ ...f }));
+    }
+    this.setState({ composeOpen: true, composeMode: mode, composeQuoteOpen: false, draft: d, composeFrom: from, composeAlias: null, showCc: false });
+  }
+  patchDraft(p) {
+    clearTimeout(this.draftTimer);
+    this.setState(s => ({ draft: { ...s.draft, ...p }, draftStat: 'saving' }));
+    this.draftTimer = setTimeout(() => this.setState({ draftStat: 'saved', draftSavedAt: new Date().toTimeString().slice(0, 5) }), 900);
+  }
+  patchFile(fid, p) { this.setState(s => s.draft ? { draft: { ...s.draft, files: (s.draft.files || []).map(f => f.fid === fid ? { ...f, ...p } : f) } } : null); }
+  startUpload(fid, willFail) {
+    const tick = setInterval(() => {
+      const f = ((this.state.draft || {}).files || []).find(x => x.fid === fid);
+      if (!f || f.st !== 'up') { clearInterval(tick); return; }
+      const pct = f.pct + 12 + Math.floor(Math.random() * 9);
+      if (willFail && pct >= 60) { this.patchFile(fid, { st: 'err' }); clearInterval(tick); }
+      else if (pct >= 100) { this.patchFile(fid, { st: 'ok', pct: 100 }); clearInterval(tick); }
+      else this.patchFile(fid, { pct });
+    }, 260);
+  }
+  closeComposeSave = () => {
+    const d = this.state.draft;
+    if (d && (d.to || d.subject || d.body.trim())) {
+      const did = d.did || 'd' + Date.now();
+      const rec = { ...d, did, from: this.state.composeFrom };
+      this.setState(s => ({ drafts: [...s.drafts.filter(x => x.did !== did), rec], composeOpen: false, draft: null }));
+    } else this.setState({ composeOpen: false, draft: null });
+  };
+  discardDraft = () => {
+    const d = this.state.draft;
+    this.setState(s => ({ composeOpen: false, draft: null, drafts: d && d.did ? s.drafts.filter(x => x.did !== d.did) : s.drafts }));
+  };
+  resumeDraft(rec) { this.setState({ composeOpen: true, composeMode: 'new', draft: { ...rec }, composeFrom: rec.from, showCc: !!(rec.cc || rec.bcc), settingsOpen: false }); }
+  replyAll(sel) {
+    if (!sel) return;
+    this.startDraft('reply', sel);
+    const me = this.accounts.map(a => a.email);
+    const others = [...new Set(sel.msgs.map(m => m.email))].filter(e => !me.includes(e));
+    const last = sel.msgs[sel.msgs.length - 1].email;
+    const cc = others.filter(e => e !== last).join(', ');
+    setTimeout(() => this.setState(s => ({ draft: { ...s.draft, cc }, showCc: !!cc })), 0);
+  }
+  deliver(rec) {
+    const a = this.accounts.find(x => x.id === rec.from) || this.accounts[0];
+    this.threads.unshift({ id: this.nextId++, acct: a.id, from: 'You → ' + (rec.to || '(no recipient)'), email: a.email, subject: rec.subject || '(no subject)', snippet: (rec.body || '').trim().split('\n')[0] || '', time: 'now', unread: false, folder: 'sent', attach: !!(rec.files || []).length, msgs: [{ from: 'You', email: a.email, time: 'Just now', body: rec.body || '', files: rec.files && rec.files.length ? rec.files : undefined }] });
+  }
+  rawSource(t, m) {
+    const a = this.accounts.find(x => x.id === t.acct) || {};
+    const mid = '<' + Math.random().toString(36).slice(2, 10) + '.' + (this.nextId * 7919) + '@' + (m.email.split('@')[1] || 'localhost') + '>';
+    const plain = m.body || (m.html || '');
+    return { id: mid, text: [
+      'Return-Path: <' + m.email + '>',
+      'Delivered-To: ' + a.email,
+      'Received: from mx.' + (m.email.split('@')[1] || 'example.com') + ' by jmap.' + (a.email || 'wilco.dev').split('@')[1] + '\n\twith ESMTPS id ' + Math.random().toString(36).slice(2, 12).toUpperCase() + '; ' + m.time + ' 2026 +0000',
+      'Date: ' + m.time + ' 2026',
+      'From: ' + m.from + ' <' + m.email + '>',
+      'To: ' + a.name + ' <' + a.email + '>',
+      'Subject: ' + t.subject,
+      'Message-ID: ' + mid,
+      'MIME-Version: 1.0',
+      'Content-Type: ' + (m.html ? 'text/html' : 'text/plain') + '; charset=UTF-8',
+      'X-Spam-Score: 0.1',
+      '',
+      plain,
+    ].join('\n') };
+  }
+  renderVals() {
+    const S = this.state;
+    const acctById = Object.fromEntries(this.accounts.map(a => [a.id, a]));
+    const unreadFor = (id) => this.threads.filter(t => this.effFolder(t) === 'inbox' && this.isUnread(t) && !S.archived.includes(t.id) && (id === 'all' || t.acct === id)).length;
+    const vis = this.visibleThreads();
+    const sel = this.threads.find(t => t.id === S.selId && !S.archived.includes(t.id));
+    const searching = !!S.searchQ.trim();
+    const rows = this.curLayout() === 'rows';
+    const saved = [...this.baseSaved.filter(x => !S.removedSaved.includes(x.id)), ...S.savedCustom];
+    const avatarColors = ['#5b6ee0', '#2a9d6e', '#c9903a', '#b05fc9', '#4a9bb8'];
+    const baseFolders = [['inbox', 'Inbox', '▤'], ['drafts', 'Drafts', '✎'], ['sent', 'Sent', '↗'], ['archive', 'Archive', '▣']];
+    const folderName = (fid) => { const all = [...baseFolders.map(f => [f[0], f[1]]), ...this.accounts.flatMap(a => a.custom)]; const hit = all.find(f => f[0] === fid); return hit ? hit[1] : 'Inbox'; };
+    const freeToks = S.searchQ.trim().toLowerCase().split(/\s+/).filter(x => x && !x.includes(':'));
+    const hi = (text) => {
+      if (!searching || !freeToks.length || !text) return text;
+      const rx = new RegExp('(' + freeToks.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'ig');
+      const parts = String(text).split(rx);
+      if (parts.length === 1) return text;
+      return React.createElement('span', {}, parts.map((p, i) => rx.test(p) && freeToks.includes(p.toLowerCase())
+        ? React.createElement('span', { key: i, style: { background: 'var(--sel)', color: 'var(--accent)', borderRadius: '2px' } }, p)
+        : p));
+    };
+    const chips = ['from:mira', 'has:attachment', 'is:flagged', 'after:fri'].map(c => ({
+      label: c,
+      bg: S.searchQ.includes(c) ? 'var(--sel)' : 'var(--panel)',
+      color: S.searchQ.includes(c) ? 'var(--accent)' : 'var(--muted)',
+      add: () => this.setState(s => ({ searchQ: s.searchQ.includes(c) ? s.searchQ.replace(c, '').replace(/\s+/g, ' ').trim() : (s.searchQ + ' ' + c).trim() })),
+    }));
+    const alreadySaved = saved.some(x => x.query === S.searchQ.trim());
+    const cmds = [
+      { icon: '✎', label: 'Compose new message', hint: 'c', go: () => this.setState({ composeOpen: true, composeMode: 'new', paletteOpen: false }) },
+      { icon: '▤', label: 'Go to All inboxes', hint: 'u', go: () => this.setState({ scope: 'all', folder: 'inbox', settingsOpen: false, paletteOpen: false, searchQ: '' }) },
+      ...this.accounts.map(a => ({ icon: '◉', label: 'Go to ' + a.email, hint: a.code, go: () => this.setState({ scope: a.id, folder: 'inbox', settingsOpen: false, paletteOpen: false, searchQ: '' }) })),
+      ...saved.map(x => ({ icon: '◎', label: 'Search: ' + x.label, hint: 'saved', go: () => this.setState({ searchQ: x.query, settingsOpen: false, paletteOpen: false }) })),
+      { icon: '◐', label: 'Toggle dark mode', hint: 't', go: () => { this.toggleTheme(); this.setState({ paletteOpen: false }); } },
+      { icon: '▦', label: 'Toggle layout — list beside / above reading', hint: 'v', go: () => { this.toggleLayout(); this.setState({ paletteOpen: false }); } },
+      { icon: '⚙', label: 'Open settings', hint: '', go: () => this.setState({ settingsOpen: true, paletteOpen: false }) },
+      { icon: '?', label: 'Keyboard shortcuts', hint: '?', go: () => this.setState({ shortcutsOpen: true, paletteOpen: false }) },
+      { icon: '◈', label: 'Simulate incoming mail', hint: 'n', go: () => { this.simulateMail(); this.setState({ paletteOpen: false }); } },
+      { icon: '＋', label: 'Add account', hint: '', go: () => { this.setState({ paletteOpen: false }); this.obStart(); } },
+    ];
+    const pq = S.paletteQ.trim().toLowerCase();
+    let paletteItems = cmds.filter(c => !pq || c.label.toLowerCase().includes(pq));
+    if (!pq && S.recent.length) paletteItems = [...S.recent.map(q => ({ icon: '↺', label: q, hint: 'recent', go: () => this.setState({ searchQ: q, settingsOpen: false, paletteOpen: false }) })), ...paletteItems];
+    if (pq && paletteItems.length < 6) {
+      const mailHits = this.threads.filter(t => this.matches(t, pq) && !S.archived.includes(t.id)).slice(0, 4)
+        .map(t => ({ icon: '✉', label: t.from + ' — ' + t.subject, hint: acctById[t.acct].code, go: () => this.setState({ selId: t.id, searchQ: S.paletteQ, settingsOpen: false, paletteOpen: false, composeOpen: false }) }));
+      paletteItems = [...paletteItems, ...mailHits];
+    }
+    return {
+      stop: (e) => e.stopPropagation(),
+      notifs: S.notifs.map(({ nid }) => {
+        const t = this.threads.find(x => x.id === nid);
+        if (!t) return { from: '', subject: '', snippet: '', code: '', color: 'transparent', viaLabel: '', open: () => {}, dismiss: () => {}, reply: () => {}, archive: () => {} };
+        const a = acctById[t.acct];
+        const drop = () => this.setState(s => ({ notifs: s.notifs.filter(n => n.nid !== nid) }));
+        return {
+          from: t.from, subject: t.subject, snippet: t.snippet, code: a.code, color: a.color, viaLabel: a.email,
+          open: () => { drop(); this.setState({ selId: nid, scope: 'all', folder: 'inbox', searchQ: '', settingsOpen: false, composeOpen: false }); },
+          dismiss: (e) => { e.stopPropagation(); drop(); },
+          reply: (e) => { e.stopPropagation(); drop(); this.setState({ selId: nid, composeOpen: true, composeMode: 'reply', settingsOpen: false }); },
+          archive: (e) => { e.stopPropagation(); drop(); this.setState(s => ({ archived: [...s.archived, nid] })); },
+        };
+      }),
+      totalUnread: unreadFor('all'),
+      allBg: (!searching && !S.settingsOpen && S.scope === 'all' && S.folder === 'inbox') ? 'var(--sel)' : 'transparent',
+      selectAll: () => this.setState({ scope: 'all', folder: 'inbox', searchQ: '', settingsOpen: false, listCap: 12 }),
+      acctBlocks: this.accounts.map(a => {
+        const expanded = !S.collapsed.includes(a.id);
+        const folderDefs = [...baseFolders, ...a.custom.map(([fid, name]) => [fid, name, '▸'])];
+        const st = S.acctStatus[a.id];
+        return {
+          name: a.name, code: a.code, color: a.color, expanded, chev: expanded ? '▾' : '▸',
+          syncing: st === 'syncing', error: st === 'error', pending: st === 'pending',
+          toggle: () => this.setState(s => ({ collapsed: expanded ? [...s.collapsed, a.id] : s.collapsed.filter(x => x !== a.id) })),
+          folders: folderDefs.map(([fid, name, icon]) => {
+            const active = !searching && !S.settingsOpen && S.scope === a.id && S.folder === fid;
+            const n = fid === 'inbox' ? unreadFor(a.id) : fid === 'drafts' ? S.drafts.filter(d => d.from === a.id).length : this.threads.filter(t => t.acct === a.id && this.effFolder(t) === fid && !S.archived.includes(t.id)).length;
+            const dkey = a.id + ':' + fid;
+            return { name, icon, count: n || '', countColor: fid === 'inbox' && n ? 'var(--accent)' : 'var(--faint)', weight: active ? 600 : 400,
+              bg: S.dragTarget === dkey ? 'var(--sel)' : (active ? 'var(--sel)' : 'transparent'),
+              select: () => this.setState({ scope: a.id, folder: fid, searchQ: '', settingsOpen: false, listCap: 12 }),
+              ctx: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ ctx: { type: 'folder', acct: a.id, fid, fname: name, x: e.clientX, y: e.clientY } }); },
+              dragOver: (e) => { e.preventDefault(); if (S.dragTarget !== dkey) this.setState({ dragTarget: dkey }); },
+              dragLeave: () => { if (S.dragTarget === dkey) this.setState({ dragTarget: null }); },
+              drop: (e) => {
+                e.preventDefault();
+                this.setState({ dragTarget: null });
+                const id = this.dragId; this.dragId = null;
+                const t = this.threads.find(x => x.id === id);
+                if (!t) return;
+                if (t.acct !== a.id) { this.pushUndo('Different account — can\u2019t move there', () => this.setState({ undo: null })); return; }
+                if (this.effFolder(t) !== fid) this.moveThread(id, fid, name);
+              } };
+          }),
+        };
+      }),
+      savedSearches: saved.map(x => ({
+        label: x.label, count: this.threads.filter(t => this.matches(t, x.query) && !S.archived.includes(t.id)).length,
+        bg: S.searchQ.trim() === x.query ? 'var(--sel)' : 'transparent',
+        select: () => { this.recordSearch(x.query); this.setState({ searchQ: x.query, settingsOpen: false }); },
+        ctx: (e) => { e.preventDefault(); e.stopPropagation(); this.setState({ ctx: { type: 'saved', sid: x.id, x: e.clientX, y: e.clientY } }); },
+      })),
+      settingsBg: S.settingsOpen ? 'var(--sel)' : 'transparent',
+      openSettings: () => this.setState({ settingsOpen: true }),
+      closeSettings: () => this.setState({ settingsOpen: false }),
+      settingsOpen: S.settingsOpen, mailOpen: !S.settingsOpen,
+      themeIcon: this.curTheme() === 'light' ? '◑' : '◐', toggleTheme: this.toggleTheme,
+      sendMsg: this.sendMsg,
+      prefSections: (() => {
+        const P = S.prefs;
+        const seg = (label, sub, val, opts, set) => ({ kind: 'seg', label, sub, opts: opts.map(([v, l]) => ({ label: l, bg: val === v ? 'var(--panel)' : 'transparent', color: val === v ? 'var(--ink)' : 'var(--muted)', pick: () => set(v) })) });
+        const tog = (label, sub, key) => ({ kind: 'toggle', label, sub, on: P[key], flip: () => this.setPref(key, !P[key]) });
+        const txt = (label, sub, value) => ({ kind: 'text', label, sub, value });
+        const sections = [
+          { title: 'Appearance', rows: [
+            seg('Theme', 'Light or dark chrome', this.curTheme(), [['light', 'Light'], ['dark', 'Dark']], v => this.setState({ theme: v })),
+            seg('Reading pane', 'Where the open message lives', this.curLayout(), [['columns', 'Beside list'], ['rows', 'Below list']], v => this.setState({ layout: v })),
+            seg('Density', 'List row spacing', this.state.density ?? this.props.density ?? 'comfortable', [['comfortable', 'Comfortable'], ['compact', 'Compact']], v => this.setState({ density: v })),
+          ]},
+          { title: 'Reading', rows: [
+            seg('Mark as read', 'When an open thread counts as read', P.markRead, [['now', 'Instantly'], ['2s', 'After 2s'], ['manual', 'Manually']], v => this.setPref('markRead', v)),
+            seg('Remote images', 'In HTML mail', P.images, [['always', 'Always'], ['ask', 'Ask per sender']], v => this.setPref('images', v)),
+            tog('Group into conversations', 'Thread replies together', 'convos'),
+          ]},
+          { title: 'Composing', rows: [
+            seg('Undo send window', 'Hold outgoing mail before it leaves', P.sendDelay, [['off', 'Off'], ['5s', '5s'], ['10s', '10s'], ['30s', '30s']], v => this.setPref('sendDelay', v)),
+            tog('Quote history in replies', 'Include the chain below your reply', 'quoteReply'),
+            tog('Reply all by default', 'When a thread has multiple recipients', 'replyAll'),
+            txt('Signature', 'Per account, appended to new messages', '— Kai · sent from Wilco'),
+          ]},
+          { title: 'Notifications', rows: [
+            tog('Desktop notifications', 'New mail toasts in the corner', 'notifDesktop'),
+            tog('People only', 'Mute automated senders — receipts, robots, newsletters', 'notifHumanOnly'),
+            tog('Sound', '', 'notifSound'),
+          ]},
+          { title: 'Behavior', rows: [
+            tog('Archive on reply', 'Move thread out of inbox after replying', 'archiveOnReply'),
+            tog('Unified inbox on launch', 'Open All inboxes instead of the last account', 'unifiedLaunch'),
+          ]},
+        ];
+        return sections.map(sec => ({ ...sec, rows: sec.rows.map((r, i) => ({
+          label: r.label, sub: r.sub, divider: i === sec.rows.length - 1 ? 'transparent' : 'var(--line2)',
+          isToggle: r.kind === 'toggle', isSeg: r.kind === 'seg', isText: r.kind === 'text',
+          flip: r.flip, opts: r.opts || [], value: r.value || '',
+          togBg: r.on ? 'var(--accent)' : 'var(--line)',
+          knobLeft: r.on ? '16px' : '2px',
+          knobBg: r.on ? 'var(--accent-ink)' : 'var(--panel)',
+        })) }));
+      })(),
+      accountRows: this.accounts.map((a, i) => {
+        const st = S.acctStatus[a.id];
+        return { ...a, divider: i === this.accounts.length - 1 ? 'transparent' : 'var(--line2)', protoColor: a.proto === 'JMAP' ? 'var(--accent)' : 'var(--faint)',
+          statusLabel: st === 'ok' ? 'connected' : st === 'syncing' ? 'syncing…' : st === 'error' ? 'auth expired' : 'waiting on IMAP',
+          statusColor: st === 'error' ? '#c9903a' : 'var(--faint)',
+          needsAuth: st === 'error', noAuth: st !== 'error', reauth: () => this.reauth(a.id),
+          manage: () => this.setState({ acctEdit: a.id }) };
+      }),
+      settingsHome: !S.acctEdit,
+      ...(() => {
+        const a = this.accounts.find(x => x.id === S.acctEdit);
+        if (!a) return { aeOpen: false };
+        const sig = this.sigFor(a.id);
+        const st = S.acctStatus[a.id];
+        const isHtml = sig.mode === 'html';
+        return {
+          aeOpen: true,
+          aeBack: () => this.setState({ acctEdit: null }),
+          aeAliases: (a.aliases || []).map(al => ({ email: al, remove: () => { a.aliases = a.aliases.filter(x => x !== al); this.pushUndo('Removed ' + al, () => { a.aliases = [...(a.aliases || []), al]; this.setState({ undo: null }); }); } })),
+          aeDomain: a.email.split('@')[1],
+          aeNewAlias: S.newAlias || '',
+          aeSetNewAlias: (e) => this.setState({ newAlias: e.target.value }),
+          aeAddAlias: () => { const v = (S.newAlias || '').trim(); if (!v.includes('@') || (a.aliases || []).includes(v) || v === a.email) return; a.aliases = [...(a.aliases || []), v]; this.setState({ newAlias: '' }); },
+          aeName: a.name, aeEmail: a.email, aeCode: a.code, aeColor: a.color,
+          aeStatus: st === 'ok' ? 'connected' : st === 'syncing' ? 'syncing…' : st === 'error' ? 'auth expired' : 'waiting on IMAP',
+          aeSetName: (e) => { a.name = e.target.value; this.forceUpdate(); },
+          aeColors: ['#5b6ee0', '#2a9d6e', '#c9903a', '#b05fc9', '#4a9bb8', '#cf5f5f'].map(c => ({ c, ring: a.color === c ? 'var(--ink)' : 'transparent', pick: () => { a.color = c; this.forceUpdate(); } })),
+          aeProtoLabel: a.proto === 'JMAP' ? 'JMAP session' : 'IMAP (bridge pending)',
+          aeServer: a.proto === 'JMAP' ? 'https://' + a.email.split('@')[1] + '/.well-known/jmap' : '— not connected yet',
+          aeSyncSub: st === 'ok' ? 'Push connected · full index' : st === 'error' ? 'Stale since Mon 14:02' : st === 'syncing' ? 'Syncing…' : 'Snapshot only',
+          aeResync: () => this.reauth(a.id),
+          aeSigText: () => this.patchSig(a.id, { mode: 'text' }),
+          aeSigHtml: () => this.patchSig(a.id, { mode: 'html' }),
+          aeSigTextBg: !isHtml ? 'var(--panel)' : 'transparent', aeSigTextColor: !isHtml ? 'var(--ink)' : 'var(--muted)',
+          aeSigHtmlBg: isHtml ? 'var(--panel)' : 'transparent', aeSigHtmlColor: isHtml ? 'var(--ink)' : 'var(--muted)',
+          aeSigSrc: isHtml ? sig.html : sig.text,
+          aeSetSig: (e) => { this.patchSig(a.id, isHtml ? { html: e.target.value } : { text: e.target.value }); this.setState(s => ({ sigDirty: { ...s.sigDirty, [a.id]: true } })); },
+          aeSigIsHtml: isHtml,
+          aeSigPreview: isHtml
+            ? React.createElement('div', { style: { fontSize: '13px', lineHeight: 1.6 }, dangerouslySetInnerHTML: { __html: sig.html } })
+            : React.createElement('div', { style: { fontSize: '12.5px', lineHeight: 1.6, whiteSpace: 'pre-line', color: 'var(--muted)' } }, sig.text),
+          aeSigModeLabel: isHtml ? 'text/html' : 'text/plain',
+          aeSigStat: S.sigDirty[a.id] ? 'unsaved changes' : (S.sigSaved[a.id] ? 'saved ' + S.sigSaved[a.id] : 'saved'),
+          aeSigStatColor: S.sigDirty[a.id] ? '#c9903a' : 'var(--faint)',
+          aeSigSave: () => this.setState(s => ({ sigDirty: { ...s.sigDirty, [a.id]: false }, sigSaved: { ...s.sigSaved, [a.id]: new Date().toTimeString().slice(0, 5) } })),
+          aeSigSaveBorder: S.sigDirty[a.id] ? 'none' : '1px solid var(--line)',
+          aeSigSaveBg: S.sigDirty[a.id] ? 'var(--accent)' : 'transparent',
+          aeSigSaveColor: S.sigDirty[a.id] ? 'var(--accent-ink)' : 'var(--faint)',
+          aeFlipNew: () => this.patchSig(a.id, { inNew: !sig.inNew }),
+          aeNewBg: sig.inNew ? 'var(--accent)' : 'var(--line)', aeNewLeft: sig.inNew ? '16px' : '2px', aeNewKnob: sig.inNew ? 'var(--accent-ink)' : 'var(--panel)',
+          aeFlipReplies: () => this.patchSig(a.id, { inReplies: !sig.inReplies }),
+          aeRepBg: sig.inReplies ? 'var(--accent)' : 'var(--line)', aeRepLeft: sig.inReplies ? '16px' : '2px', aeRepKnob: sig.inReplies ? 'var(--accent-ink)' : 'var(--panel)',
+          aeRemove: () => {
+            const idx = this.accounts.indexOf(a);
+            this.accounts = this.accounts.filter(x => x !== a);
+            this.setState(s => ({ acctEdit: null, scope: s.scope === a.id ? 'all' : s.scope }));
+            this.pushUndo('Removed ' + a.email, () => { this.accounts.splice(idx, 0, a); this.setState({ undo: null }); });
+          },
+        };
+      })(),
+      statusDot: Object.values(S.acctStatus).includes('error') ? '#c9903a' : Object.values(S.acctStatus).includes('syncing') ? 'var(--faint)' : '#2a9d6e',
+      statusLine: (() => {
+        if (S.outbox.length) return S.outbox.length + ' queued · sending soon';
+        const errs = this.accounts.filter(a => S.acctStatus[a.id] === 'error');
+        if (errs.length) return errs.map(a => a.code).join(', ') + ' needs attention';
+        if (Object.values(S.acctStatus).includes('syncing')) return 'syncing…';
+        return 'JMAP push · synced 9:41';
+      })(),
+      bannerError: !S.settingsOpen && (S.scope === 'all' ? Object.values(S.acctStatus).includes('error') : S.acctStatus[S.scope] === 'error'),
+      bannerErrorText: (() => {
+        const errs = this.accounts.filter(a => S.acctStatus[a.id] === 'error');
+        if (!errs.length) return '';
+        return S.scope === 'all' ? errs[0].name + ' (' + errs[0].email + ') — authentication expired, mail is stale.' : 'Authentication expired — mail is stale since Mon 14:02.';
+      })(),
+      reauth: () => { const err = this.accounts.find(a => S.acctStatus[a.id] === 'error'); if (err) this.reauth(err.id); },
+      bannerPending: !S.settingsOpen && S.scope === 'gmail' && S.acctStatus.gmail === 'pending',
+      openOnboard: this.obStart,
+      closeOnboard: () => this.setState({ ob: null }),
+      obOpen: !!S.ob,
+      obStepLabel: S.ob ? 'step ' + S.ob.step + '/3 · JMAP' : '',
+      obStep1: !!S.ob && S.ob.step === 1, obStep2: !!S.ob && S.ob.step === 2, obStep3: !!S.ob && S.ob.step === 3,
+      obPickJmap: () => this.obPatch({ step: 2 }),
+      obBack: () => this.obPatch({ step: 1 }),
+      obEmail: S.ob ? S.ob.email : '',
+      obSetEmail: (e) => this.obPatch({ email: e.target.value }),
+      obUrl: S.ob ? S.ob.url : '',
+      obSetUrl: (e) => this.obPatch({ url: e.target.value }),
+      obUrlPlaceholder: S.ob && S.ob.email.includes('@') ? this.obUrlGuess() : 'https://…/.well-known/jmap (auto)',
+      obColors: S.ob ? ['#4a9bb8', '#cf5f5f', '#7aa843', '#8d6ac9', '#c9903a', '#5b6ee0'].map(c => ({ c, ring: S.ob.color === c ? 'var(--ink)' : 'transparent', pick: () => this.obPatch({ color: c }) })) : [],
+      obCode: S.ob ? this.obCode() : '',
+      obConnect: this.obConnect,
+      obConnectOpacity: S.ob && S.ob.email.includes('@') ? 1 : 0.45,
+      obLog: S.ob ? S.ob.log : [],
+      obConnecting: !!S.ob && S.ob.step === 3 && !S.ob.done,
+      obDone: !!S.ob && S.ob.done,
+      obFinish: this.obFinish,
+      listTitle: searching ? 'Search' : (S.scope === 'all' ? 'All inboxes' : acctById[S.scope].name + ' — ' + folderName(S.folder)),
+      listMeta: searching ? vis.length + ' result' + (vis.length === 1 ? '' : 's') : vis.length + ' · ' + unreadFor(S.scope) + ' unread',
+      searchQ: S.searchQ, searchActive: searching,
+      onSearch: (e) => this.setState({ searchQ: e.target.value }),
+      searchKey: (e) => { if (e.key === 'Enter') { this.recordSearch(S.searchQ); e.target.blur(); } },
+      syncFooterOn: !searching && S.folder === 'inbox' && vis.length > 0,
+      syncFooter: vis.length + ' of 4,182 synced — older mail loads on scroll',
+      clearSearch: () => this.setState({ searchQ: '' }),
+      chipSuggestions: chips,
+      saveLabel: alreadySaved ? '✓ Saved' : '＋ Save search',
+      saveSearch: () => { if (!alreadySaved && S.searchQ.trim()) this.setState(s => ({ savedCustom: [...s.savedCustom, { id: 'c' + Date.now(), label: s.searchQ.trim(), query: s.searchQ.trim() }] })); },
+      ...(() => {
+        const draftMode = !searching && S.folder === 'drafts';
+        const scopedDrafts = S.drafts.filter(d => S.scope === 'all' || d.from === S.scope);
+        const empty = draftMode ? scopedDrafts.length === 0 : vis.length === 0;
+        const emptyByFolder = {
+          drafts: ['Nothing in progress', 'c starts a new message'],
+          spam: ['No spam', 'The robots are behaving'],
+          trash: ['Trash is empty', 'Deleted mail is kept 30 days, then gone'],
+          sent: ['Nothing sent yet', ''],
+          archive: ['Archive is empty', 'e files the selected thread here'],
+          inbox: ['Inbox zero', 'Enjoy it while it lasts'],
+        };
+        const [et, es] = searching ? ['No messages match', S.searchQ] : (emptyByFolder[S.folder] || ['Nothing here', '']);
+        const blank = { isHeader: false, wide: false, tall: false };
+        const mkRow = (t) => {
+          const active = t.id === S.selId;
+          const isChecked = S.checked.includes(t.id);
+          const un = this.isUnread(t);
+          return {
+            ...t, ...{ isHeader: false, wide: rows, tall: !rows }, multi: (t.msgs || []).length > 1, msgCount: (t.msgs || []).length, unread: un, star: S.starred.includes(t.id), accountName: acctById[t.acct].name, code: acctById[t.acct].code, dot: acctById[t.acct].color,
+            from: hi(t.from), subject: hi(t.subject), snippet: hi(t.snippet),
+            drag: (e) => { this.dragId = t.id; e.dataTransfer.effectAllowed = 'move'; },
+            bg: isChecked ? 'var(--sel)' : (active ? 'var(--sel)' : 'transparent'),
+            fromWeight: un ? 700 : 500, subjWeight: un ? 600 : 400,
+            subjColor: un ? 'var(--ink)' : 'var(--muted)',
+            boxBorder: isChecked ? 'var(--accent)' : 'var(--line)',
+            boxBg: isChecked ? 'var(--accent)' : 'transparent',
+            boxMark: isChecked ? '✓' : '',
+            check: (e) => {
+              e.stopPropagation();
+              if (e.shiftKey && S.lastCheck != null) {
+                const ids = vis.map(x => x.id);
+                const a = ids.indexOf(S.lastCheck), b = ids.indexOf(t.id);
+                if (a >= 0 && b >= 0) { const range = ids.slice(Math.min(a, b), Math.max(a, b) + 1); this.setState(s => ({ checked: [...new Set([...s.checked, ...range])], lastCheck: t.id })); return; }
+              }
+              this.setState(s => ({ checked: isChecked ? s.checked.filter(x => x !== t.id) : [...s.checked, t.id], lastCheck: t.id }));
+            },
+            ctx: (e) => { e.preventDefault(); this.setState({ ctx: { type: 'thread', id: t.id, x: e.clientX, y: e.clientY } }); },
+            open: () => this.select(t.id, { composeOpen: false }),
+          };
+        };
+        if (draftMode) {
+          return { emptyList: empty, emptyTitle: et, emptySub: es, threads: scopedDrafts.map(d => ({
+            ...blank, wide: rows, tall: !rows, id: d.did, unread: false, star: false, attach: (d.files || []).length > 0,
+            from: 'Draft', fromWeight: 500, subject: d.subject || '(no subject)', subjWeight: 400, subjColor: '#cf5f5f',
+            snippet: (d.body || '').trim().split('\n')[0] || 'Empty', time: '—',
+            accountName: (acctById[d.from] || {}).name || '', code: (acctById[d.from] || {}).code || '', dot: (acctById[d.from] || {}).color || 'var(--faint)',
+            bg: 'transparent', boxBorder: 'var(--line)', boxBg: 'transparent', boxMark: '',
+            check: (e) => e.stopPropagation(), ctx: (e) => e.preventDefault(),
+            open: () => this.resumeDraft(d),
+          })) };
+        }
+        const grouped = [];
+        if (searching && S.scope === 'all') {
+          this.accounts.forEach(a => {
+            const hits = vis.filter(t => t.acct === a.id);
+            if (!hits.length) return;
+            grouped.push({ ...blank, isHeader: true, label: a.name + ' · ' + hits.length, id: 'ha' + a.id });
+            hits.forEach(t => grouped.push(mkRow(t)));
+          });
+        } else {
+          let lastG = null;
+          const groupOf = (t) => (t.time.includes(':') || t.time === 'now' || t.time === 'Today') ? 'Today' : 'Earlier';
+          vis.slice(0, S.listCap).forEach(t => {
+            const g = groupOf(t);
+            if (g !== lastG) { grouped.push({ ...blank, isHeader: true, label: g, id: 'h' + g }); lastG = g; }
+            grouped.push(mkRow(t));
+          });
+        }
+        const hidden = (searching && S.scope === 'all') ? 0 : Math.max(0, vis.length - S.listCap);
+        return { emptyList: empty, emptyTitle: et, emptySub: es, threads: grouped,
+          hasMore: hidden > 0, moreLabel: 'Show ' + hidden + ' more — ' + Math.min(S.listCap, vis.length) + ' of ' + vis.length,
+          loadMore: () => this.setState(s => ({ listCap: s.listCap + 25 })) };
+      })(),
+      trashMode: !searching && S.folder === 'trash' && vis.length > 0,
+      emptyTrash: this.emptyTrash,
+      anyChecked: S.checked.length > 0, noneChecked: S.checked.length === 0,
+      checkedCount: S.checked.length,
+      checkAll: () => this.setState({ checked: vis.map(t => t.id) }),
+      clearChecked: () => this.setState({ checked: [] }),
+      bulkArchive: this.bulkArchive, bulkRead: this.bulkRead,
+      undoOpen: !!S.undo,
+      undoLabel: S.undo ? (S.undo.until ? S.undo.label + ' ' + Math.max(0, Math.ceil((S.undo.until - Date.now()) / 1000)) + 's' : S.undo.label) : '',
+      doUndo: () => S.undo && S.undo.restore(),
+      ctxOpen: !!S.ctx,
+      ctxX: S.ctx ? Math.min(S.ctx.x, (window.innerWidth || 1200) - 210) + 'px' : '0px',
+      ctxY: S.ctx ? Math.min(S.ctx.y, (window.innerHeight || 800) - 280) + 'px' : '0px',
+      closeCtx: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ ctx: null }); },
+      ctxItems: (() => {
+        if (!S.ctx) return [];
+        const mk = (label, hint, run, color) => ({ item: true, divider: false, label, hint, color: color || 'var(--ink)', run: () => { this.setState({ ctx: null }); run(); } });
+        const div = { item: false, divider: true, label: '', hint: '', color: '', run: () => {} };
+        if (S.ctx.type === 'thread') {
+          const t = this.threads.find(x => x.id === S.ctx.id);
+          if (!t) return [];
+          const un = this.isUnread(t);
+          const starred = S.starred.includes(t.id);
+          const inSpam = this.effFolder(t) === 'spam';
+          const mvTo = (fid, label) => { const prev = this.effFolder(t); this.setState(s => ({ moves: { ...s.moves, [t.id]: fid }, selId: s.selId === t.id ? null : s.selId })); this.pushUndo(label, () => this.setState(s => ({ moves: { ...s.moves, [t.id]: prev }, undo: null }))); };
+          return [
+            mk('Open', '⏎', () => this.select(t.id, { composeOpen: false })),
+            mk('Reply', 'r', () => this.startDraft('reply', t)),
+            mk('Forward', 'f', () => this.startDraft('forward', t)),
+            div,
+            mk(un ? 'Mark read' : 'Mark unread', '', () => this.setState(s => un
+              ? { readIds: [...s.readIds, t.id] }
+              : { readIds: s.readIds.filter(x => x !== t.id), unreadForced: t.unread ? s.unreadForced : [...s.unreadForced, t.id] })),
+            mk(starred ? 'Unflag' : 'Flag', 's', () => this.toggleStar(t.id)),
+            mk('Select', 'x', () => this.setState(s => ({ checked: s.checked.includes(t.id) ? s.checked : [...s.checked, t.id] }))),
+            mk('Print', '', () => { this.select(t.id, { composeOpen: false }); setTimeout(() => window.print(), 80); }),
+            mk('Move to…', '', () => this.setState({ movePick: t.id })),
+            div,
+            mk('Archive', 'e', () => mvTo('archive', 'Archived 1')),
+            mk(inSpam ? 'Not spam' : 'Mark spam', '', () => mvTo(inSpam ? 'inbox' : 'spam', inSpam ? 'Moved to inbox' : 'Marked spam')),
+            mk('Delete', '#', () => mvTo('trash', 'Deleted 1'), '#cf222e'),
+          ];
+        }
+        if (S.ctx.type === 'saved') {
+          const x = saved.find(v => v.id === S.ctx.sid);
+          if (!x) return [];
+          const isBase = this.baseSaved.some(v => v.id === x.id);
+          return [
+            mk('Run search', '', () => { this.recordSearch(x.query); this.setState({ searchQ: x.query, settingsOpen: false }); }),
+            mk('Remove from sidebar', '', () => {
+              if (isBase) this.setState(s => ({ removedSaved: [...s.removedSaved, x.id] }));
+              else this.setState(s => ({ savedCustom: s.savedCustom.filter(v => v.id !== x.id) }));
+              this.pushUndo('Removed ' + x.label, () => isBase
+                ? this.setState(s => ({ removedSaved: s.removedSaved.filter(v => v !== x.id), undo: null }))
+                : this.setState(s => ({ savedCustom: [...s.savedCustom, x], undo: null })));
+            }, '#cf222e'),
+          ];
+        }
+        if (S.ctx.type === 'msg') {
+          const t = this.threads.find(x => x.id === S.ctx.id);
+          const m = t && t.msgs[S.ctx.mi];
+          if (!m) return [];
+          return [
+            mk('Reply', 'r', () => this.startDraft('reply', t)),
+            mk('Reply all', 'a', () => this.replyAll(t)),
+            mk('Forward', 'f', () => this.startDraft('forward', t)),
+            div,
+            mk('View source', '', () => this.setState({ rawView: { tid: t.id, mi: S.ctx.mi } })),
+            mk('Copy address', '', () => { try { navigator.clipboard.writeText(m.email); } catch (x) {} this.pushUndo('Copied ' + m.email, () => this.setState({ undo: null })); }),
+          ];
+        }
+        const ids = this.threads.filter(t => t.acct === S.ctx.acct && this.effFolder(t) === S.ctx.fid && this.isUnread(t) && !S.archived.includes(t.id)).map(t => t.id);
+        return [
+          mk('Open folder', '', () => this.setState({ scope: S.ctx.acct, folder: S.ctx.fid, searchQ: '', settingsOpen: false })),
+          mk('Mark all read', ids.length ? String(ids.length) : '0', () => { if (!ids.length) return; this.setState(s => ({ readIds: [...new Set([...s.readIds, ...ids])] })); this.pushUndo('Marked ' + ids.length + ' read', () => this.setState(s => ({ readIds: s.readIds.filter(x => !ids.includes(x)), undo: null }))); }),
+        ];
+      })(),
+      ...(() => {
+        if (!S.rawView) return { rawOpen: false, rawId: '', rawText: '' };
+        const t = this.threads.find(x => x.id === S.rawView.tid);
+        const m = t && t.msgs[S.rawView.mi];
+        if (!m) return { rawOpen: false, rawId: '', rawText: '' };
+        const r = this.rawSource(t, m);
+        return { rawOpen: true, rawId: r.id, rawText: r.text };
+      })(),
+      closeRaw: () => this.setState({ rawView: null }),
+      movePickOpen: S.movePick != null,
+      closeMovePick: () => this.setState({ movePick: null }),
+      moveAcct: (() => { const t = this.threads.find(x => x.id === S.movePick); return t ? acctById[t.acct].email : ''; })(),
+      moveFolders: (() => {
+        const t = this.threads.find(x => x.id === S.movePick);
+        if (!t) return [];
+        const a = acctById[t.acct];
+        const icons = { inbox: '▤', drafts: '✎', sent: '↗', archive: '▣' };
+        return [['inbox', 'Inbox'], ['archive', 'Archive'], ...a.custom].filter(([fid]) => fid !== this.effFolder(t))
+          .map(([fid, name]) => ({ name, icon: icons[fid] || '▸', run: () => this.moveThread(t.id, fid, name) }));
+      })(),
+      layoutDir: rows ? 'column' : 'row',
+      listW: rows ? '100%' : S.listPx + 'px',
+      listH: rows ? S.listPct + '%' : 'auto',
+      dragStart: (e) => {
+        e.preventDefault();
+        const isRows = this.curLayout() === 'rows';
+        const host = e.target.parentElement;
+        const move = (ev) => {
+          const r = host.getBoundingClientRect();
+          if (isRows) this.setState({ listPct: Math.min(75, Math.max(20, ((ev.clientY - r.top) / r.height) * 100)) });
+          else this.setState({ listPx: Math.min(620, Math.max(280, ev.clientX - r.left)) });
+        };
+        const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); document.body.style.cursor = ''; };
+        document.body.style.cursor = isRows ? 'row-resize' : 'col-resize';
+        window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+      },
+      dividerCursor: rows ? 'row-resize' : 'col-resize',
+      dividerW: rows ? 'auto' : '5px',
+      dividerH: rows ? '5px' : 'auto',
+      dividerMargin: rows ? '-3px 0' : '0 -3px',
+      listBR: rows ? 'none' : '1px solid var(--line)',
+      listBB: rows ? '1px solid var(--line)' : 'none',
+      readingOpen: !S.composeOpen,
+      hasSel: !!sel, noSel: !sel,
+      selSubject: sel ? sel.subject : '',
+      selColor: sel ? acctById[sel.acct].color : 'transparent',
+      selMeta: sel ? acctById[sel.acct].code + ' · ' + acctById[sel.acct].email + ' · ' + sel.msgs.length + ' message' + (sel.msgs.length === 1 ? '' : 's') : '',
+      selMsgs: sel ? sel.msgs.map((m, i) => {
+        const key = sel.id + ':' + i;
+        const open = S.msgToggles[key] ?? (i === sel.msgs.length - 1);
+        const plain = m.body || (m.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        const histCount = this.threads.filter(t => !S.archived.includes(t.id) && (t.email === m.email || t.msgs.some(x => x.email === m.email))).length;
+        return {
+          cardOpen: S.hoverKey === key,
+          cardOn: () => this.setState({ hoverKey: key }),
+          cardOff: () => this.setState(s => (s.hoverKey === key ? { hoverKey: null } : null)),
+          cardMeta: histCount + ' thread' + (histCount === 1 ? '' : 's') + ' · first seen Mar 2026 · ' + acctById[sel.acct].code,
+          cardDomainless: m.email.split('@')[0],
+          cardSearch: (e) => { e.stopPropagation(); this.recordSearch('from:' + m.email.split('@')[0]); this.setState({ searchQ: 'from:' + m.email.split('@')[0], hoverKey: null }); },
+          cardCompose: (e) => { e.stopPropagation(); this.setState({ hoverKey: null }); this.startDraft('new'); this.patchDraft({ to: m.email }); },
+          menu: (e) => { e.stopPropagation(); this.setState({ ctx: { type: 'msg', id: sel.id, mi: i, x: e.clientX, y: e.clientY } }); },
+          ...m, initial: m.from[0], open, collapsed: !open,
+          preview: plain.split('\n')[0],
+          toggle: () => this.setState(s => ({ msgToggles: { ...s.msgToggles, [key]: !open } })),
+          avatarBg: m.from === 'You' ? 'var(--accent)' : avatarColors[(m.email.length + i) % avatarColors.length],
+          isHtml: !!m.html && (S.msgView[key] || 'html') === 'html',
+          isText: !m.html || (S.msgView[key] || 'html') === 'text',
+          ctype: m.html ? ((S.msgView[key] || 'html') === 'html' ? 'text/html' : 'text/plain') : 'text/plain',
+          body: (m.html && (S.msgView[key] || 'html') === 'text') ? plain : ((m.big && S.fullMsg[key] && m.more) ? m.body + m.more : m.body),
+          flipView: m.html ? ((e) => { e.stopPropagation(); this.setState(s => ({ msgView: { ...s.msgView, [key]: (s.msgView[key] || 'html') === 'html' ? 'text' : 'html' } })); }) : ((e) => e.stopPropagation()),
+          flipTitle: m.html ? 'Toggle formatted / plain text' : 'Plain text message',
+          flipCursor: m.html ? 'pointer' : 'default',
+          imgBar: open && !!m.html && this.state.prefs.images === 'ask' && (S.msgView[key] || 'html') === 'html',
+          imgBlocked: !S.imgLoaded[key], imgDone: !!S.imgLoaded[key],
+          imgDoneLabel: S.imgLoaded[key] === 'always' ? 'remote images loaded · always for ' + m.email : 'remote images loaded · this message',
+          loadImgs: () => this.setState(s => ({ imgLoaded: { ...s.imgLoaded, [key]: true } })),
+          loadImgsAlways: () => this.setState(s => ({ imgLoaded: { ...s.imgLoaded, [key]: 'always' } })),
+          truncBar: open && !!m.big && !S.fullMsg[key],
+          loadFull: () => this.setState(s => ({ fullMsg: { ...s.fullMsg, [key]: true } })),
+          htmlNode: m.html ? React.createElement('div', { key: 'h' + i, style: { padding: '16px 18px', fontSize: '13px', lineHeight: 1.6 }, dangerouslySetInnerHTML: { __html: m.html } }) : null,
+          hasQuote: !!m.quote, quoteOpen: !!S.quoteShown[key],
+          toggleQuote: () => this.setState(s => ({ quoteShown: { ...s.quoteShown, [key]: !s.quoteShown[key] } })),
+          hasFiles: !!m.files,
+          files: (m.files || []).map(f => ({ ...f, open: (e) => { e.stopPropagation(); this.setState({ filePreview: f }); } })),
+        };
+      }) : [],
+      fpOpen: !!S.filePreview,
+      fpName: S.filePreview ? S.filePreview.name : '',
+      fpSize: S.filePreview ? S.filePreview.size : '',
+      fpKind: S.filePreview ? (S.filePreview.name.split('.').pop() || 'file').toUpperCase() : '',
+      closeFp: () => this.setState({ filePreview: null }),
+      fpDownload: () => { const n = S.filePreview && S.filePreview.name; this.setState({ filePreview: null }); this.pushUndo('Downloaded ' + n + ' (demo)', () => this.setState({ undo: null })); },
+      printSubject: sel ? sel.subject : '',
+      printMeta: sel ? acctById[sel.acct].email + ' · ' + sel.msgs.length + ' message' + (sel.msgs.length === 1 ? '' : 's') + ' · printed from Wilco' : '',
+      printMsgs: sel ? sel.msgs.map(m => ({ ...m, plain: m.body || (m.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() })) : [],
+      selReplyTo: sel ? sel.msgs[sel.msgs.length - 1].from : '',
+      archiveSel: this.archive, deleteSel: this.trashSel,
+      spamSel: () => this.sendTo('spam', 'Marked spam'),
+      selStarred: sel ? S.starred.includes(sel.id) : false,
+      starGlyph: sel && S.starred.includes(sel.id) ? '★' : '☆',
+      starColor: sel && S.starred.includes(sel.id) ? '#c9903a' : 'var(--faint)',
+      toggleStarSel: () => this.toggleStar(S.selId),
+      prevThread: () => { const i = vis.findIndex(t => t.id === S.selId); if (i > 0) this.select(vis[i - 1].id); },
+      nextThread: () => { const i = vis.findIndex(t => t.id === S.selId); if (i >= 0 && i < vis.length - 1) this.select(vis[i + 1].id); },
+      openReply: () => this.startDraft('reply'),
+      openForward: () => this.startDraft('forward'),
+      composeOpen: S.composeOpen,
+      composeTitle: S.composeMode === 'reply' && sel ? 'Reply — ' + sel.subject : S.composeMode === 'forward' && sel ? 'Forward — ' + sel.subject : 'New message',
+      composeStatus: S.draftStat === 'saving' ? 'saving…' : S.draftStat === 'saved' ? 'draft saved ' + S.draftSavedAt + ' · esc' : 'not saved · esc',
+      composeStatColor: S.draftStat === 'saving' ? 'var(--muted)' : 'var(--faint)',
+      draftTo: S.draft ? S.draft.to : '', setDraftTo: (e) => this.patchDraft({ to: e.target.value }),
+      toFocusOn: () => this.setState({ toFocus: true }),
+      toFocusOff: () => setTimeout(() => this.setState({ toFocus: false }), 120),
+      ...(() => {
+        if (!S.draft || !S.toFocus) return { acOpen: false, acItems: [] };
+        const parts = S.draft.to.split(',');
+        const frag = parts[parts.length - 1].trim().toLowerCase();
+        if (frag.length < 2) return { acOpen: false, acItems: [] };
+        const hits = this.contacts().filter(c => (c.name + ' ' + c.email).toLowerCase().includes(frag) && !S.draft.to.includes(c.email)).slice(0, 5);
+        return {
+          acOpen: hits.length > 0,
+          acItems: hits.map(c => ({ ...c, pick: (e) => { e.preventDefault(); const p = S.draft.to.split(','); p[p.length - 1] = ' ' + c.email; this.patchDraft({ to: p.join(',').replace(/^ /, '') + ', ' }); } })),
+        };
+      })(),
+      draftCc: S.draft ? S.draft.cc : '', setDraftCc: (e) => this.patchDraft({ cc: e.target.value }),
+      draftBcc: S.draft ? S.draft.bcc : '', setDraftBcc: (e) => this.patchDraft({ bcc: e.target.value }),
+      draftSubject: S.draft ? S.draft.subject : '', setDraftSubject: (e) => this.patchDraft({ subject: e.target.value }),
+      draftBody: S.draft ? S.draft.body : '', setDraftBody: (e) => this.patchDraft({ body: e.target.value }),
+      showCc: S.showCc, toggleCc: () => this.setState(s => ({ showCc: !s.showCc })),
+      draftFiles: S.draft ? (S.draft.files || []).map((f, i) => ({ ...f, up: f.st === 'up', err: f.st === 'err', ok: !f.st || f.st === 'ok', pctLabel: (f.pct || 0) + '%',
+        retry: (e) => { e.stopPropagation(); this.patchFile(f.fid, { st: 'up', pct: 0 }); this.startUpload(f.fid, false); },
+        remove: (e) => { e.stopPropagation(); this.patchDraft({ files: S.draft.files.filter((_, j) => j !== i) }); } })) : [],
+      hasDraftFiles: !!(S.draft && S.draft.files && S.draft.files.length),
+      addFile: () => { const names = [['q4-notes.pdf', '84 KB'], ['screenshot.png', '312 KB'], ['export.csv', '9 KB']]; const cnt = (S.draft.files || []).length; const n = names[cnt % names.length]; const fid = Date.now(); this.patchDraft({ files: [...(S.draft.files || []), { fid, name: n[0], size: n[1], st: 'up', pct: 0 }] }); this.startUpload(fid, cnt % 3 === 2); },
+      discardDraft: this.discardDraft,
+      fmtBold: () => this.wrapSel('**', '**'),
+      fmtItalic: () => this.wrapSel('_', '_'),
+      fmtCode: () => this.wrapSel('`', '`'),
+      fmtLink: () => this.wrapSel('[', '](url)'),
+      fmtQuote: () => this.wrapSel('\n> ', ''),
+      composeQuote: S.composeMode === 'reply' && !!sel,
+      composeQuoteOpen: S.composeQuoteOpen,
+      composeQuoteLabel: S.composeQuoteOpen ? 'hide quoted history' : '··· quoted history (' + (sel ? sel.msgs.length : 0) + ')',
+      toggleComposeQuote: () => this.setState(s => ({ composeQuoteOpen: !s.composeQuoteOpen })),
+      quoteChain: S.composeMode === 'reply' && sel ? [...sel.msgs].reverse().map(m => ({ from: m.from, email: m.email, time: m.time, body: m.body || (m.html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() })) : [],
+      openCompose: () => this.startDraft('new'),
+      closeCompose: this.closeComposeSave,
+      fromOptions: this.accounts.filter(a => a.proto === 'JMAP').flatMap(a => [
+        { val: a.id + '|' + a.email, label: a.name + ' <' + a.email + '>' },
+        ...(a.aliases || []).map(al => ({ val: a.id + '|' + al, label: a.name + ' <' + al + '> · alias' })),
+      ]),
+      composeFromVal: S.composeFrom + '|' + (S.composeAlias || (acctById[S.composeFrom] || {}).email || ''),
+      onComposeFrom: (e) => { const [id, al] = e.target.value.split('|'); this.setState({ composeFrom: id, composeAlias: al === (acctById[id] || {}).email ? null : al }); },
+      ...(() => {
+        const sig = this.sigFor(S.composeFrom);
+        const acct = acctById[S.composeFrom];
+        const on = S.composeMode === 'reply' ? sig.inReplies : sig.inNew;
+        if (!acct || !on) return { composeSigOn: false };
+        return {
+          composeSigOn: true,
+          composeSigMode: sig.mode === 'html' ? 'text/html' : 'text/plain',
+          composeSigAcct: acct.code,
+          composeSigNode: sig.mode === 'html'
+            ? React.createElement('div', { style: { fontSize: '12.5px', lineHeight: 1.6, background: 'var(--bg)', border: '1px solid var(--line2)', borderRadius: '3px', padding: '9px 12px', maxHeight: '110px', overflow: 'auto' }, dangerouslySetInnerHTML: { __html: sig.html } })
+            : React.createElement('div', { style: { fontSize: '12.5px', lineHeight: 1.6, whiteSpace: 'pre-line', color: 'var(--muted)' } }, sig.text),
+        };
+      })(),
+      paletteOpen: S.paletteOpen, paletteQ: S.paletteQ,
+      onPaletteQ: (e) => this.setState({ paletteQ: e.target.value }),
+      closePalette: () => this.setState({ paletteOpen: false }),
+      paletteItems: paletteItems.map(p => ({ ...p, run: p.go })),
+      shortcutsOpen: S.shortcutsOpen,
+      toggleShortcuts: () => this.setState(s => ({ shortcutsOpen: !s.shortcutsOpen })),
+      shortcuts: [
+        { what: 'Command palette', key: '⌘K' }, { what: 'Next / previous thread', key: 'j / k' },
+        { what: 'Compose / Reply / Forward', key: 'c r f' }, { what: 'Reply all', key: 'a' },
+        { what: 'Flag', key: 's' },
+        { what: 'Archive / Delete', key: 'e #' }, { what: 'Focus search', key: '/' },
+        { what: 'All inboxes', key: 'u' }, { what: 'Go to folder', key: 'g + i d s t a f' },
+        { what: 'Toggle theme / layout', key: 't v' },
+        { what: 'Select / deselect', key: 'x' }, { what: 'Undo', key: 'z' },
+        { what: 'Simulate incoming', key: 'n' }, { what: 'This overlay', key: '?' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

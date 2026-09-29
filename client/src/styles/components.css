@@ -1,0 +1,3775 @@
+/*
+ * Real component classes (design-fidelity plan, ruling P3): styling for
+ * components below `App` moves here, off `data-testid` selectors, one
+ * component (file) at a time as each is brought to fidelity. A test id is
+ * a test's contract with a component's *behavior*; hanging its visual
+ * styling off the same string too makes renaming a test id (to improve a
+ * test) silently unstyle a component while every test still passes. Task 9
+ * asserts no `[data-testid=...]` selector remains for anything migrated
+ * here.
+ *
+ * Every literal value below is transcribed from the design's own inline
+ * `style=` attributes (docs/design/Wilco.dc.html), not invented -- see
+ * that file's sidebar `<nav>` block for the source of truth this section
+ * mirrors. Values that come from per-instance DATA (an account's accent)
+ * or that a component test reads back via `getComputedStyle` (the account
+ * code / total-unread / folder-count font-family, which happy-dom cannot
+ * resolve through a `var(...)` set from an external stylesheet) stay
+ * inline in the component instead of here -- see Sidebar.tsx's `FONT_MONO`
+ * constant.
+ */
+
+/* ---------------------------------------------------------------------
+ * Sidebar (Task 2)
+ * --------------------------------------------------------------------- */
+
+.sidebar {
+  /* Belt-and-braces default matching the design's literal 242px -- the
+   * component itself always sets this same value as an inline style too
+   * (see Sidebar.tsx's `effectiveWidth`), because `test-utils.tsx`'s
+   * `px()` helper reads only the inline style, not a computed value. */
+  width: 242px;
+  flex: 0 0 242px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  background: var(--panel2);
+  font-size: 13px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--line2);
+  flex: 0 0 auto;
+}
+.sidebar-logo {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.sidebar-wordmark {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.sidebar-total-unread {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.sidebar-compose-wrap {
+  padding: 10px 10px 8px;
+  flex: 0 0 auto;
+}
+.sidebar-compose {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.sidebar-compose:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+.sidebar-compose:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+.sidebar-compose-label {
+  flex: 1;
+  text-align: left;
+}
+.sidebar-compose-hint {
+  opacity: 0.6;
+  font-weight: 400;
+  font-size: 10.5px;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 6px 8px;
+}
+
+/* Shared shape for a plain icon+label(+count) row: All inboxes, Add
+ * account, and each saved-search entry. */
+.sidebar-row {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+.sidebar-row:not(:disabled):hover {
+  background: var(--hover);
+}
+.sidebar-row:disabled {
+  cursor: not-allowed;
+  color: var(--faint);
+}
+/* DESIGN.md "1. Sidebar": "Active folder = --sel background, weight
+ * 600." -- "All inboxes" is a `.sidebar-row`; its label is already
+ * always 600 (see `.sidebar-row-label` above), so only the background
+ * needs the active variant. Design-fidelity Pass B finding 3. */
+.sidebar-row--active {
+  background: var(--sel);
+}
+.sidebar-row--active:not(:disabled):hover {
+  background: var(--sel);
+}
+.sidebar-row-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  width: 14px;
+  text-align: center;
+  color: var(--muted);
+  flex: none;
+}
+.sidebar-row-label {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.sidebar-row-count {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.sidebar-row-count--accent {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sidebar-all-inboxes {
+  margin-bottom: 2px;
+}
+.sidebar-add-account {
+  margin-top: 8px;
+  color: var(--faint);
+  padding-left: 9px;
+}
+.sidebar-add-account .sidebar-row-icon {
+  color: inherit;
+}
+.sidebar-add-account .sidebar-row-label {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.sidebar-account {
+  margin-top: 8px;
+}
+.sidebar-account-toggle {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px 5px 6px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+.sidebar-account-toggle:hover {
+  background: var(--hover);
+}
+.sidebar-account-bar {
+  width: 3px;
+  height: 14px;
+  flex: none;
+  border-radius: 1px;
+}
+.sidebar-account-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-account-code {
+  font-size: 9.5px;
+  color: var(--faint);
+}
+.sidebar-account-chev {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--faint);
+  width: 10px;
+  text-align: center;
+}
+
+/* Per-account sync state (Wilco.dc.html lines 63-65: `a.syncing`/
+ * `a.error`/`a.pending`). Colors are the design's own literal values --
+ * `--faint` for the spinner (not themed as an "error" color, it's neutral
+ * motion), `#c9903a` for the warning glyph and the pending chip's border/
+ * text are BOTH the design's plain amber/faint, not a token either.
+ * See Sidebar.tsx's `syncBadgeFor` for the state->class mapping. */
+.sidebar-account-sync {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.sidebar-account-sync--syncing {
+  color: var(--faint);
+  animation: spin 1.2s linear infinite;
+}
+.sidebar-account-sync--error {
+  color: #c9903a;
+  font-weight: 700;
+}
+.sidebar-account-sync--pending {
+  font-size: 9px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 3px;
+}
+
+.sidebar-folders {
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-folder {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4.5px 8px 4.5px 17px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+.sidebar-folder:not(:disabled):hover {
+  background: var(--hover);
+}
+.sidebar-folder:disabled {
+  cursor: default;
+}
+/* Design-fidelity Pass B finding 3 -- see `.sidebar-row--active` above. */
+.sidebar-folder--active {
+  background: var(--sel);
+}
+.sidebar-folder--active:not(:disabled):hover {
+  background: var(--sel);
+}
+.sidebar-folder--active .sidebar-folder-name {
+  font-weight: 600;
+}
+.sidebar-folder-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  color: var(--faint);
+  flex: none;
+}
+.sidebar-folder-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-folder-count {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.sidebar-folder-count--accent {
+  color: var(--accent);
+}
+
+.sidebar-saved-label {
+  padding: 14px 8px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.sidebar-saved {
+  padding: 4.5px 8px;
+}
+.sidebar-saved-query {
+  flex: 1;
+  font-size: 12px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-saved-count {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.sidebar-status {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--success);
+}
+.sidebar-status-line {
+  flex: 1;
+  font-size: 10px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 6px;
+  display: flex;
+  gap: 3px;
+}
+.sidebar-footer-btn {
+  font: inherit;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+.sidebar-footer-btn:not(:disabled):hover {
+  background: var(--hover);
+}
+.sidebar-footer-btn:disabled {
+  cursor: not-allowed;
+  color: var(--faint);
+}
+.sidebar-settings {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1;
+  padding: 6px 10px;
+  text-align: left;
+}
+.sidebar-settings-active {
+  background: var(--sel);
+}
+.sidebar-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+/* Panes.tsx's `ListPane` wrapper -- moved off `[data-testid="list"]`
+ * (ruling P3, design-fidelity Pass B finding 7): same declarations, real
+ * class. `container-name` has no `@container` consumer yet; kept as-is,
+ * not this pass's concern. */
+.list-pane {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  container-type: inline-size;
+  container-name: list-pane;
+}
+
+/* Panes.tsx's `Divider` -- moved off `[data-testid="divider-list"]`/
+ * `[data-testid="divider-row"]` (tokens.css, deleted -- design-fidelity
+ * Pass B round 2, finding 7). `Divider` had NO class at all before this:
+ * the resizer's only visible pixel (its `background`) hung entirely off
+ * two test ids that exist for drag-handling tests, not styling -- ruling
+ * P3's exact hazard, renaming either test id would have made the
+ * resizer invisible with every test still green. */
+.divider {
+  background: var(--line);
+}
+
+/* ---------------------------------------------------------------------
+ * MessageList (Task 3) -- transcribed from Wilco.dc.html's list-pane
+ * `<header>` (lines ~262-309) and the `t.tall` three-line row (lines
+ * ~336-354). The design's OTHER row shape (`t.wide`, one line) is used
+ * only when the pane stacks list-above-reading; per owner ruling this
+ * app's narrow/phone layout matches desktop exactly, so only `t.tall` is
+ * implemented. `[data-testid^="row-"]` and friends no longer carry any
+ * styling in tokens.css (ruling P3) -- these classes are the only source
+ * of this pane's visuals now, aside from per-instance data (an account's
+ * accent/code color) which stays inline in the component.
+ * --------------------------------------------------------------------- */
+
+.msg-list-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  /* This pane is itself a flex item wherever it's mounted (Panes.tsx's
+   * list section, in the real app). Without `min-width: 0` a flex item
+   * refuses to shrink below its content's min-content size -- and with
+   * `white-space: nowrap` on the subject/snippet/sender cells below, that
+   * min-content is the full un-wrapped text width, not zero. Panes.tsx
+   * already sets this inline on its own wrapper; this is the same guard
+   * applied defensively so the pane is correct even mounted bare (as the
+   * design-fidelity screenshot harness does). */
+  min-width: 0;
+}
+
+.msg-list-header {
+  flex: none;
+  padding: 10px 12px 9px;
+}
+.msg-list-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 2px 9px;
+}
+.msg-list-title {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.msg-list-meta {
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+}
+
+.msg-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0 9px;
+}
+.msg-bulk-count {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+.msg-bulk-btn {
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: inherit;
+}
+.msg-bulk-btn:hover {
+  background: var(--hover);
+}
+.msg-bulk-btn--primary {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.msg-bulk-btn--primary:hover {
+  filter: brightness(1.06);
+}
+.msg-bulk-clear {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 4px 7px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--faint);
+  font-family: inherit;
+}
+.msg-bulk-clear:hover {
+  background: var(--hover);
+}
+
+/* Amber reauthorize banner (Wilco.dc.html `bannerError`). #c9903a is the
+ * design's own literal warning color -- not a token, transcribed as-is
+ * (see tokens.css's --flag, which is the same hex, kept separate because
+ * the design never routes this banner through that token itself). */
+.msg-reauth-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 7px 10px;
+  border: 1px solid rgba(201, 144, 58, 0.45);
+  border-radius: var(--radius-md);
+  background: rgba(201, 144, 58, 0.1);
+}
+.msg-reauth-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: #c9903a;
+  font-weight: 700;
+}
+.msg-reauth-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-reauth-btn {
+  flex: none;
+  padding: 3px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: #c9903a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+/* Grey IMAP "support coming" banner (Wilco.dc.html `bannerPending`). */
+.msg-imap-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.msg-imap-badge {
+  font-size: 10px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+}
+.msg-imap-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Trash banner (Wilco.dc.html's `trashMode` block, line ~314-319). The
+ * button's red (#cf222e) is the design's own literal danger color, not
+ * `--danger`/`--flag` -- see Task 1's progress note: this exact hex
+ * appears nowhere in the design's `:root` token block, so it is
+ * transcribed as a plain value here too, not routed through a token that
+ * would silently invent one. Permanently `:disabled` (see MessageList.tsx's
+ * comment) -- the dimmed/not-allowed treatment below is this file's own
+ * addition for a disabled affordance the design never had to specify. */
+.msg-trash-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--line2);
+  background: var(--panel2);
+}
+.msg-trash-banner-text {
+  flex: 1;
+  font-size: 11px;
+  color: var(--faint);
+}
+.msg-trash-empty-btn {
+  flex: none;
+  padding: 3px 10px;
+  border: 1px solid #cf222e;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 11px;
+  color: #cf222e;
+  font-weight: 600;
+  font-family: inherit;
+}
+.msg-trash-empty-btn:not(:disabled) {
+  cursor: pointer;
+}
+.msg-trash-empty-btn:not(:disabled):hover {
+  background: rgba(207, 34, 46, 0.08);
+}
+.msg-trash-empty-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.msg-list-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--faint);
+  font-size: 12.5px;
+}
+.msg-list-empty-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* Task 5 (2026-09-22): shown instead of the empty state or the previous
+ * folder's rows while `rows` is not yet loaded for the folder in view --
+ * see MessageList.tsx's `showLoading`. Plain CSS, no animation dependency. */
+.msg-list-loading {
+  padding: 9px 12px;
+}
+.msg-list-loading-row {
+  height: 54px;
+  margin-bottom: 1px;
+  border-radius: 4px;
+  background: var(--panel-alt, rgba(127, 127, 127, 0.08));
+}
+
+.msg-list-scroll {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid var(--line2);
+}
+
+.msg-group-header {
+  padding: 7px 12px 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--line2);
+  background: var(--panel2);
+}
+
+/* The three-line row itself. `border-left-color` stays inline (a
+ * per-account accent hex, continuous data no class can express);
+ * `--sel`/hover backgrounds are plain classes instead of inline styles
+ * specifically so `:hover` can win over a *selected* row too, matching
+ * the design's `style-hover="background: var(--hover)"` on top of
+ * `background: {{ t.bg }}` -- inline styles cannot lose to a CSS
+ * pseudo-class, so `t.bg` had to become a class here, not an inline
+ * value, for hover to work at all. */
+.msg-row {
+  display: flex;
+  gap: 8px;
+  padding: 9px 12px 9px 9px;
+  border-bottom: 1px solid var(--line2);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  background: transparent;
+}
+.msg-row:hover {
+  background: var(--hover);
+}
+.msg-row--selected {
+  background: var(--sel);
+}
+/* Design-fidelity Pass B finding 4: Chrome's UA stylesheet gives
+ * `input[type=checkbox]` its own default margin (`3px 3px 3px 4px`) --
+ * `margin-top: 3px` alone left the left/right/bottom thirds of that in
+ * place, so every row's checkbox (and, via the flex gap after it, every
+ * row's text) sat ~7px right of the design. Reset to a single explicit
+ * margin instead of layering a partial override on top of the UA
+ * default. Kept a real `<input type="checkbox">` (focusable, spacebar-
+ * toggleable, correct `role`/`checked` semantics for free) rather than a
+ * div-based replica -- the design's own checkbox is a plain small square,
+ * which `accent-color` already renders close enough that a custom
+ * control would buy fidelity this finding didn't ask for at the cost of
+ * real semantics this finding explicitly asked to keep. */
+/* The row selection box (Wilco.dc.html lines 326/338). A button, not a
+   native checkbox: `accent-color` only tints the CHECKED fill, so an
+   unchecked native box stayed the browser's white square and read as a
+   bright chip in every row on the dark theme. */
+.select-box {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--accent-ink);
+  font-size: 10px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.select-box[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.select-box:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.select-box:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+/* The columns layout nudges the box onto the first text line; the rows
+   layout centres it. */
+.select-box--offset {
+  margin-top: 3px;
+}
+.msg-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.msg-row-line1 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.msg-row-sender {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-row-sender--unread {
+  font-weight: 700;
+}
+/* No background, no padding, no radius -- the design renders the account
+ * code as plain colored monospace text on this line, not a badge/chip
+ * (unlike Sidebar's account header, which is a different element
+ * entirely). A prior implementation invented a pill here; transcribed
+ * against the literal markup, there isn't one. */
+.msg-row-code {
+  flex: none;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+.msg-row-time {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+}
+.msg-row-subject {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-row-subject--unread {
+  font-weight: 600;
+  color: var(--ink);
+}
+.msg-row-line3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+.msg-row-snippet {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-row-star {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+  font-size: 10px;
+  color: #c9903a;
+}
+.msg-row-attach {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+  font-size: 10px;
+  color: var(--faint);
+}
+/* Fixed --accent, deliberately NOT the per-account swatch color -- the
+ * design's own row markup (line ~350) sets this dot's background to the
+ * plain `var(--accent)` token, unlike the code/left-edge, which use the
+ * account's own color. Transcribed as literally written, not assumed to
+ * match its neighbors. */
+.msg-row-unread-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* Rows-layout single-line table (Wilco.dc.html's `t.wide` article, lines
+ * ~324-335; DESIGN.md's Message list section: "Rows layout: single-line
+ * table (checkbox · code · sender 168px · subject — snippet · flags ·
+ * time 38px right)"). Only rendered when `MessageList`'s `rowsLayout`
+ * prop is true (the app's top/bottom "rows" layout, `v` key) -- the
+ * three-line `.msg-row` above stays the columns-layout row. */
+.msg-row-wide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 9px;
+  border-bottom: 1px solid var(--line2);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  background: transparent;
+}
+.msg-row-wide:hover {
+  background: var(--hover);
+}
+.msg-row-wide.msg-row--selected {
+  background: var(--sel);
+}
+
+.msg-row-wide-code {
+  flex: none;
+  width: 32px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+.msg-row-wide-sender {
+  flex: none;
+  width: 168px;
+  min-width: 0;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-row-wide-subject-line {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-row-wide-subject {
+  font-size: 12.5px;
+}
+.msg-row-wide-dash,
+.msg-row-wide-snippet {
+  font-size: 12px;
+  color: var(--faint);
+}
+.msg-row-wide-time {
+  flex: none;
+  width: 38px;
+  text-align: right;
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.msg-list-more {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-top: 1px solid var(--line2);
+  background: var(--panel2);
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.msg-list-more:hover {
+  background: var(--hover);
+}
+.msg-list-more:disabled {
+  cursor: not-allowed;
+  color: var(--faint);
+}
+
+/* ---------------------------------------------------------------------
+ * Reading pane (Task 4) -- transcribed from Wilco.dc.html's `<!-- Reading
+ * -->` block (lines ~465-560): the header (subject/meta/action row) and
+ * the conversation column (collapsed rows, the open message card, quoted
+ * history, attachment chips, the reply footer). Values that a test reads
+ * back via `getComputedStyle` (the mono address/chip/time font-family,
+ * which happy-dom cannot resolve through a `var(...)` set from an
+ * external stylesheet) stay inline in Reading.tsx's `FONT_MONO` constant
+ * instead of here, matching Sidebar.tsx/MessageList.tsx's own convention.
+ * --------------------------------------------------------------------- */
+
+/* Design-fidelity Pass B round 2, finding 7: moved off
+ * `[data-testid="reading"]` (tokens.css), which had also carried a wrong
+ * `padding: 18px 22px` -- the design's own reading `<main>` (line 365)
+ * has NO padding at all, only its header and conversation-scroll area do
+ * (both already correct real classes below), so that padding was pure
+ * extra, stacking on top of both and insetting every message +22px left
+ * / +18px top of the design. Background corrected to `--panel2` in the
+ * same move (was `--panel`, i.e. white -- the design's `<main>` is
+ * explicitly `background:var(--panel2)`). `height:100%` is new,
+ * defensive sizing (same convention `.msg-list-root`'s own comment
+ * gives) -- this element's `flex:1 1 auto` (Reading.tsx's inline style)
+ * only does anything when its parent is itself a flex container; a
+ * plain block wrapper around it (the harness's `shell-1440` composite
+ * state, before this pass) left it shrunk to content height with `--bg`
+ * showing through underneath, a real defect the reviewer screenshotted. */
+.reading {
+  background: var(--panel2);
+  height: 100%;
+}
+
+.reading-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+}
+.reading-empty-inner {
+  text-align: center;
+}
+.reading-empty-title {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.reading-empty-hint {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+}
+
+.reading-header {
+  flex: none;
+  display: flex;
+  /* nowrap (owner, 2026-09-09): with wrap, a longer subject or one more
+     button dropped the whole action row a line and every button moved. The
+     subject truncates instead; the bar keeps its place. */
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.reading-header-top {
+  flex: 1;
+  min-width: 0;
+}
+.reading-subject {
+  margin: 0;
+  /* Merged from `[data-testid="reading-subject"]` (tokens.css, deleted --
+     design-fidelity Pass B round 2, finding 7). Needed for the
+     `text-overflow: ellipsis` below to actually engage inside the flex
+     row this h1 sits in (`.reading-header-top`). */
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reading-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.reading-account-square {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 1px;
+}
+.reading-meta {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reading-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.reading-act {
+  font: inherit;
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink);
+}
+.reading-act:not(:disabled):hover {
+  background: var(--hover);
+}
+/* F9 (design-fidelity Pass D): two disabled treatments coexisted --
+ * Trash's `Empty trash` kept its true color and dimmed via `opacity:0.5`
+ * (correctly: it's a `Match` against the design's own literal button
+ * color, which has no disabled state of its own to deviate from), while
+ * every action button here instead recolored to `--faint` at full
+ * opacity, discarding its identity (Reply/Send additionally swapped
+ * their `--accent` fill for flat grey). Neither is speced -- none of
+ * these controls are ever shown disabled in the design, since they all
+ * WORK there -- so this file's own disabled convention is picked, not
+ * transcribed. Standardized on the Trash button's approach (keep the
+ * real color, dim the whole control), matching `.overlay-primary-btn`/
+ * `.move-folder-row`/`.contextmenu-item`'s existing `opacity`-only
+ * disabled rules elsewhere in this file. */
+.reading-act:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.reading-act-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px;
+  padding: 6px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.reading-act-reply {
+  padding: 6px 13px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.reading-act-reply:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+.reading-act-reply:disabled {
+  opacity: 0.5;
+}
+
+.reading-conversation {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px 40px;
+}
+/* Focused programmatically to own the scroll keys (see Reading.tsx). It is
+   a container, not a control, so it must not draw a focus ring. */
+.reading-conversation:focus,
+.reading-conversation:focus-visible {
+  outline: none;
+}
+.reading-conversation-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reading-collapsed {
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  opacity: 0.75;
+  color: var(--ink);
+}
+.reading-collapsed:hover {
+  opacity: 1;
+}
+.reading-collapsed-avatar {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 3px;
+  background: var(--line);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+.reading-collapsed-name {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.reading-collapsed-preview {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reading-collapsed-time {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.reading-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.reading-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line2);
+  cursor: pointer;
+}
+.reading-card-avatar {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 3px;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+/* The design underlines the name because it's the trigger for a sender
+ * hover-card (search-from-sender / compose shortcuts) -- Wilco.dc.html
+ * line ~512. That popover itself is out of this task's scope (no test
+ * asks for it, and it's real new interactive surface, not a value to
+ * transcribe), but the dotted underline costs nothing to keep literal. */
+.reading-card-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px dotted var(--faint);
+}
+.reading-card-address {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reading-card-chip {
+  flex: none;
+  font-size: 9px;
+  color: var(--faint);
+  border: 1px solid var(--line2);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+.reading-card-time {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.reading-card-menu {
+  font: inherit;
+  flex: none;
+  width: 22px;
+  padding: 2px 0;
+  border: none;
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1;
+}
+.reading-card-menu:not(:disabled):hover {
+  background: var(--hover);
+}
+.reading-card-menu:disabled {
+  cursor: not-allowed;
+}
+
+.reading-html-notice {
+  padding: 10px 18px 0;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+/* The message body frame (spec 6). It is a cross-origin sandboxed iframe,
+   so its height cannot be measured from here -- there is no script on
+   either side of that boundary to report it. A fixed viewport-relative
+   height with the frame's own scrollbar is pass 1's answer; spec 6.10's
+   ruling (the chrome owning scrolling by translating or resizing the
+   frame, so space/PageDown work) is pass 2.
+
+   `color-scheme: light` because the document inside picks its own surface
+   via chooseSurface -- letting the frame inherit the app's dark scheme
+   would repaint a sender's white background dark underneath their own
+   dark ink. */
+.reading-body-frame {
+  display: block;
+  width: 100%;
+  min-height: 320px;
+  /* Height is set inline by BodyFrame from the frame's own resize script
+     (row 3, 2026-09-06): the frame is as tall as its message, so the
+     reading column owns scrolling and no message scrolls inside a box.
+     An earlier note that said the chrome could not do this
+     was wrong about whose script that would be. */
+  border: 0;
+  background: #ffffff;
+  color-scheme: light;
+}
+
+/* The blocked-image banner sits in the CHROME, outside the frame (spec
+   6.8): a message whose own stylesheet sets a background would restyle it
+   into invisibility if it were rendered into the message document. */
+.reading-blocked-images {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reading-attachment--link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.reading-html-toggle {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.reading-body {
+  padding: 14px 18px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre-line;
+  max-width: 640px;
+}
+
+/* Nested inside .reading-body (see Reading.tsx's MessageCard) so it
+ * inherits that element's 14px/18px padding -- only vertical spacing is
+ * added here, not a second layer of horizontal padding. */
+.reading-quote {
+  margin-top: 6px;
+}
+.reading-quote-toggle {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 1px 8px;
+  letter-spacing: 0.1em;
+}
+.reading-quote-toggle:hover {
+  background: var(--hover);
+}
+.reading-quote-body {
+  margin-top: 10px;
+  border-left: 2px solid var(--line);
+  padding: 2px 14px;
+  color: var(--faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.reading-attachments {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 18px 14px;
+}
+.reading-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+.reading-attachment-meta {
+  color: var(--faint);
+}
+
+.reading-reply-footer {
+  font: inherit;
+  align-self: flex-start;
+  padding: 8px 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.reading-reply-footer:hover {
+  background: var(--hover);
+}
+/* F9 (design-fidelity Pass D): opacity-dim rather than recolor -- see
+ * `.reading-act:disabled`'s comment for why. */
+.reading-reply-footer:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------------
+ * Compose (Task 5)
+ *
+ * Transcribed from Wilco.dc.html ~lines 366-462. Task 1's tokens.css
+ * comment on --radius-lg calls Compose one of "the two modals" (5px) --
+ * that was written before this pane existed and is WRONG: the design's
+ * own literal value at line 369 is `border-radius:4px`, same as every
+ * other card. This section uses a plain 4px, matching the design exactly
+ * rather than that earlier assumption (see the task 5 report).
+ * --------------------------------------------------------------------- */
+
+.compose-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  padding: 18px 22px;
+  min-height: 0;
+}
+.compose-card {
+  position: relative; /* the drop target overlays the card */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  min-height: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.compose-header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel2);
+}
+.compose-title {
+  flex: 1;
+  min-width: 140px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compose-saved-note {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.compose-close {
+  font: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 13px;
+  padding: 2px 4px;
+}
+.compose-close:hover {
+  background: var(--hover);
+}
+
+.compose-body-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.compose-field-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.compose-field-label {
+  font-size: 11.5px;
+  color: var(--faint);
+  width: 52px;
+  flex: none;
+}
+.compose-field-input {
+  font: inherit;
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--ink);
+  min-width: 0;
+}
+.compose-from-select {
+  cursor: pointer;
+}
+/* Row 60: the From options read as the headers they send, so the account
+   they belong to is carried by this dot instead of by a name prefix. */
+.compose-from-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.compose-subject-input {
+  font-weight: 600;
+}
+.compose-to-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  /* A flex container, so the input's `flex: 1` means something: inside a
+     block wrap it fell back to a text input's intrinsic ~150px in a 750px
+     row (owner, 2026-09-08; row 50). */
+  display: flex;
+}
+/* -- Drop target (row 51): shown while a file is dragged over the window -- */
+.compose-drop-target {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: auto;
+}
+.compose-cc-toggle {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 11px;
+  flex: none;
+}
+.compose-autocomplete {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  z-index: 40;
+  min-width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  padding: 3px;
+}
+.compose-autocomplete-item {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.compose-autocomplete-item:hover {
+  background: var(--hover);
+}
+.compose-autocomplete-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.compose-autocomplete-email {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compose-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.compose-toolbar-btn {
+  width: 26px;
+  padding: 3px 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.compose-toolbar-btn:hover {
+  background: var(--hover);
+}
+.compose-toolbar-spacer {
+  flex: 1;
+}
+.compose-toolbar-note {
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.compose-textarea {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  resize: none;
+  padding: 14px 20px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  min-height: 120px;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+
+.compose-attachments {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 20px 10px;
+}
+.compose-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.compose-attachment-size {
+  color: var(--faint);
+}
+.compose-attachment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 10px;
+  padding: 0;
+  line-height: 1;
+}
+
+.compose-signature {
+  flex: none;
+  margin: 0 20px 12px;
+  padding: 9px 13px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+.compose-signature-label {
+  font-size: 9.5px;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+/* A signature is multi-line and its whitespace is significant (spec 11:
+   byte for byte, trailing space of `-- ` included). Rendering it in a
+   whitespace-collapsing box would show something other than what is
+   actually sent. */
+.compose-signature-body {
+  white-space: pre-wrap;
+}
+/* The HTML signature preview. A cross-origin frame cannot be measured, so
+   the height is fixed and it scrolls if the signature is taller -- the same
+   constraint the message frame has, at a size suited to a signature. */
+/* Handoff v1.1 #5/#6: the rendered signature sits in an INSET FRAME --
+   --bg ground, 1px --line2 hairline, radius 3, 9x12 padding, and a fixed
+   110px ceiling that scrolls. The design solves the cross-origin
+   height problem by not needing a measurement; the server-side estimate
+   this replaced is gone.
+
+   The iframe itself carries no padding (its document has its own), so the
+   padding lives on a wrapper in the markup where the design puts it. */
+.compose-signature-frame,
+.settings-signature-frame {
+  display: block;
+  width: 100%;
+  height: 110px;
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  background: var(--bg);
+  color-scheme: light;
+}
+/* Row 38 (owner ruling 2026-09-06): the SETTINGS preview shows the whole
+   signature. Its height is set inline from the server's estimate
+   (SignaturePreview `naturalHeight`); this floor only covers the moment
+   before the estimate lands. Compose keeps the fixed 110px frame above. */
+.settings-signature-frame {
+  height: auto;
+  min-height: 96px;
+}
+
+
+
+.compose-quote-wrap {
+  flex: none;
+  margin: 0 20px 14px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.compose-quote-toggle {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 2px 10px;
+}
+.compose-quote-toggle:hover {
+  background: var(--hover);
+}
+.compose-quote-chain {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.compose-quote-meta {
+  font-size: 11px;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.compose-quote-body {
+  border-left: 2px solid var(--line);
+  padding: 2px 14px;
+  color: var(--faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.compose-footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+.compose-send {
+  font: inherit;
+  padding: 7px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.compose-send:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+/* F9 (design-fidelity Pass D): opacity-dim, keep the real `--accent`
+ * fill, matching `.reading-act-reply`'s same fix -- see that rule's
+ * comment. */
+.compose-send:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.compose-attach {
+  font: inherit;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+.compose-attach:not(:disabled):hover {
+  background: var(--hover);
+}
+.compose-attach:disabled {
+  cursor: not-allowed;
+  color: var(--faint);
+}
+.compose-footer-spacer {
+  flex: 1;
+}
+.compose-discard {
+  font: inherit;
+  padding: 7px 11px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--faint);
+}
+.compose-discard:not(:disabled):hover {
+  background: var(--hover);
+}
+.compose-discard:disabled {
+  cursor: not-allowed;
+}
+.compose-footer-hint {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+/* ---------------------------------------------------------------------
+ * Settings (Task 6) -- transcribed from Wilco.dc.html's `settingsOpen`/
+ * `aeOpen` blocks (~lines 107-256), confirmed against a screenshot of the
+ * running prototype per docs/design/RENDERING.md. Card border-radius is
+ * the design's own literal 4px (not --radius-md/3px -- see the "two
+ * modals" note on --radius-lg in tokens.css; this is a third literal, not
+ * a third token, matching Compose's own line-369 precedent).
+ * --------------------------------------------------------------------- */
+
+.settings {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--bg);
+}
+.settings-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 36px 32px 80px;
+}
+.settings-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.settings-subtitle {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.settings-section {
+  margin-top: 0;
+}
+.settings-section-title {
+  margin: 28px 0 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+/* The FIRST section title (Accounts) sits right under the subtitle with
+ * no extra top margin -- the design's own literal for that one heading
+ * (line 115) omits the 28px every later `sec.title` carries. */
+.settings-inner > .settings-section-title:first-of-type {
+  margin-top: 0;
+}
+.settings-card {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+}
+.settings-accounts {
+  margin-bottom: 10px;
+}
+
+.settings-account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line2);
+}
+.settings-account-row:last-child {
+  border-bottom-color: transparent;
+}
+.settings-account-bar {
+  width: 3px;
+  height: 26px;
+  flex: none;
+  border-radius: 1px;
+}
+.settings-account-text {
+  flex: 1;
+  min-width: 0;
+}
+.settings-account-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.settings-account-code {
+  font-size: 10px;
+  color: var(--faint);
+  margin-left: 4px;
+}
+.settings-account-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.settings-account-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  color: var(--accent);
+}
+/* F10 (design-fidelity Pass D) -- Wilco.dc.html line ~124: the account
+ * card's status label, `10.5px` mono, `--faint` by default, `#c9903a`
+ * (the design's literal amber, matching `.msg-reauth-banner`'s own
+ * un-tokenized use of the same hex) when the account needs auth. */
+.settings-account-status {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.settings-account-status--amber {
+  color: #c9903a;
+}
+.settings-account-manage {
+  font: inherit;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.settings-account-manage:hover {
+  background: var(--hover);
+}
+/* F10 -- Wilco.dc.html line ~127: `padding:5px 11px; border:none;
+ * border-radius:3px; background:#c9903a; color:#fff`. Permanently
+ * `:disabled` (see `REAUTHORIZE_REASON`); dimmed the same opacity-only
+ * way F9 standardized the rest of this file's unwired controls on. */
+.settings-account-reauthorize {
+  font: inherit;
+  padding: 5px 11px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: #c9903a;
+  color: #fff;
+  cursor: not-allowed;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.settings-account-reauthorize:disabled {
+  opacity: 0.5;
+}
+
+.settings-add-account {
+  font: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--muted);
+  width: 100%;
+}
+.settings-add-account:not(:disabled):hover {
+  border-color: var(--faint);
+}
+.settings-add-account:disabled {
+  cursor: not-allowed;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line2);
+}
+.settings-row-last {
+  border-bottom-color: transparent;
+}
+.settings-row-text {
+  min-width: 0;
+  flex: 1;
+}
+.settings-row-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.settings-row-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.settings-seg {
+  display: flex;
+  gap: 3px;
+  padding: 2px;
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  flex: none;
+}
+/* A <fieldset> resets to look exactly like the plain <div> above -- see
+ * SegPickerDisabled's doc comment for why a fieldset (not a div) backs
+ * every disabled segmented row. */
+.settings-seg-fieldset {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+}
+.settings-seg-opt {
+  font: inherit;
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.settings-seg-opt-active {
+  background: var(--panel);
+  color: var(--ink);
+}
+.settings-seg-fieldset .settings-seg-opt {
+  cursor: not-allowed;
+}
+
+/* Squared switch, 32x18, square knob -- never a pill (this task's brief,
+ * verbatim). Used only by the three real Appearance rows and every
+ * disabled toggle row alike, so both share one visual language. */
+.settings-switch {
+  flex: none;
+  width: 32px;
+  height: 18px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--line);
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+}
+.settings-switch:disabled {
+  cursor: not-allowed;
+}
+.settings-switch-on {
+  background: var(--accent);
+}
+.settings-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--panel);
+  transition: left 0.12s ease;
+}
+.settings-switch-on .settings-switch-knob {
+  left: 16px;
+  background: var(--accent-ink);
+}
+
+/* The spam-training folder picker. A native <select>: the design has no
+   dropdown of its own for this (the setting postdates it), and a real
+   select gets keyboard behaviour and mobile pickers for free -- unlike the
+   segmented controls, whose fixed option count the design DOES specify. */
+/* Send-as alias chips (audit pass 3 D2). Mono, because an address is a
+   value to be read exactly; the primary one carries the accent border the
+   design uses for a selected chip elsewhere. */
+.settings-alias-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.settings-alias-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--muted);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.settings-alias-chip--primary { color: var(--accent); border-color: var(--accent); }
+
+.settings-select {
+  font: inherit;
+  font-size: 11.5px;
+  max-width: 260px;
+  padding: 4px 8px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.settings-select:focus { outline: none; border-color: var(--accent); }
+.settings-select:disabled { color: var(--faint); cursor: not-allowed; }
+
+.settings-mono-value {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.settings-back-to-mail {
+  font: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 0 0 16px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.settings-back-to-mail:hover {
+  background: var(--hover);
+}
+
+/* -- Per-account detail page -- */
+
+.settings-back-link {
+  font: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.settings-back-link:hover {
+  background: var(--hover);
+}
+.settings-account-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.settings-account-header-bar {
+  width: 4px;
+  height: 36px;
+  flex: none;
+  border-radius: 1px;
+}
+.settings-account-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.settings-account-header-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+.settings-account-header-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.settings-input {
+  font: inherit;
+  width: 200px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  outline: none;
+  font-size: 12.5px;
+}
+.settings-input:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+}
+.settings-input-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.settings-swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.settings-swatch:disabled {
+  cursor: not-allowed;
+}
+.settings-swatch-active {
+  border-color: var(--ink);
+}
+.settings-account-code-tag {
+  font-size: 10px;
+  color: var(--faint);
+  margin-left: 6px;
+}
+
+.settings-aliases {
+  padding: 12px 14px;
+}
+.settings-alias-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-alias-add .settings-input {
+  flex: 1;
+  width: auto;
+}
+.settings-btn {
+  font: inherit;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.settings-btn:not(:disabled):hover {
+  background: var(--hover);
+}
+.settings-btn:disabled {
+  cursor: not-allowed;
+}
+.settings-hint {
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 8px;
+}
+
+.settings-signature-textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--line2);
+  background: var(--bg);
+  outline: none;
+  resize: vertical;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  height: 96px;
+  box-sizing: border-box;
+}
+.settings-signature-textarea:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+}
+
+.settings-danger-title {
+  color: var(--danger);
+}
+.settings-danger-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+}
+.settings-btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  font-weight: 600;
+}
+.settings-btn-danger:not(:disabled):hover {
+  background: rgba(207, 34, 46, 0.08);
+}
+
+/* ---------------------------------------------------------------------
+ * Add account (Task 7) -- transcribed from Wilco.dc.html's `obOpen` block,
+ * ~lines 567-647. A real modal (unlike Compose/Settings, which are
+ * first-class panes) -- fixed scrim + a floating card, matching the
+ * design's context-menu/move-picker/palette overlays. Card border-radius
+ * is the design's own literal 4px, a fourth instance of the same fact
+ * Compose's and Settings' own sections already document (see the "two
+ * modals" note on --radius-lg in tokens.css, which this design never
+ * actually followed for its card corners).
+ * --------------------------------------------------------------------- */
+
+.addaccount-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--scrim);
+  animation: fadein 0.08s ease;
+  display: flex;
+  justify-content: center;
+  padding-top: 12vh;
+}
+.addaccount-card {
+  width: 460px;
+  max-width: calc(100vw - 40px);
+  align-self: flex-start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+  animation: pop 0.1s ease;
+  overflow: hidden;
+}
+.addaccount-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line2);
+}
+.addaccount-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+}
+.addaccount-step-label {
+  font-size: 10px;
+  color: var(--faint);
+}
+.addaccount-close {
+  font: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 13px;
+  padding: 0 0 0 6px;
+}
+
+.addaccount-step1 {
+  padding: 16px 18px 18px;
+}
+.addaccount-step1-lead {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.addaccount-proto {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 8px;
+}
+.addaccount-proto-jmap {
+  border: 1px solid var(--line);
+}
+.addaccount-proto-jmap:hover {
+  border-color: var(--accent);
+}
+.addaccount-proto-imap {
+  border: 1px dashed var(--line);
+  opacity: 0.55;
+  cursor: not-allowed;
+  margin-bottom: 0;
+}
+.addaccount-proto-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 2px 6px;
+}
+.addaccount-proto-badge-jmap {
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.addaccount-proto-badge-imap {
+  color: var(--faint);
+  border: 1px solid var(--line);
+}
+.addaccount-proto-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.addaccount-proto-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+.addaccount-proto-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.addaccount-proto-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--faint);
+  font-size: 11px;
+}
+.addaccount-soon-badge {
+  font-size: 9px;
+  color: var(--faint);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+
+.addaccount-step2 {
+  padding: 6px 0 0;
+}
+.addaccount-field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--line2);
+}
+.addaccount-field-label {
+  flex: none;
+  font-size: 11px;
+  color: var(--faint);
+  width: 56px;
+}
+.addaccount-field-input {
+  font: inherit;
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  min-width: 0;
+}
+.addaccount-field-mono {
+  font-size: 12.5px;
+}
+.addaccount-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+}
+.addaccount-swatch {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.addaccount-spacer {
+  flex: 1;
+}
+.addaccount-code-preview {
+  font-size: 10px;
+  color: var(--faint);
+}
+.addaccount-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+}
+.addaccount-connect {
+  font: inherit;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.addaccount-connect:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+.addaccount-connect:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.addaccount-back {
+  font: inherit;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+.addaccount-back:hover {
+  background: var(--hover);
+}
+.addaccount-discovery-hint {
+  font-size: 10px;
+  color: var(--faint);
+}
+
+.addaccount-step3 {
+  padding: 16px 18px 18px;
+}
+.addaccount-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+  min-height: 96px;
+}
+.addaccount-log-line {
+  display: flex;
+  gap: 8px;
+}
+.addaccount-spinner {
+  display: inline-block;
+  animation: spin 1.2s linear infinite;
+  width: 12px;
+}
+.addaccount-open-inbox {
+  font: inherit;
+  margin-top: 12px;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.addaccount-open-inbox:hover {
+  filter: brightness(1.06);
+}
+
+/* ---------------------------------------------------------------------
+ * Search (Task 9) -- moved off `[data-testid="search*"]`/`[data-testid=
+ * "chips"]`/`[data-testid^="search-*"]` (ruling P3, design-fidelity Pass
+ * B finding 7). Values transcribed as-is from tokens.css's legacy rules;
+ * this pass fixes the selector anti-pattern, not Search's own visual
+ * fidelity against the design (a separate, larger gap -- see this task's
+ * report). `quoted-toggle` stays in tokens.css: it belongs to
+ * Reading.tsx, out of scope here.
+ * --------------------------------------------------------------------- */
+.search-box {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+/* F4 (design-fidelity Pass D) -- the bordered field itself, transcribed
+ * from Wilco.dc.html line ~279: `display:flex; align-items:center;
+ * gap:8px; padding:6px 9px; border:1px solid var(--line); border-
+ * radius:3px; background:var(--bg)`, with `style-focus` (border-color:
+ * var(--accent)) reproduced as `:focus-within` since there's no ambient
+ * `Component.state`-driven hover/focus system here. */
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+.search-field:focus-within {
+  border-color: var(--accent);
+}
+.search-field-icon {
+  flex: none;
+  color: var(--faint);
+  font-size: 12px;
+}
+.search-input {
+  font: inherit;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  color: var(--ink);
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 12.5px;
+}
+.search-clear {
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 0;
+}
+.search-kbd {
+  flex: none;
+  font-size: 9.5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+}
+.search-chips,
+.search-results {
+  padding-top: 6px;
+  color: var(--muted);
+}
+/* F5/F6 (design-fidelity Pass D) -- same shape as the folder list's own
+ * header row (Wilco.dc.html line ~264-266): title 14/700 flex:1, meta
+ * 10.5px mono `--faint`, right-aligned by the title's own `flex:1`. */
+.search-results-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 2px 9px;
+}
+.search-results-title {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.search-results-count {
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+}
+.search-save-row {
+  display: flex;
+  align-items: center;
+}
+.search-chip {
+  padding: 2px 8px;
+  background: var(--sel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+.search-row {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line2);
+  cursor: pointer;
+}
+.search-row:hover {
+  background: var(--hover);
+}
+.search-recent {
+  z-index: 5;
+  min-width: 200px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px var(--scrim);
+}
+.search-empty {
+  padding: 28px 12px;
+  color: var(--muted);
+}
+.search-save {
+  /* F2 (Critical, design-fidelity Pass D): this was `font: inherit` --
+     the exact shorthand-resets-everything bug an earlier pass reported
+     fixed systemically (see components.css's other `font: inherit`
+     rules, which use it deliberately to reset a control's font-family to
+     its ambient context while leaving THIS component's own font-size/
+     weight declared explicitly alongside it -- this rule declared no
+     size/weight at all, so the shorthand silently fell back to the UA
+     button default instead of the design's 11px/600). Values below are
+     transcribed verbatim from Wilco.dc.html line ~292: `padding:2px 9px;
+     border:none; border-radius:2px; background:var(--sel); font-size:
+     11px; color:var(--accent); font-weight:600`. `font-family: inherit`
+     replaces the shorthand so the button still doesn't fall back to the
+     UA default -- font-family is the one sub-property the design's own
+     rule leaves unset (it inherits the ambient sans), same intent as
+     every other `font: inherit` in this file, just spelled so it can't
+     also clobber size/weight. */
+  margin: 0;
+  padding: 2px 9px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--sel);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------
+ * Command palette (Task 10) -- moved off `[data-testid="palette*"]`
+ * (ruling P3, design-fidelity Pass B finding 7). Palette.tsx had NO
+ * classes at all before this pass -- every declaration below is new
+ * class plumbing for values tokens.css already asserted; visual result
+ * unchanged. One real bug fixed in the move: tokens.css's
+ * `[data-testid^="shortcut-"]` selector (removed) matched every
+ * `shortcut-*` testid in Overlays.tsx too -- including the
+ * `shortcuts-key-part` spans and `shortcut-row-N` wrappers -- and forced
+ * `display:flex; padding:5px 8px` onto them despite those elements
+ * already having their own real classes (`.shortcuts-row`/
+ * `.shortcuts-key-part`). That stray rule (specificity tie, source order
+ * behind the real classes but still landing on `padding`/`display`
+ * `.shortcuts-key-part` never set) is why "Save attachment"'s 9-part key
+ * badge had room to overflow into the row below instead of wrapping
+ * inside its own cell -- see finding 1's writeup in the task report.
+ * --------------------------------------------------------------------- */
+.palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10vh 16px 16px;
+  pointer-events: none;
+}
+.palette-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  pointer-events: auto;
+}
+.palette-panel {
+  position: relative;
+  flex: 0 1 auto;
+  width: min(560px, 100%);
+  max-height: 76vh;
+  overflow: auto;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px var(--scrim);
+  pointer-events: auto;
+  animation: pop 90ms ease-out;
+}
+.palette-input {
+  font: inherit;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: none;
+  width: 100%;
+  font-size: 14px;
+  color: var(--ink);
+}
+.palette-list {
+  list-style: none;
+  margin: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.palette-item {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.palette-item[aria-selected="true"] {
+  background: var(--sel);
+}
+.palette-empty {
+  padding: 5px 8px;
+  color: var(--faint);
+}
+.palette-hint,
+.palette-disabled {
+  color: var(--faint);
+}
+
+/* ---------------------------------------------------------------------
+ * Overlays and toasts (Task 8) -- transcribed from Wilco.dc.html's own
+ * six blocks (~lines 590-688: context menu, move picker, attachment
+ * preview, raw source, undo toast, notifications) plus the shortcuts
+ * overlay (~775-808). box-shadow values live INLINE in Overlays.tsx, not
+ * here -- see that file's own module comment for why (happy-dom never
+ * loads this stylesheet, so a shadow a test reads back via
+ * `getComputedStyle` must be set on the element itself). Everything else
+ * -- layout, color, spacing -- is a real class here per ruling P3.
+ * --------------------------------------------------------------------- */
+
+.overlay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: var(--scrim);
+  animation: fadein 0.08s ease;
+  display: grid;
+  place-items: center;
+}
+/* The move picker is the one modal that top-aligns instead of centering
+ * (design line 613: `padding-top:18vh` + `align-self:flex-start`). */
+.overlay-scrim-top {
+  display: flex;
+  justify-content: center;
+  padding-top: 18vh;
+}
+.overlay-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  animation: pop 0.1s ease;
+  overflow: hidden;
+}
+.overlay-card-shortcuts {
+  width: 620px;
+  max-width: calc(100vw - 40px);
+  border-radius: 5px;
+  padding: 22px 26px;
+  position: relative;
+}
+.overlay-card-source {
+  width: 680px;
+  max-width: calc(100vw - 40px);
+}
+.overlay-card-attachment {
+  width: 520px;
+  max-width: calc(100vw - 40px);
+}
+.overlay-card-move {
+  width: 340px;
+  max-width: calc(100vw - 40px);
+  align-self: flex-start;
+}
+.overlay-header {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+/* Finding 1 (follow-up): even at the corrected 620px width, the
+ * shortcuts overlay is the one card with BOTH a right-aligned header
+ * hint ("? to toggle") and a `.overlay-close` (absolute, `right: 22px`,
+ * ~16px wide) -- every other overlay card's header has no competing
+ * text there. The close button's left edge lands ~38px in from the
+ * card's own edge, 12px past the header's un-adjusted content boundary
+ * (26px, the card's own padding), which is why the ✕ still grazed
+ * "toggle"'s last letter after the width fix alone. Reserve that
+ * clearance on the header itself rather than shrinking the hint or
+ * moving the close button (which other cards also use). */
+.overlay-card-shortcuts .overlay-header {
+  padding-right: 20px;
+}
+.overlay-header-bordered {
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line2);
+  margin-bottom: 0;
+}
+.overlay-title {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.overlay-title-flex {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.overlay-hint,
+.overlay-meta {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.overlay-close {
+  font: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 13px;
+  padding: 0;
+}
+.overlay-close-inline {
+  font: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 13px;
+  padding: 0 0 0 6px;
+}
+
+/* Shortcuts overlay body -- design lines 783-793. */
+.shortcuts-grid {
+  display: grid;
+  /* `minmax(0, 1fr)`, not bare `1fr` -- fix round 1's screenshot pass
+   * caught a real overflow: a grouped row's key badge (several
+   * `shortcuts-key-part`s, e.g. "Go to folder" -> "[ ] g g g i") is wider
+   * than a single-glyph badge ever was, and a flex child's default
+   * min-width is its content width, not 0 -- so the RIGHT column blew
+   * past the card's own boundary and got silently clipped by
+   * `.overlay-card`'s `overflow: hidden` instead of wrapping. `minmax(0,
+   * 1fr)` forces the track (and, transitively, its row) to actually
+   * respect the column width. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 5px 36px;
+}
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.shortcuts-what {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.shortcuts-key {
+  flex: none;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 1px 7px;
+  background: var(--bg);
+  white-space: nowrap;
+}
+/* Fix round 1: a grouped row's key badge is now ONE bordered box (design
+ * fidelity) holding several `shortcuts-key-part` spans -- one per
+ * underlying command, each individually testid/title-addressable (the
+ * per-key honesty contract) but visually just adjacent text inside the
+ * same box, matching the design's literal single "c r f" span exactly. */
+.shortcuts-key-part {
+  display: inline;
+}
+
+/* Visually hidden but present in `textContent` (and to assistive tech) --
+ * the disabled-reason text nested inside a `shortcuts-key-part`. Keeps a
+ * grouped row's VISIBLE shape identical to the design (which has no
+ * disabled state at all) while keeping "visibly disabled" true via the
+ * sibling `title` attribute (hover) and this text (screen reader / test).
+ * Standard clip technique, not `display:none` (which some assistive tech
+ * also skips). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Raw source -- design line 660. */
+.source-body {
+  margin: 0;
+  padding: 16px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Attachment preview -- design lines 632-645. */
+.attachment-preview-swatch {
+  height: 240px;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(45deg, var(--bg), var(--bg) 10px, var(--panel2) 10px, var(--panel2) 20px);
+}
+.attachment-type-badge {
+  font-size: 10.5px;
+  color: var(--faint);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 4px 10px;
+}
+.overlay-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line2);
+}
+.overlay-footer-fill {
+  flex: 1;
+}
+.overlay-footer-note {
+  font-size: 10px;
+  color: var(--faint);
+}
+.overlay-primary-btn {
+  font: inherit;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.overlay-primary-btn:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+.overlay-primary-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Move picker -- design lines 622-627. */
+.move-folder-list {
+  padding: 5px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.move-folder-row {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.move-folder-row:not(:disabled):hover {
+  background: var(--hover);
+}
+.move-folder-row:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.move-folder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  color: var(--faint);
+}
+.move-folder-name {
+  flex: 1;
+  font-size: 12.5px;
+}
+
+/* Context menu -- design lines 590-601. No scrim background (it's a
+ * click-away layer only, unlike the modal overlays above). */
+.contextmenu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+.contextmenu-card {
+  position: fixed;
+  width: 198px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px;
+  animation: pop 0.08s ease;
+}
+.contextmenu-divider {
+  height: 1px;
+  background: var(--line2);
+  margin: 4px 6px;
+}
+.contextmenu-item {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.contextmenu-item:not(:disabled):hover {
+  background: var(--hover);
+}
+.contextmenu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.contextmenu-item-label {
+  flex: 1;
+  font-size: 12.5px;
+}
+.contextmenu-item-label--danger {
+  color: var(--danger);
+}
+.contextmenu-item-hint {
+  font-size: 10px;
+  color: var(--faint);
+}
+
+/* Undo toast -- design lines 662-668. */
+.undo-toast {
+  position: fixed;
+  z-index: 85;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 3px;
+  padding: 9px 14px;
+  animation: pop 0.12s ease;
+}
+.undo-toast-label {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.undo-toast-btn {
+  font: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 0;
+}
+.undo-toast-btn:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}
+.undo-toast-hint {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+/* Notification toasts -- design lines 670-688. */
+.notification-toast-layer {
+  position: fixed;
+  z-index: 80;
+  top: 14px;
+  right: 14px;
+  width: 340px;
+}
+.notification-toast {
+  cursor: pointer;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: 3px;
+  animation: pop 0.14s ease;
+  padding: 10px 12px;
+}
+.notification-toast:hover {
+  border-color: var(--faint);
+}
+.notification-toast-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.notification-toast-from {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notification-toast-code {
+  flex: none;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.notification-toast-dismiss {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 0 0 0 2px;
+  line-height: 1;
+}
+.notification-toast-subject {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notification-toast-snippet {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notification-toast-bottom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+/* Design-fidelity Pass B finding 5 -- Reply/Archive, disabled (see
+ * `NotificationToast`'s doc comment). Sized/bordered like the design's
+ * own pair (ref-1440-light-inbox.png), not copied from a differently-
+ * proportioned button elsewhere in the app. */
+.notification-toast-action {
+  font: inherit;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  /* F8 (design-fidelity Pass D): Wilco.dc.html's `n.reply`/`n.archive`
+   * buttons (line ~741) are `border-radius:2px`; the `padding:4px 10px`
+   * vs the design's `3px 10px` (and the resulting 24-vs-22px height) was
+   * already deferred by an earlier pass -- only the radius was left. */
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink);
+  font-size: 11px;
+  cursor: not-allowed;
+}
+/* F9 (design-fidelity Pass D): opacity-dim rather than recolor -- see
+ * `.reading-act:disabled`'s comment for why. */
+.notification-toast-action:disabled {
+  opacity: 0.5;
+}
+.notification-toast-fill {
+  flex: 1;
+}
+.notification-toast-via {
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+/* Compose send failure. Sits in the footer beside Send; the window stays
+ * open when this shows, so the draft is never lost to a failed send. */
+.compose-send-error {
+  color: var(--danger);
+  font-size: 11px;
+  margin-right: 10px;
+}
+
+/* Handoff v1.1 #3: three variants of one chip geometry (mono 11px,
+   radius 3). A chip that looked identical while its upload was in flight
+   would read as attached when it is not. */
+.compose-attachment-chip--uploading {
+  border-style: dashed;
+  color: var(--muted);
+}
+@keyframes wilco-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.compose-attachment-spinner {
+  display: inline-block;
+  color: var(--accent);
+  animation: wilco-spin 1.1s linear infinite;
+}
+.compose-attachment-chip--failed {
+  border-color: #cf222e;
+  color: #cf222e;
+}
+.compose-attachment-retry {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #cf222e;
+  font-size: 11px;
+  padding: 0;
+  line-height: 1;
+  font-weight: 700;
+}
+
+
+/* Handoff v1.1 #6. The preview section: label, inset frame, then a status
+   row with the save button pushed right. */
+.settings-signature-preview {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line2);
+}
+.settings-signature-preview-label {
+  font-size: 9.5px;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+/* Plain-text mode is frameless (v1.1 #5). */
+.settings-signature-preview-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: var(--muted);
+}
+.settings-signature-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.settings-signature-spacer {
+  flex: 1;
+}
+.settings-signature-status {
+  font-size: 10.5px;
+  color: var(--faint);
+}
+/* v1.1 #6: dirty status is #c9903a, the same amber as the star/flag. */
+.settings-signature-status--dirty {
+  color: #c9903a;
+}
+/* v1.1 #6: "[Save signature] button (accent fill when dirty; bordered
+   --faint ghost when clean)". 🚨 These two classes were applied by the
+   markup and asserted by tests from the day the editor shipped, and had no
+   rule here -- the button rendered as the browser's default grey box with
+   a black border (row 38, found from the owner's screenshot). The same
+   ghost styling dresses the "Edit HTML in Fastmail" link. */
+.settings-signature-save {
+  display: inline-block;
+  padding: 5px 14px;
+  border: 1px solid var(--faint);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: normal;
+  text-decoration: none;
+  cursor: pointer;
+}
+.settings-signature-save:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.settings-signature-save--dirty {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.settings-signature-save--dirty:hover {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.settings-signature-save:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* The signature format picker. The disabled `SegPickerDisabled` used
+   elsewhere is a different component; this one is live. */
+.settings-segpicker {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.settings-seg {
+  padding: 3px 10px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.settings-seg--active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.settings-seg:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Handoff v1.1 #1. Mono 9.5px --faint, bare number, no parentheses or pill.
+   `flex: none` so it never squeezes the sender or the subject. */
+.msg-row-thread-count {
+  flex: none;
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+/* v1.1 #4: --muted while saving, --faint otherwise. */
+.compose-saved-note--saving {
+  color: var(--muted);
+}
+
+/* Handoff v1.1 #2: body-pipeline notices are full-width strips INSIDE the
+   message card -- mono 10.5px on --panel2, hairline dividers -- not
+   floating rows around the frame. The blocked strip divides the header
+   from the body; the truncation strip sits under the body. */
+.body-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 18px;
+  background: var(--panel2);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.body-strip--top {
+  border-bottom: 1px solid var(--line2);
+}
+.body-strip--bottom {
+  border-top: 1px solid var(--line2);
+}
+.body-strip-text {
+  flex: 1;
+  min-width: 0;
+}
+.body-strip-text--done {
+  color: var(--faint);
+}
+/* The bordered action: --panel ground so it reads as a control against the
+   --panel2 strip. */
+.body-strip-btn {
+  flex: none;
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.body-strip-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.body-strip-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+/* The borderless secondary action. */
+.body-strip-link {
+  flex: none;
+  padding: 2px 4px;
+  border: none;
+  background: none;
+  color: var(--faint);
+  font: inherit;
+  cursor: pointer;
+}
+.body-strip-link:hover {
+  color: var(--muted);
+}
+
+/* v1.1 #2: the content-type badge is the formatted/plaintext toggle when
+   the message HAS both; inert with a default cursor when it does not. */
+.reading-card-chip--toggle {
+  cursor: pointer;
+}
+.reading-card-chip--toggle:hover {
+  border-color: var(--faint);
+}
+.reading-card-chip:disabled {
+  cursor: default;
+}
+
+/* Row 34: the account order controls on the Settings account cards. */
+.settings-account-move { display: inline-flex; flex-direction: column; gap: 2px; margin-right: 8px; }
+.settings-account-move-btn { font: inherit; font-size: 11px; line-height: 1; padding: 2px 5px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel); color: var(--muted); cursor: pointer; }
+.settings-account-move-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* Row 33: the print document (PrintView.tsx). Serif, one column, no chrome;
+ * the body frame grows to its content so the dialog gets all of it. */
+.print-view { max-width: 720px; margin: 0 auto; padding: 32px 24px; color: #111; background: #fff; font-size: 14px; line-height: 1.5; }
+.print-subject { font-size: 22px; font-weight: 600; margin: 0 0 12px; }
+.print-meta { border-collapse: collapse; margin: 0 0 20px; font-size: 13px; }
+.print-meta th { text-align: left; font-weight: 600; padding: 2px 12px 2px 0; vertical-align: top; white-space: nowrap; }
+.print-meta td { padding: 2px 0; }
+.print-body { white-space: pre-wrap; word-wrap: break-word; }
+.print-view .reading-body-frame { width: 100%; border: 0; }
+@media print { .print-view { max-width: none; padding: 0; } }
+
+/* ---------------------------------------------------------------------------
+ * RichEditor (HTML compose, owner rulings 2026-09-07). The composer's
+ * plain textarea and markdown bar are gone; this is Fastmail's bar over a
+ * contenteditable region. The compose card's own frame, fields and footer
+ * are unchanged.
+ * ------------------------------------------------------------------------- */
+.rich-editor-wrap {
+  display: flex;
+  flex-direction: column;
+  /* Grows with its content and never shrinks (row 47): the body wrapper
+     around it scrolls; the editor must not hide its own overflow. */
+  flex: 1 0 auto;
+}
+.rich-toolbar {
+  flex-wrap: wrap;
+  gap: 1px;
+}
+.rich-toolbar-btn {
+  width: 26px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rich-toolbar-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 5px;
+  background: var(--line);
+}
+.rich-toolbar-font {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+}
+.rich-toolbar-select {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 3px;
+  max-width: 110px;
+}
+.rich-toolbar-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.rich-editor {
+  min-height: 180px;
+  padding: 14px 20px 24px;
+  outline: none;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.rich-editor:empty::before,
+.rich-editor[data-placeholder]:has(> p:only-child > br:only-child)::before {
+  content: attr(data-placeholder);
+  color: var(--faint);
+  pointer-events: none;
+  position: absolute;
+}
+.rich-editor p {
+  margin: 0;
+}
+.rich-editor img {
+  max-width: 100%;
+  height: auto;
+}
+.rich-editor blockquote {
+  margin: 0 0 0 0.8ex;
+  border-left: 2px solid var(--line);
+  padding-left: 1ex;
+  color: var(--muted);
+}
+.rich-editor a {
+  color: var(--accent);
+}
+.rich-editor [data-wilco-signature] {
+  margin-top: 4px;
+}
+
+/* The quoted original in a reply (QuotePanel): the same sandboxed frame
+   as the reading pane, read-only, sized by its own resize report. */
+.compose-quote-panel {
+  padding: 0 0 6px;
+}
+.compose-quote-frame {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line2);
+  border-radius: 3px;
+  background: var(--bg);
+  color-scheme: light;
+}
+
+/* Row 43: nested custom folders. A row is the folder button plus, for a
+   parent, a fold chevron beside it (a button inside a button is not HTML,
+   so they are siblings). Depth indents the row; the button keeps its own
+   left padding so the icon column stays aligned per level. */
+.sidebar-folder-row {
+  display: flex;
+  align-items: center;
+}
+.sidebar-folder-row > .sidebar-folder {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-folder-chev {
+  flex: none;
+  width: 18px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 0;
+  margin-right: 4px;
+}
+.sidebar-folder-chev:hover {
+  background: var(--hover);
+  color: var(--muted);
+}
+
+/* Row 44: the quoted original lives IN the editor, editable, as one
+   blockquote (reply) or an inline block under a header (forward). The
+   blocked-image placeholder mirrors the body frame's. */
+.rich-editor [data-wilco-attribution] {
+  color: var(--muted);
+  margin-top: 10px;
+}
+.rich-editor blockquote[data-wilco-quote] {
+  margin: 4px 0 0 0.8ex;
+  border-left: 2px solid var(--accent);
+  padding-left: 1ex;
+  color: var(--ink);
+  background: var(--panel2);
+}
+.rich-editor div[data-wilco-quote] {
+  margin-top: 6px;
+}
+.rich-editor img[data-wilco-blocked] {
+  min-width: 16px;
+  min-height: 16px;
+  background: rgba(127, 127, 127, 0.1);
+  border: 1px dashed rgba(127, 127, 127, 0.35);
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+/* Row 46: toolbar polish -- the colour grid, the link popover, the More
+   menu for a narrow pane. Popovers anchor to the toolbar. */
+.rich-toolbar {
+  position: relative;
+}
+.rich-toolbar-more {
+  width: auto;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.rich-popover {
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  z-index: 30;
+  margin-top: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+}
+.rich-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 22px);
+  gap: 4px;
+}
+.rich-swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+}
+.rich-swatch:hover {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.rich-link {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rich-link-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.rich-link-input {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.rich-link-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.rich-link-add,
+.rich-link-cancel {
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.rich-link-add {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+}
+.rich-link-cancel {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--faint);
+}
+.rich-more-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 4px;
+}
+.rich-more-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+}
+.rich-more-item:hover {
+  background: var(--hover);
+}
+
+/* -- Attachment viewer (2026-09-08): a raster image, shown at its size within the card -- */
+.attachment-preview-image {
+  display: flex; align-items: center; justify-content: center;
+  max-height: 70vh; overflow: auto;
+  background: var(--panel2);
+  padding: 12px;
+}
+.attachment-preview-image img {
+  max-width: 100%; max-height: calc(70vh - 24px); object-fit: contain;
+  border-radius: var(--radius-sm, 2px);
+}

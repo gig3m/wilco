@@ -1,0 +1,73 @@
+# Wilco -- one instance. Every site-specific value comes from .env
+# (see .env.example). Maintainers add docker-compose.harness.yml through
+# COMPOSE_FILE in their .env; users never need it.
+services:
+  wilco:
+    build:
+      context: .
+    image: ${WILCO_IMAGE:-wilco:local}
+    container_name: wilco
+    restart: unless-stopped
+    ports:
+      - "${WILCO_BIND:-127.0.0.1}:${WILCO_HOST_PORT:-8794}:8794"
+    environment:
+      TZ: ${TZ:-UTC}
+      WILCO_DB_PATH: /data/wilco.db
+      WILCO_BLOB_DIR: /data/blobs
+      WILCO_PORT: "8794"
+      WILCO_BASE_URL: ${WILCO_BASE_URL:?set WILCO_BASE_URL in .env (https://mail.example.com)}
+      WILCO_BODY_BASE_URL: ${WILCO_BODY_BASE_URL:?set WILCO_BODY_BASE_URL in .env (a DIFFERENT https origin)}
+      # Ruling H5: the master secret is supplied by FILE, never by .env. An
+      # env var is readable from `docker inspect` and /proc/1/environ and
+      # lands in crash dumps. Lose this file and every sealed credential is
+      # unreadable -- recovery is re-entering the JMAP tokens, not restoring.
+      WILCO_MASTER_KEY_FILE: /run/secrets/wilco-master-key
+      # Accounts and credentials live in the database (spec 8.6), sealed with
+      # the master key above -- see INSTALL.md for adding an account and for
+      # what secrets/master-key protects.
+      WILCO_CREDENTIAL_STORE: db
+    env_file:
+      - .env
+    volumes:
+      - wilco-data:/data
+      - ${WILCO_MASTER_KEY_PATH:-./secrets/master-key}:/run/secrets/wilco-master-key:ro
+    command: ["node", "src/server/main.ts"]
+
+  # The server test runner. A SEPARATE service on purpose (final-review fix
+  # 4): `npm run test:docker` used to run inside the `wilco` service itself,
+  # which mounts the live `wilco-data` volume READ-WRITE and supplies
+  # WILCO_DB_PATH=/data/wilco.db. The only thing standing between the test
+  # suite and the live archive was that no test happens to read
+  # process.env for a db path -- and node 26 is unavailable on the host, so
+  # the container is not a rarely-used path, it is THE path.
+  #
+  # This service mounts no named volume at all: /scratch is a tmpfs that dies
+  # with the container, and WILCO_DB_PATH points into it. Verify with
+  # `docker compose config wilco-test` -- `wilco-data` must not appear.
+  wilco-test:
+    profiles: ["test"]
+    build:
+      context: .
+    image: ${WILCO_IMAGE:-wilco:local}
+    environment:
+      TZ: ${TZ:-UTC}
+      WILCO_DB_PATH: /scratch/wilco-test.db
+      WILCO_BLOB_DIR: /scratch/blobs
+    tmpfs:
+      - /scratch
+    volumes:
+      - ./test:/app/test:ro
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+    entrypoint: ["node"]
+    # 🚨 A GLOB, not the `test/` directory. On Node 22.23 `node --test test/`
+    # no longer treats the positional as a directory to search -- it tries to
+    # LOAD it as a module, fails with MODULE_NOT_FOUND, and exits 1 having run
+    # zero of the 577 tests while printing a plausible-looking `# fail 1`.
+    # Found in the audit (pass 1) after `npm test` "failed" against an
+    # untouched server tree. Node expands this pattern itself, so the exec
+    # form (no shell) is correct.
+    command: ["--test", "test/*.test.ts"]
+
+volumes:
+  wilco-data:

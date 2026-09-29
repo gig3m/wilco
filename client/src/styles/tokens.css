@@ -1,0 +1,302 @@
+/* Design tokens. Verified against the binding design source,
+ * docs/design/Wilco.dc.html's own <style> block -- see tokens.test.ts. */
+:root {
+  --bg: #f3f4f5;
+  --panel: #ffffff;
+  --panel2: #fafbfb;
+  --ink: #191b1e;
+  --muted: #5f666e;
+  --faint: #959ba3;
+  --line: #dde0e3;
+  --line2: #eaecee;
+  --accent: #5b6ee0;
+  --accent-ink: #ffffff;
+  --hover: #eef0f2;
+  --sel: #e8eafa;
+  --scrim: rgba(18, 20, 24, 0.36);
+  --flag: #c9903a;
+  --danger: #cf222e;
+  --success: #2a9d6e;
+
+  /* Radii: deliberately squared, no pill shapes. */
+  --radius-sm: 2px; /* chips, kbd */
+  --radius-md: 3px; /* buttons, inputs, rows */
+  /* 5px in the design is modal dialogs (Compose, the account-editor sheet)
+   * and the scrollbar thumb specifically; the design's own account/settings
+   * CARDS use a plain 4px inline, not this token -- verified by counting
+   * every literal `border-radius:` in Wilco.dc.html (29 uses of 4px vs. 3
+   * of 5px). Keep --radius-lg for the two modals; a card stays 4px inline
+   * to match the design exactly rather than being folded into one token
+   * the design itself does not use consistently. */
+  --radius-lg: 5px; /* modals */
+
+  /* F12 (design-fidelity Pass D): fallback stack matches Wilco.dc.html
+   * line 17's literal `font-family:'IBM Plex Sans',Helvetica,Arial,
+   * sans-serif` exactly. The primary face is self-hosted and always
+   * loads, so the fallback almost never renders in practice -- fixed
+   * anyway for a literal transcription match, per the design-fidelity
+   * review. */
+  --font-sans: "IBM Plex Sans", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/*
+ * The OS setting must theme the app when the user has made no explicit
+ * choice. Only `[data-theme="dark"]` existed, which is set by the in-app
+ * toggle, so a browser asking for dark got the LIGHT palette until someone
+ * clicked the toggle -- and a fresh profile always rendered light. Guarded
+ * with :not([data-theme="light"]) so an explicit light choice still wins
+ * over a dark OS. Values are identical to the block above by construction.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121316;
+    --panel: #1a1c1f;
+    --panel2: #16171a;
+    --ink: #e6e8ea;
+    --muted: #9aa0a7;
+    --faint: #686e75;
+    --line: #2b2e32;
+    --line2: #222428;
+    --accent: #7b8cf0;
+    --accent-ink: #141519;
+    --hover: #222428;
+    --sel: #262a3c;
+    --scrim: rgba(0, 0, 0, 0.55);
+    --flag: #c9903a;
+    --danger: #cf5f5f;
+    --success: #2a9d6e;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #121316;
+  --panel: #1a1c1f;
+  --panel2: #16171a;
+  --ink: #e6e8ea;
+  --muted: #9aa0a7;
+  --faint: #686e75;
+  --line: #2b2e32;
+  --line2: #222428;
+  --accent: #7b8cf0;
+  --accent-ink: #141519;
+  --hover: #222428;
+  --sel: #262a3c;
+  --scrim: rgba(0, 0, 0, 0.55);
+  --flag: #c9903a;
+  --danger: #cf5f5f;
+  --success: #2a9d6e;
+}
+
+/*
+ * Self-hosted fonts (deliberately: no
+ * fonts.googleapis.com -- a webfont fetched from a third party is an
+ * outbound request per session from a mail client, against the grain of
+ * everything else this box does). Files vendored into
+ * client/public/fonts/, served by Vite/serveStatic from /fonts/ at runtime.
+ * Local fallback stack (system sans / system mono) covers the gap if a font
+ * file ever fails to load.
+ */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Design-fidelity Pass B round 2: no 700 face was ever vendored, so
+ * `font-weight: 700` (reading subjects, row subjects, Undo, both <h1>s)
+ * was resolving to browser SYNTHETIC bold on top of the 600 (SemiBold)
+ * face -- indistinguishable in width from real 600 (both measured
+ * 329.20px in the reviewer's probe), i.e. faux-bold, not the design's
+ * actual Bold weight. */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("/fonts/IBMPlexSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/IBMPlexMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Animations: brief and functional, no decorative motion. */
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Layout and density (Task 11).
+ *
+ * Tasks 5-10 built each screen's STRUCTURE and its inline sizing (widths the
+ * shell owns and a test can read back off the DOM -- see Panes.tsx), but
+ * nothing ever gave the app its bones: panes did not scroll, so the page
+ * itself grew and the sidebar ran off the bottom of the viewport, and a list
+ * row's spans wrapped and then clipped at the pane edge, making a row ~140px
+ * tall with its subject and preview cut off mid-word. Both were invisible to
+ * every test (happy-dom applies no stylesheet and runs no layout engine) and
+ * obvious in the first screenshot.
+ *
+ * Selectors hang off `data-testid` because the components below `App` carry
+ * no class names yet. That is deliberate for now -- it adds no risk to the
+ * component tests, which is what makes this a safe late fix -- but a real
+ * design pass should give them classes and move these rules onto those.
+ * This is a legibility floor, not the DESIGN.md visual design.
+ * ------------------------------------------------------------------------- */
+
+body {
+  font-size: 13px;
+}
+
+/* The shell owns the viewport; the panes inside it scroll, not the page. */
+.app-shell {
+  overflow: hidden;
+}
+
+/* Sidebar styling lives in components.css as real classes now
+ * (design-fidelity Task 2, ruling P3: a test id is a test's contract with
+ * behavior, not a styling hook -- see that file's header comment).
+ * Deliberately not re-added here; Task 9 asserts none remain. */
+
+/* list-header, bulk-bar, empty, group-header-, row- (and its per-cell
+ * children), more and load-more all moved to components.css as real
+ * classes (design-fidelity Task 3, ruling P3 -- see that file's
+ * "MessageList" section). `[data-testid="list"]` itself, and every
+ * search-pane selector that lived here, moved the same way in
+ * design-fidelity Pass B (finding 7) -- see components.css's "Search"
+ * section. Deliberately not re-added here; Task 9 asserts none remain.
+ *
+ * Design-fidelity Pass B round 2 (finding 7 continued -- the reviewer's
+ * own triage of the 8 real hits left after round 1):
+ *   - `[data-testid="quoted-toggle"]` (was here) and
+ *     `[data-testid="reading-empty"]` (was below) were both DEAD -- the
+ *     real element's testid is `quote-toggle` (no "d"; a naming-drift
+ *     typo, not a migration gap) and already carries a real class
+ *     (`.reading-quote-toggle`), and `reading-empty`'s element already
+ *     carries `.reading-empty`, which already sets the same
+ *     `color: var(--faint)` this rule did. Deleted outright, nothing to
+ *     migrate.
+ *   - `[data-testid="reading"]`, `[data-testid="reading-subject"]`,
+ *     `[data-testid="divider-list"]`/`[data-testid="divider-row"]` were
+ *     LOAD-BEARING with no real-class equivalent -- moved to `.reading`
+ *     (components.css's Reading section) and `.divider`
+ *     (components.css, Panes.tsx's `Divider` component, which had NO
+ *     class at all: renaming either test id would have made the resizer
+ *     invisible with every test still green, exactly the dual-contract
+ *     hazard ruling P3 exists to prevent).
+ *   - `[data-testid="reading"]`'s own `padding:18px 22px` was also a
+ *     real, separate bug (Pass B finding, reading-pane inset): the
+ *     design's outer reading `<main>` (Wilco.dc.html line 365) has NO
+ *     padding at all -- only its header (`.reading-header`, `padding:11px
+ *     20px`, already correct) and its conversation scroll area
+ *     (`.reading-conversation`, `padding:18px 20px 40px`, already
+ *     correct) do. This rule's padding was pure extra, stacking on top
+ *     of both and insetting every message +22px left / +18px top of the
+ *     design. Not carried into `.reading` -- see that class instead.
+ *   - `[data-testid="body"]`/`[data-testid="html-notice"]` (exact-match
+ *     selectors) matched only the FIRST message's testid (`body`/
+ *     `html-notice`, no suffix) -- every later message gets a suffixed
+ *     testid (`body-1`, `body-2`, ...) that an exact-match attribute
+ *     selector can never match. Both already have real classes
+ *     (`.reading-body`/`.reading-html-notice`, applied to EVERY
+ *     message), so message 1 was picking up extra/conflicting rules
+ *     (`margin-top:14px`+`max-width:78ch` on top of the real class's
+ *     `padding:14px 18px`+`max-width:640px`; a border+background box on
+ *     top of the real class's plain faint text) that messages 2+ never
+ *     got. Verified against the design (line 546: body div is exactly
+ *     `padding:14px 18px; ...; max-width:640px`, no margin-top, no
+ *     `78ch`) -- the real class was already correct; deleting these
+ *     rules makes message 1 match every message after it, not the
+ *     reverse.
+ *
+ * `.reading`/`.reading-subject`/`.divider` are the real classes those
+ * four selectors moved to -- defined in components.css (Reading's own
+ * section, and a new "Panes" section for the divider), not here. */
+
+/* Overlays: the palette and the shortcut sheet are dialogs. Both used to
+ * hang their entire layout off `[data-testid="palette*"]`/
+ * `[data-testid="shortcuts*"]` selectors here; the shortcuts overlay
+ * moved to real classes in an earlier task (`.overlay-scrim`/
+ * `.overlay-card-shortcuts`, components.css) but this legacy block was
+ * never deleted, so BOTH styling systems applied at once. The stray
+ * `[data-testid="shortcuts-overlay"] > *:not([data-testid="shortcuts-
+ * scrim"])` rule below set `width: min(560px, 100%)` on the shortcuts
+ * card's `overlay-card` div at specificity (0,2,0), beating
+ * `.overlay-card-shortcuts`'s real `width: 620px` (0,1,0) -- the actual
+ * cause of design-fidelity Pass B finding 1 (the shortcuts overlay
+ * visibly overflowing/colliding), not the card's own CSS, which was
+ * already correct. The palette (`Palette.tsx`) had never been migrated
+ * at all; it now has real classes too (`.palette-*`, components.css).
+ * Removed entirely 2026-09-04 (design-fidelity Pass B, finding 7 /
+ * ruling P3); Task 9 asserts none remain. */
