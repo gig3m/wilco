@@ -77,7 +77,7 @@ A run exits non-zero on any red or unbuilt row.
 ## The test accounts
 
 `test-a` and `test-b` are ordinary Wilco accounts (tokens in `keys` as
-`WILCO_TEST_A`/`WILCO_TEST_B`). **They are the only accounts the harness may
+`FASTMAIL_TESTA_WILCO_TOKEN`/`FASTMAIL_TESTB_WILCO_TOKEN`). **They are the only accounts the harness may
 write to**, enforced in `lib.py` (`guard_write`, and every mutating API call)
 and `jmap.py` (every write, and construction itself). A violation aborts the
 run.
@@ -121,6 +121,6 @@ No Playwright on the host and none needed: the checks run in
 `--build-runner`), which carries Chromium. Secrets come from `keys exec` when
 the `keys` CLI is present, and never touch disk or the terminal.
 
-Without the `keys` CLI, export `WILCO_LOGIN_PASSWORD`, `WILCO_TEST_A` and
-`WILCO_TEST_B` yourself (the tokens of two JMAP accounts you own and can
+Without the `keys` CLI, export `WILCO_KYLE_PASSWORD`, `FASTMAIL_TESTA_WILCO_TOKEN` and
+`FASTMAIL_TESTB_WILCO_TOKEN` yourself (the tokens of two JMAP accounts you own and can
 wipe).

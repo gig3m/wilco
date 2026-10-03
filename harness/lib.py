@@ -20,7 +20,7 @@ BODY_ORIGIN = os.environ.get("WILCO_BODY_BASE", "https://wilcotestbody.example.c
 # went red on the harness instance for a download the browser had aborted).
 BODY_HOST = re.escape(BODY_ORIGIN.split("//", 1)[-1])
 APP_HOST = re.escape(BASE.split("//", 1)[-1])
-PASSWORD = os.environ["WILCO_LOGIN_PASSWORD"]
+PASSWORD = os.environ["WILCO_KYLE_PASSWORD"]
 OUT = os.environ.get("WILCO_HARNESS_OUT", "/out")
 
 # The ONLY accounts a check may change. Spec: "Dedicated accounts".

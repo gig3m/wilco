@@ -254,5 +254,5 @@ class Jmap:
 
 
 def jmaps() -> dict[str, Jmap]:
-    return {"test-a": Jmap("test-a", os.environ["WILCO_TEST_A"]),
-            "test-b": Jmap("test-b", os.environ["WILCO_TEST_B"])}
+    return {"test-a": Jmap("test-a", os.environ["FASTMAIL_TESTA_WILCO_TOKEN"]),
+            "test-b": Jmap("test-b", os.environ["FASTMAIL_TESTB_WILCO_TOKEN"])}

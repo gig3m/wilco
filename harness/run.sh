@@ -60,7 +60,7 @@ fi
 # Secrets: the login password and the two TEST-account tokens. From the keys
 # service when its CLI is present (never written to disk); otherwise they
 # must already be in the environment (a contributor's own accounts).
-need=(WILCO_LOGIN_PASSWORD WILCO_TEST_A WILCO_TEST_B)
+need=(WILCO_KYLE_PASSWORD FASTMAIL_TESTA_WILCO_TOKEN FASTMAIL_TESTB_WILCO_TOKEN)
 if command -v keys >/dev/null 2>&1; then
   inject=(keys exec "${need[@]}" --)
 else
@@ -70,7 +70,7 @@ fi
 
 exec flock -w 3600 "$lock" "${inject[@]}" sh -c '
   docker run --rm --network host --memory=4g --memory-swap=4g \
-    -e WILCO_LOGIN_PASSWORD -e WILCO_TEST_A -e WILCO_TEST_B \
+    -e WILCO_KYLE_PASSWORD -e FASTMAIL_TESTA_WILCO_TOKEN -e FASTMAIL_TESTB_WILCO_TOKEN \
     -e WILCO_BASE -e WILCO_BODY_BASE \
     -e WILCO_HARNESS_OUT=/out \
     -v "'"$here"':/h:ro" -w /h \

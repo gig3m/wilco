@@ -2497,7 +2497,7 @@ def check_62(c: Ctx) -> None:
     """
     r = c.run
     r.guard_write(["test-b"])
-    token = os.environ["WILCO_TEST_B"]
+    token = os.environ["FASTMAIL_TESTB_WILCO_TOKEN"]
     before = {a["key"]: a for a in r.api_get("/api/accounts")}
     spec = before.get("test-b")
     expect(spec is not None, "test-b is not configured on this instance; row 62 removes and re-adds it")
