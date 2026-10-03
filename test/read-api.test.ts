@@ -12,6 +12,7 @@ import { JmapClient } from "../src/core/client.ts";
 import { resolveSession } from "../src/core/session.ts";
 import { personalSession } from "./fixtures/session.ts";
 import { tempDbPath } from "./tmpdir.ts";
+import { AddressBook } from "../src/core/addressbook.ts";
 
 const ORIGIN = "https://mail.example.com";
 
@@ -87,7 +88,7 @@ function assignMailbox(db: DatabaseSync, account: string, emailId: string, mailb
  */
 async function withApp(
   fn: (base: string, db: DatabaseSync) => Promise<void>,
-  extra: { clients?: Map<string, JmapClient>; fetchFn?: (url: string, init?: RequestInit) => Promise<Response> } = {},
+  extra: { clients?: Map<string, JmapClient>; fetchFn?: (url: string, init?: RequestInit) => Promise<Response>; book?: AddressBook } = {},
 ): Promise<void> {
   const db = tempDb();
   addAccount(db, PERSONAL);
@@ -1026,28 +1027,130 @@ test("🚨 the paperclip means a FILE — not an inline image, not an AMP body",
   });
 });
 
-test("row 23: POST /api/contacts suggests an account's correspondents; the query never rides a URL", async () => {
+test("row 23: POST /api/contacts offers the UNIFIED address book; the query never rides a URL", async () => {
   await withSession(async (base, cookie, db) => {
     db.prepare(`UPDATE emails SET from_email = 'dana@example.com', from_name = 'Dana' WHERE account = 'personal' AND id = 'M1'`).run();
+    insertEmail(db, { account: "work", id: "W9", receivedAt: "2026-08-30T00:00:00Z", subject: "hi" });
+    db.prepare(`UPDATE emails SET from_email = 'danielle@work.example', from_name = 'Danielle' WHERE account = 'work' AND id = 'W9'`).run();
+
     const res = await fetch(`${base}/api/contacts`, {
       method: "POST",
       headers: { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" },
-      body: JSON.stringify({ account: "personal", q: "dan" }),
+      body: JSON.stringify({ q: "dan" }),
     });
     assert.equal(res.status, 200);
-    assert.deepEqual(await res.json(), { contacts: [{ name: "Dana", email: "dana@example.com" }] });
-
-    const other = await fetch(`${base}/api/contacts`, {
-      method: "POST",
-      headers: { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" },
-      body: JSON.stringify({ account: "work", q: "dan" }),
-    });
-    assert.deepEqual(await other.json(), { contacts: [] }, "another account's correspondents are not offered");
+    const got = (await res.json()) as { contacts: { name: string; email: string; accounts: string[] }[] };
+    assert.deepEqual(
+      got.contacts.map((c) => c.email).sort(),
+      ["dana@example.com", "danielle@work.example"],
+      "🚨 no account is asked for and none is needed -- both accounts' correspondents are offered",
+    );
+    assert.deepEqual(got.contacts.find((c) => c.email === "danielle@work.example")?.accounts, ["work"], "the row names the account that knows them");
 
     const get = await fetch(`${base}/api/contacts?q=dan`, { headers: { cookie } });
     assert.equal(get.status, 405, "GET /api/contacts is not a route -- a fragment on the URL would land in the proxy log");
     const anon = await fetch(`${base}/api/contacts`, { method: "POST" });
     assert.equal(anon.status, 401);
+  });
+});
+
+/** A client that answers Identity/get with one primary identity and nothing
+ *  else.
+ *
+ *  🚨 The identity cache in send-api.ts is per account FOR THE LIFE OF THE
+ *  PROCESS, and every test in this file shares that process. So `personal`
+ *  must be row 31's identity exactly -- same address AND same name. The first
+ *  version used the name "Me", and row 31 then sent its unsubscribe mail as
+ *  "Me" whenever this test happened to run first. */
+function identityClient(email: string, displayName: string): JmapClient {
+  return new JmapClient(resolveSession("personal", personalSession), "t", async (_u, init) => {
+    const calls = JSON.parse(init!.body as string).methodCalls as [string, Record<string, unknown>, string][];
+    const responses = calls.map(([method, _args, tag]) =>
+      method === "Identity/get" ? ["Identity/get", { list: [{ id: "ID1", name: displayName, email, mayDelete: false }] }, tag] : [method, {}, tag],
+    );
+    return new Response(JSON.stringify({ methodResponses: responses }), { status: 200, headers: { "content-type": "application/json" } });
+  });
+}
+
+test("🚨 /api/contacts excludes only the SENDING account's own addresses; your other accounts stay addressable", async () => {
+  // Owner ruling 2026-10-03, after board row 23 went red: excluding EVERY
+  // account's identities meant composing from work could never suggest the
+  // owner's personal address -- and writing from one of your accounts to
+  // another is an ordinary thing to do.
+  const clients = new Map([
+    ["personal", identityClient("robin@example.test", "Robin")],
+    ["work", identityClient("me@work.example", "Me")],
+  ]);
+  await withSession(
+    async (base, cookie, db) => {
+      db.prepare(`UPDATE emails SET from_email = 'robin@example.test' WHERE account = 'personal' AND id = 'M1'`).run();
+      db.prepare(`UPDATE emails SET from_email = 'me@work.example' WHERE account = 'work' AND id = 'M4'`).run();
+      const H = { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" };
+      const ask = async (body: object) =>
+        ((await (await fetch(`${base}/api/contacts`, { method: "POST", headers: H, body: JSON.stringify(body) })).json()) as {
+          contacts: { email: string }[];
+        }).contacts.map((c) => c.email).sort();
+
+      assert.deepEqual(await ask({ q: "example", from: "personal" }), ["me@work.example"], "sending from personal: personal's own address is dropped, work's is offered");
+      assert.deepEqual(await ask({ q: "example", from: "work" }), ["robin@example.test"], "and the mirror image from work");
+      assert.deepEqual(await ask({ q: "example" }), ["me@work.example", "robin@example.test"], "no sender named, nothing to exclude");
+    },
+    { clients },
+  );
+});
+
+test("🚨 the contact routes serve from the ONE injected book, so they do not re-aggregate the archive per request", async () => {
+  // Building the book is a full aggregate over every contact event, which
+  // cost 175ms on the owner's archive (see core/addressbook.ts). The route
+  // must take the long-lived instance boot hands it; building its own per
+  // request would put that cost back on every keystroke.
+  const book = new AddressBook(openDb(tempDbPath()), { ttlMs: 1 });
+  await withSession(
+    async (base, cookie, db) => {
+      db.prepare(`UPDATE emails SET from_email = 'dana@example.com', from_name = 'Dana' WHERE account = 'personal' AND id = 'M1'`).run();
+      const H = { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" };
+      const got = (await (
+        await fetch(`${base}/api/contacts`, { method: "POST", headers: H, body: JSON.stringify({ q: "dan" }) })
+      ).json()) as { contacts: unknown[] };
+      assert.deepEqual(
+        got.contacts,
+        [],
+        "the injected book was built over a DIFFERENT, empty database -- an empty answer is the proof it was used",
+      );
+    },
+    { book },
+  );
+});
+
+test("POST /api/contacts/habits names the accounts each address has been written to from, and never rides a URL", async () => {
+  await withSession(async (base, cookie, db) => {
+    db.prepare(`INSERT INTO mailboxes (account, id, name, role, parent_id, sort_order, total_emails, unread_emails) VALUES ('personal','P-SENT2','Sent','sent',NULL,3,0,0)`).run();
+    insertEmail(db, { account: "personal", id: "S9", receivedAt: "2026-08-01T00:00:00Z", subject: "hello" });
+    assignMailbox(db, "personal", "S9", "P-SENT2");
+    insertRecipient(db, { account: "personal", emailId: "S9", kind: "to", email: "Jordan@Example.com" });
+
+    const res = await fetch(`${base}/api/contacts/habits`, {
+      method: "POST",
+      headers: { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" },
+      body: JSON.stringify({ emails: ["jordan@example.com", "stranger@example.com"] }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), {
+      habits: { "jordan@example.com": ["personal"], "stranger@example.com": [] },
+      },
+      "every requested address gets an answer; an empty list is 'no habit', which the note stays silent about",
+    );
+
+    const get = await fetch(`${base}/api/contacts/habits?emails=a@b.c`, { headers: { cookie } });
+    assert.equal(get.status, 405, "an address must never land in the proxy log");
+    const anon = await fetch(`${base}/api/contacts/habits`, { method: "POST" });
+    assert.equal(anon.status, 401);
+    const bad = await fetch(`${base}/api/contacts/habits`, {
+      method: "POST",
+      headers: { cookie, "content-type": "application/json", origin: ORIGIN, "x-wilco-csrf": "1" },
+      body: JSON.stringify({ emails: "jordan@example.com" }),
+    });
+    assert.equal(bad.status, 400, "emails must be a list");
   });
 });
 

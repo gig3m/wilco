@@ -765,10 +765,11 @@ export function getThread(db: DatabaseSync, account: string, threadId: string): 
 }
 
 // ---------------------------------------------------------------------------
-// Contact suggestions for compose (spec 7.5, CHECKLIST row 23).
+// "Written to" for the per-account notification switch (row 37). The
+// COMPOSE side of contacts moved to core/addressbook.ts on 2026-10-03: it
+// is held in memory because ranking correspondents is an aggregate over the
+// whole archive, which cost 175ms per keystroke as a query.
 // ---------------------------------------------------------------------------
-
-export const CONTACT_SUGGESTION_LIMIT = 8;
 
 /** Whether the account has ever WRITTEN to `email`: it is a To/Cc of a
  *  message in the account's Sent folder. The definition behind the
@@ -785,67 +786,4 @@ export function writtenTo(db: DatabaseSync, account: string, email: string): boo
     )
     .get(account, email);
   return row !== undefined;
-}
-const CONTACT_RECENT_MS = 365 * 24 * 60 * 60 * 1000;
-
-export interface ContactSuggestion {
-  name: string;
-  email: string;
-}
-
-/**
- * Who to offer as the To field is typed: everyone who has written to this
- * account plus everyone it has written to (the cached recipients of its
- * own mail), one entry per address.
- *
- * Ranked `(seen within a year) DESC, times seen DESC, last seen DESC` --
- * frequency alone puts a newsletter's noreply@ at the top of every list,
- * and someone you exchanged three messages with last week beats a sender
- * from 2024 with forty. Matched `LIKE %q%` on email OR name, because
- * people search by surname. Needs two characters; capped at 8.
- *
- * `exclude` is the account's own addresses: Sent mail otherwise makes them
- * the most frequent "correspondents" by an order of magnitude.
- */
-export function suggestContacts(
-  db: DatabaseSync,
-  account: string,
-  q: string,
-  opts: { exclude: Set<string>; limit?: number; now?: () => number },
-): ContactSuggestion[] {
-  const fragment = q.trim();
-  if (fragment.length < 2) return [];
-  const limit = opts.limit ?? CONTACT_SUGGESTION_LIMIT;
-  const cutoff = new Date((opts.now ?? Date.now)() - CONTACT_RECENT_MS).toISOString();
-  // A LIKE wildcard typed by the user is a character, never a match-all.
-  const like = `%${fragment.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
-  const rows = db
-    .prepare(
-      `WITH seen AS (
-         SELECT lower(from_email) AS email, from_name AS name, received_at
-           FROM emails WHERE account = ? AND from_email <> ''
-         UNION ALL
-         SELECT lower(r.email) AS email, r.name AS name, e.received_at
-           FROM email_recipients r JOIN emails e ON e.account = r.account AND e.id = r.email_id
-          WHERE r.account = ? AND r.kind IN ('to', 'cc') AND r.email <> ''
-       ),
-       people AS (
-         SELECT email,
-                MAX(CASE WHEN name <> '' THEN name ELSE NULL END) AS name,
-                COUNT(*) AS n,
-                MAX(received_at) AS last_seen
-           FROM seen GROUP BY email
-       )
-       SELECT email, COALESCE(name, '') AS name
-         FROM people
-        WHERE (email LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\')
-        ORDER BY (last_seen > ?) DESC, n DESC, last_seen DESC
-        LIMIT ?`,
-    )
-    .all(account, account, like, like, cutoff, limit + opts.exclude.size) as { email: string; name: string }[];
-  const own = new Set([...opts.exclude].map((e) => e.toLowerCase()));
-  return rows
-    .filter((r) => !own.has(r.email))
-    .slice(0, limit)
-    .map((r) => ({ name: r.name, email: r.email }));
 }

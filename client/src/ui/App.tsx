@@ -1949,7 +1949,8 @@ function fmtAddrs(list: { email: string; name: string | null }[]): string {
       }}
       onSend={sendDraft}
       onUpload={(account, file, onProgress) => api.uploadAttachment(account, file, onProgress)}
-      lookupContacts={(account, q) => api.contacts(account, q).then((r) => r.contacts)}
+      lookupContacts={(q, from) => api.contacts(q, from).then((r) => r.contacts)}
+      lookupHabits={(emails) => api.contactHabits(emails).then((r) => r.habits)}
       initialDraftId={resumedDraftId}
       // A resumed draft was saved when it was last written -- show that
       // time rather than a blank one (v1.1 #4).

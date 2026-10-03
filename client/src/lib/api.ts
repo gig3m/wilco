@@ -45,6 +45,16 @@ const CSRF_HEADER = "x-wilco-csrf";
 /** What `GET /api/accounts/:key/settings` returns. `settings` is sparse --
  *  an absent key means "not chosen", which is a different state from any
  *  particular value and must stay so (see core/settings.ts). */
+/** A To-field suggestion. `accounts` names the accounts that know the
+ *  address, most recent contact first -- the unified book shows the account
+ *  rather than requiring one. */
+export interface ContactSuggestion {
+  name: string;
+  email: string;
+  n: number;
+  accounts: string[];
+}
+
 export interface AccountSettings {
   settings: Record<string, string>;
   mailboxes: { id: string; name: string; role: string | null }[];
@@ -804,12 +814,23 @@ export function makeApi(fetchImpl: FetchImpl) {
         method: "POST",
       }),
 
-    /** To-field suggestions (row 23). POST: the fragment is a search term
-     *  and never rides a URL. */
-    contacts: (account: string, q: string): Promise<{ contacts: { name: string; email: string }[] }> =>
-      request<{ contacts: { name: string; email: string }[] }>("/api/contacts", {
+    /** To-field suggestions (row 23), across EVERY account -- the book is
+     *  unified (owner ruling 2026-10-03). `from` is the sending account, and
+     *  only its own addresses are left out. POST: the fragment is a search
+     *  term and never rides a URL. */
+    contacts: (q: string, from: string): Promise<{ contacts: ContactSuggestion[] }> =>
+      request<{ contacts: ContactSuggestion[] }>("/api/contacts", {
         method: "POST",
-        body: JSON.stringify({ account, q }),
+        body: JSON.stringify({ q, from }),
+      }),
+
+    /** Which accounts have ever written to each address, for the
+     *  composer's mismatch note. POST: a recipient's address must never
+     *  land in the proxy log. */
+    contactHabits: (emails: string[]): Promise<{ habits: Record<string, string[]> }> =>
+      request<{ habits: Record<string, string[]> }>("/api/contacts/habits", {
+        method: "POST",
+        body: JSON.stringify({ emails }),
       }),
 
     triage: (action: TriageAction, targets: TriageTarget[], scope?: TriageScope): Promise<TriageResult> =>

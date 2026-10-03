@@ -86,6 +86,10 @@ const CONTACT_LOOKUP_DEBOUNCE_MS = 150;
 export interface ComposeContact {
   name: string;
   email: string;
+  /** The accounts that know this address, most recent contact first. Shown
+   *  as accent dots: the book is unified, so the account is information,
+   *  never a precondition for finding someone. */
+  accounts?: string[];
 }
 
 export interface ComposeAttachment {
@@ -146,9 +150,21 @@ export interface ComposeProps {
    *  dropdown. */
   contacts?: ComposeContact[];
   /** Live lookup for the To field (row 23): asked, debounced, once the
-   *  fragment being typed reaches two characters, for the From account.
-   *  Results merge with any static `contacts`. */
-  lookupContacts?: (account: string, q: string) => Promise<ComposeContact[]>;
+   *  fragment being typed reaches two characters. Results merge with any
+   *  static `contacts`.
+   *
+   *  🚨 The book is UNIFIED (owner ruling 2026-10-03): `from` never narrows
+   *  who can be found -- that per-account scoping was the defect, and a
+   *  correspondent of another account simply could not be found. `from` is
+   *  passed only so the SENDING account's own addresses are left out. Your
+   *  other accounts stay addressable: writing from one to another is
+   *  ordinary, and excluding every account's addresses broke board row 23.
+   */
+  lookupContacts?: (q: string, from: string) => Promise<ComposeContact[]>;
+  /** Which accounts have ever written to each address, most recently used
+   *  first (`/api/contacts/habits`). Drives the mismatch note. An address
+   *  mapping to an empty list has no habit and is never remarked on. */
+  lookupHabits?: (emails: string[]) => Promise<Record<string, string[]>>;
   attachments?: ComposeAttachment[];
   onClose?: () => void;
   /** Sends the message. Omitted -> Send stays disabled with
@@ -228,6 +244,26 @@ function fromHeaderOf(identity: ComposeIdentity): string {
   return name === "" ? identity.email : `${name} <${identity.email}>`;
 }
 
+/**
+ * The bare addresses in a comma-separated recipient field, lowercased.
+ *
+ * Only ever used to ASK which accounts have written to someone -- the
+ * server does the real parsing on send. A token that is not an address
+ * yields nothing to ask about, which is the right answer while the user is
+ * still typing one.
+ */
+export function addressesIn(...fields: string[]): string[] {
+  const out: string[] = [];
+  for (const field of fields) {
+    for (const part of field.split(",")) {
+      const angle = /<([^>]+)>/.exec(part);
+      const candidate = (angle ? angle[1]! : part).trim().toLowerCase();
+      if (candidate.includes("@") && !candidate.includes(" ") && !out.includes(candidate)) out.push(candidate);
+    }
+  }
+  return out;
+}
+
 function fromOptionsFor(account: ComposeAccount): FromOption[] {
   const identities = account.identities ?? [];
   if (identities.length === 0) {
@@ -254,6 +290,7 @@ export function Compose({
   initialSubject,
   contacts,
   lookupContacts,
+  lookupHabits,
   attachments,
   onClose,
   onSend,
@@ -501,11 +538,14 @@ export function Compose({
     if (lookupContacts === undefined || !toFocused || toFragment.length < 2) return;
     const q = toFragment;
     const timer = setTimeout(() => {
-      void lookupContacts(accountKey, q)
+      void lookupContacts(q, accountKey)
         .then((items) => setRemote({ q, items }))
         .catch(() => setRemote({ q, items: [] }));
     }, CONTACT_LOOKUP_DEBOUNCE_MS);
     return () => clearTimeout(timer);
+    // `accountKey` IS a dependency, but only because the addresses left out
+    // are the sender's: switching From changes whose those are, never who
+    // can be found. The answer is cheap (core/addressbook.ts, under 1ms).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toFragment, toFocused, accountKey]);
   const fetched = remote.q === toFragment ? remote.items : [];
@@ -524,12 +564,151 @@ export function Compose({
       if (acItems.length === 8) break;
     }
   }
-  const acOpen = acItems.length > 0;
+  /**
+   * Which accounts have ever written to each recipient (`lookupHabits`).
+   * Asked for the addresses the fields actually hold, debounced, so a
+   * half-typed address is not asked about on every keystroke.
+   */
+  const [habits, setHabits] = useState<Record<string, string[]>>({});
+  const recipients = addressesIn(to, cc, bcc);
+  const recipientKey = recipients.join(",");
+  useEffect(() => {
+    if (lookupHabits === undefined || recipients.length === 0) return;
+    const timer = setTimeout(() => {
+      void lookupHabits(recipients)
+        .then((h) => setHabits((prev) => ({ ...prev, ...h })))
+        .catch(() => {});
+    }, CONTACT_LOOKUP_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipientKey]);
+
+  /**
+   * The mismatch note (owner ruling 2026-10-03): "you usually write to
+   * Jordan from Personal", with a switch.
+   *
+   * 🚨 SILENT unless a habit EXISTS and the selected account is not in it.
+   * An address no account has ever written to is a new correspondent, and
+   * remarking on every one of those is how a warning stops being read.
+   * Some people are legitimately written to from several accounts; those
+   * are a match, not a mismatch.
+   */
+  const mismatched = recipients.filter((a) => {
+    const used = habits[a];
+    return used !== undefined && used.length > 0 && !used.includes(accountKey);
+  });
+  // The habit to offer: the account the most of the mismatched recipients
+  // are written to from, preferring each one's most recent.
+  const habitTarget = ((): ComposeAccount | undefined => {
+    if (mismatched.length === 0) return undefined;
+    const tally = new Map<string, number>();
+    for (const a of mismatched) {
+      for (const used of habits[a] ?? []) tally.set(used, (tally.get(used) ?? 0) + (used === habits[a]![0] ? 2 : 1));
+    }
+    let best: string | undefined;
+    let bestScore = 0;
+    for (const [key, score] of tally) {
+      if (score > bestScore) {
+        best = key;
+        bestScore = score;
+      }
+    }
+    // Offered only when it is a habit for EVERY mismatched recipient --
+    // otherwise switching would fix one and break another, and the note
+    // states the fact without pretending there is one move that helps.
+    if (best === undefined || !mismatched.every((a) => (habits[a] ?? []).includes(best!))) return undefined;
+    return accounts.find((acc) => acc.key === best);
+  })();
+  /** What the note calls the habit. With one account to offer it is that
+   *  account; with several it names them all rather than picking one, since
+   *  no single switch would be right. */
+  const habitLabel = ((): string => {
+    if (habitTarget !== undefined) return habitTarget.label;
+    const keys = [...new Set(mismatched.flatMap((a) => habits[a]?.slice(0, 1) ?? []))];
+    const labels = keys.map((k) => accounts.find((acc) => acc.key === k)?.label ?? k);
+    return labels.length <= 1 ? (labels[0] ?? "another account") : `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+  })();
+
+  /** The fragment whose dropdown the user dismissed with Escape. Keyed by
+   *  the fragment rather than a bare boolean so typing on reopens it, and
+   *  so dismissal also covers a static `contacts` list, which no amount of
+   *  clearing the fetched results would close. */
+  const [acDismissed, setAcDismissed] = useState<string | null>(null);
+  const acOpen = acItems.length > 0 && acDismissed !== toFragment;
+
+  /**
+   * Which suggestion the keyboard is on, or -1 for none.
+   *
+   * 🚨 Reset whenever the list the user is looking at changes. A new list
+   * inheriting the old index means Enter sends to whoever happens to sit
+   * at that position -- the worst possible failure for this control.
+   */
+  const [acActive, setAcActive] = useState(-1);
+  /**
+   * 🚨 The keys read the index from a REF, never from the render closure.
+   * Preact batches, so two ArrowDown presses inside one frame both see the
+   * render's `acActive` and both compute the same next index -- the
+   * selection sticks on the first row however fast you press. Exactly the
+   * race `openedRef` exists for on the triage keys (row 36); a burst with
+   * no pause is the only thing that shows it.
+   */
+  const acActiveRef = useRef(-1);
+  function moveActive(next: number): void {
+    acActiveRef.current = next;
+    setAcActive(next);
+  }
+  // Keyed by the addresses themselves, not by the typed fragment: the
+  // index must reset when the PEOPLE change. Two fragments that match the
+  // same list leave the same person highlighted, which is correct; a
+  // fragment dependency would also have been redundant, since a pending
+  // fetch empties the list in between and resets it anyway.
+  const acKey = acItems.map((c) => c.email).join(",");
+  useEffect(() => moveActive(-1), [acKey]);
+  const acActiveItem = acActive >= 0 ? acItems[acActive] : undefined;
 
   function pickContact(email: string): void {
     const parts = to.split(",");
     parts[parts.length - 1] = ` ${email}`;
     setTo(`${parts.join(",").replace(/^ /, "")}, `);
+    moveActive(-1);
+  }
+
+  /**
+   * The To field's own keys. Everything here is conditional on the
+   * dropdown being open, so the field behaves exactly as it always did
+   * when it is not.
+   *
+   * 🚨 ESCAPE MUST `stopPropagation()`. The composer's own Escape handler
+   * is on `window` (see the effect above), so without this the first
+   * Escape -- the one meant to dismiss the suggestions -- closes the whole
+   * composer to Drafts. Row 46 found the toolbar's pickers doing exactly
+   * this; a dropdown is the same shape of mistake.
+   */
+  function onToKeyDown(e: KeyboardEvent): void {
+    if (!acOpen) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      // Clamped, not wrapped: a short list that silently jumps from the
+      // bottom back to the top reads as the keystroke having done nothing.
+      const at = acActiveRef.current;
+      const next = e.key === "ArrowDown" ? Math.min(at + 1, acItems.length - 1) : Math.max(at - 1, 0);
+      moveActive(next);
+      return;
+    }
+    // Read through the ref for the same reason: Enter may arrive in the
+    // same frame as the ArrowDown that chose the row.
+    const active = acActiveRef.current >= 0 ? acItems[acActiveRef.current] : undefined;
+    if (e.key === "Enter" && active !== undefined) {
+      e.preventDefault();
+      pickContact(active.email);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      moveActive(-1);
+      setAcDismissed(toFragment);
+    }
   }
 
   /** The window's current contents, as both the draft save and the send
@@ -934,6 +1113,27 @@ export function Compose({
             </select>
           </div>
 
+          {mismatched.length > 0 && (
+            <div class="compose-field-row compose-habit-note" data-testid="from-habit-note">
+              <span class="compose-field-label" style={{ fontFamily: FONT_MONO }} />
+              <span class="compose-habit-text">
+                {mismatched.length === 1
+                  ? `You usually write to ${mismatched[0]} from ${habitLabel}.`
+                  : `You usually write to these ${mismatched.length} recipients from ${habitLabel}.`}
+                {habitTarget !== undefined && (
+                  <button
+                    type="button"
+                    data-testid="from-habit-switch"
+                    class="compose-habit-switch"
+                    onClick={() => setFrom(fromOptionsFor(habitTarget)[0]!.value)}
+                  >
+                    {`switch to ${habitTarget.label}`}
+                  </button>
+                )}
+              </span>
+            </div>
+          )}
+
           <div class="compose-field-row" data-testid="field-to">
             <span class="compose-field-label" style={{ fontFamily: FONT_MONO }}>
               to
@@ -948,15 +1148,34 @@ export function Compose({
                 onInput={(e) => setTo((e.target as HTMLInputElement).value)}
                 onFocus={() => setToFocused(true)}
                 onBlur={() => setToFocused(false)}
+                onKeyDown={onToKeyDown}
+                role="combobox"
+                aria-expanded={acOpen}
+                aria-controls="compose-to-suggestions"
+                aria-autocomplete="list"
+                aria-activedescendant={acActiveItem === undefined ? undefined : `to-ac-${acActiveItem.email}`}
               />
               {acOpen && (
-                <div class="compose-autocomplete" data-testid="to-autocomplete">
-                  {acItems.map((c) => (
+                <div
+                  class="compose-autocomplete"
+                  data-testid="to-autocomplete"
+                  id="compose-to-suggestions"
+                  role="listbox"
+                  aria-activedescendant={acActiveItem === undefined ? undefined : `to-ac-${acActiveItem.email}`}
+                >
+                  {acItems.map((c, i) => (
                     <button
                       key={c.email}
                       type="button"
+                      id={`to-ac-${c.email}`}
                       data-testid={`to-autocomplete-${c.email}`}
-                      class="compose-autocomplete-item"
+                      class={i === acActive ? "compose-autocomplete-item is-active" : "compose-autocomplete-item"}
+                      role="option"
+                      aria-selected={i === acActive}
+                      // Hover drives the same index the keys do, so the
+                      // highlighted row and the row Enter would pick can
+                      // never be two different rows.
+                      onMouseEnter={() => moveActive(i)}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         pickContact(c.email);
@@ -965,6 +1184,21 @@ export function Compose({
                       <span class="compose-autocomplete-name">{text(c.name)}</span>
                       <span class="compose-autocomplete-email" style={{ fontFamily: FONT_MONO }}>
                         {text(c.email)}
+                      </span>
+                      <span class="compose-autocomplete-accounts">
+                        {(c.accounts ?? []).map((k) => {
+                          const acc = accounts.find((a) => a.key === k);
+                          return (
+                            <span
+                              key={k}
+                              data-testid={`to-autocomplete-dot-${c.email}-${k}`}
+                              class="compose-from-dot"
+                              title={acc?.label ?? k}
+                              aria-label={`${acc?.label ?? k} account`}
+                              style={{ background: acc?.accent ?? "var(--faint)" }}
+                            />
+                          );
+                        })}
                       </span>
                     </button>
                   ))}
