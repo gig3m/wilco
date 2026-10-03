@@ -28,7 +28,7 @@ disposable JMAP accounts** it wipes on every run. To run it you need:
   its own pair of hostnames;
 - two JMAP accounts you own and can empty, with tokens in
   `FASTMAIL_TESTA_WILCO_TOKEN` / `FASTMAIL_TESTB_WILCO_TOKEN`, and the instance's login password in
-  `WILCO_KYLE_PASSWORD`. These come from the `keys` CLI automatically when
+  `WILCO_HARNESS_PASSWORD`. These come from the `keys` CLI automatically when
   it's present; without it, export the three yourself (see `harness/README.md`);
 - the harness's own runner image, `wilco-harness-runner:local`, built from
   `harness/Dockerfile` (automatic on first use, or force it with

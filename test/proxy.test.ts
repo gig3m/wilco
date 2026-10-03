@@ -11,7 +11,7 @@ test("inCidr covers the docker bridge range and rejects outside it", () => {
   assert.equal(inCidr("172.18.0.5", "172.16.0.0/12"), true);
   assert.equal(inCidr("172.31.255.254", "172.16.0.0/12"), true);
   assert.equal(inCidr("172.15.0.1", "172.16.0.0/12"), false);
-  assert.equal(inCidr("10.10.10.68", "172.16.0.0/12"), false);
+  assert.equal(inCidr("10.0.0.5", "172.16.0.0/12"), false);
 });
 
 test("a direct client's own address is used, and its header is IGNORED", () => {

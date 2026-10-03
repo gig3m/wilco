@@ -50,15 +50,24 @@ Both names go to the same container port. Caddy:
         reverse_proxy 127.0.0.1:8794
     }
 
-nginx: `proxy_buffering off;` and `proxy_http_version 1.1;` on the app host. Nginx Proxy Manager users: enable *Websockets Support* on the app host and put only `proxy_buffering off;` in its Advanced tab; NPM already emits `proxy_http_version 1.1`, and repeating it takes the host offline with a duplicate-directive error
+nginx: `proxy_buffering off;` and `proxy_http_version 1.1;` on the app host,
 for `/api/events`; no caching on the body host. The container decides by the
 `Host` header which of the two it is serving, so nothing else is needed.
 
+Nginx Proxy Manager: enable *Websockets Support* on the app host and put only
+`proxy_buffering off;` in its Advanced tab. NPM already emits
+`proxy_http_version 1.1`, and repeating it takes the host offline with a
+duplicate-directive error.
+
 ## 3. Adding an account
 
-In the app: sidebar "+" → key, label, endpoint, token → then
-`docker compose up -d --force-recreate wilco` (the account list is read
-once at boot). Or headless:
+In the app: sidebar "+" → address, token, and an endpoint only if yours is
+not discoverable (it is derived from the address, falling back to Fastmail's).
+Wilco checks the token before storing it and starts syncing straight away;
+no restart.
+
+Or headless. This writes to the database directly, so the running container
+needs a recreate to pick the account up:
 
     WILCO_ACCOUNT_TOKEN='<token>' docker compose run --rm -e WILCO_ACCOUNT_TOKEN wilco \
       node scripts/add-account.ts --key personal --label Personal --commit

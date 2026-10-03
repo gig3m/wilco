@@ -2704,7 +2704,7 @@ def check_64(c: Ctx) -> None:
     A custom folder's route carries only the mailbox id, so the app titles
     it from /api/mailboxes and shows a placeholder until that answers. The
     title therefore lands SEPARATELY from the rows, and on a real instance
-    it can land after them: Brian's, 2026-09-22, where the list read path
+    it can land after them: a second instance, 2026-09-22, where the list read path
     returns in ~30ms and /api/mailboxes takes ~500ms. The folder rendered
     and then fell into the loading skeleton a second later, for good.
 

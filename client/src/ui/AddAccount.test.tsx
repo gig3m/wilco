@@ -88,7 +88,7 @@ test("the modal reports what the server verified, not a canned success", async (
         accent: "#4a9bb8",
         provider: "jmap",
         endpoint: "https://api.fastmail.com/jmap/session",
-        username: "brian@example.com",
+        username: "pat@example.com",
       }),
   });
   render(<AddAccount api={api} onClose={() => {}} />);
@@ -99,7 +99,7 @@ test("the modal reports what the server verified, not a canned success", async (
   await tick();
   const terminalText = byTestId("terminal").textContent!;
   assert.match(terminalText, /https:\/\/api\.fastmail\.com\/jmap\/session/);
-  assert.match(terminalText, /brian@example\.com/);
+  assert.match(terminalText, /pat@example\.com/);
   assert.doesNotMatch(terminalText, /container restarts?/i);
   assert.doesNotMatch(terminalText, /JMAP 1\.0/);
 });

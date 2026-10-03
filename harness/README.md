@@ -121,6 +121,8 @@ No Playwright on the host and none needed: the checks run in
 `--build-runner`), which carries Chromium. Secrets come from `keys exec` when
 the `keys` CLI is present, and never touch disk or the terminal.
 
-Without the `keys` CLI, export `WILCO_KYLE_PASSWORD`, `FASTMAIL_TESTA_WILCO_TOKEN` and
-`FASTMAIL_TESTB_WILCO_TOKEN` yourself (the tokens of two JMAP accounts you own and can
-wipe).
+Without the `keys` CLI, export `WILCO_HARNESS_PASSWORD` (the harness
+instance's login password), `FASTMAIL_TESTA_WILCO_TOKEN` and
+`FASTMAIL_TESTB_WILCO_TOKEN` yourself (the tokens of two JMAP accounts you own
+and can wipe). With `keys`, a password filed under another name is mapped by
+`WILCO_HARNESS_PASSWORD_KEY=<its name>` in `.env`.

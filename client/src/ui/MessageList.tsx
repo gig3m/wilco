@@ -107,7 +107,7 @@ export interface MessageListProps {
    *  A custom folder's route carries only the mailbox id, so the caller
    *  passes a placeholder until `/api/mailboxes` resolves the real name;
    *  treating that late rename as a folder switch left the list stuck in
-   *  the loading skeleton forever (Brian's instance, 2026-09-22). */
+   *  the loading skeleton forever (a second instance, 2026-09-22). */
   mailbox: string;
   /** STABLE identity of the view `rows` belong to -- a role for a native
    *  folder, `account/mailboxId` for a custom one. Changes exactly when
