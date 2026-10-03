@@ -5,7 +5,6 @@ import { openDb } from "../src/core/db.ts";
 import {
   ftsQuery,
   searchEmails,
-  suggestContacts,
   unreadCount,
   listMailboxes,
   SEARCH_LIMIT,
@@ -452,62 +451,6 @@ test("limit is clamped to [1, SEARCH_LIMIT], including a negative or absurdly la
   const zero = searchEmails(d, "budget", { limit: 0 });
   assert.equal(zero.rows.length, 1, "a limit of 0 clamps to the floor of 1, not zero rows");
 
-  d.close();
-});
-
-// ---------------------------------------------------------------------------
-// Row 23: contact suggestions for compose (spec 7.5).
-// ---------------------------------------------------------------------------
-
-function contactsDb() {
-  const d = db();
-  // Senders: dana wrote three times (recent), oldtimer once, two years ago.
-  insert(d, { account: "personal", id: "c1", fromEmail: "dana@example.com", receivedAt: "2026-08-01T00:00:00Z" });
-  insert(d, { account: "personal", id: "c2", fromEmail: "dana@example.com", receivedAt: "2026-08-02T00:00:00Z" });
-  insert(d, { account: "personal", id: "c3", fromEmail: "dana@example.com", receivedAt: "2026-08-03T00:00:00Z" });
-  d.prepare(`UPDATE emails SET from_name = 'Dana Ruiz' WHERE id = 'c3'`).run();
-  insert(d, { account: "personal", id: "c4", fromEmail: "oldtimer@example.com", receivedAt: "2024-01-01T00:00:00Z" });
-  // Recipients of a sent message: sam (once, recent) and the owner's own address.
-  insert(d, { account: "personal", id: "c5", fromEmail: "robin@example.com", receivedAt: "2026-08-20T00:00:00Z" });
-  addRecipient(d, { account: "personal", emailId: "c5", kind: "to", email: "sam@example.com" });
-  addRecipient(d, { account: "personal", emailId: "c5", kind: "cc", email: "robin@example.com" });
-  // Another account's correspondent must not leak across.
-  insert(d, { account: "work", id: "c6", fromEmail: "danielle@work.example", receivedAt: "2026-08-25T00:00:00Z" });
-  return d;
-}
-const NOW = () => Date.parse("2026-09-01T00:00:00Z");
-
-test("row 23: suggestions match email OR name by substring, ranked recent-first then by frequency", () => {
-  const d = contactsDb();
-  const got = suggestContacts(d, "personal", "da", { exclude: new Set(), now: NOW });
-  assert.deepEqual(got, [{ name: "Dana Ruiz", email: "dana@example.com" }], "dana by email; danielle is another account's");
-  const byName = suggestContacts(d, "personal", "ruiz", { exclude: new Set(), now: NOW });
-  assert.equal(byName[0]?.email, "dana@example.com", "people search by surname");
-  d.close();
-});
-
-test("row 23: a recent once-only correspondent outranks a frequent one not seen in a year; recipients count too", () => {
-  const d = contactsDb();
-  insert(d, { account: "personal", id: "c7", fromEmail: "oldtimer@example.com", receivedAt: "2024-02-01T00:00:00Z" });
-  insert(d, { account: "personal", id: "c8", fromEmail: "oldtimer@example.com", receivedAt: "2024-03-01T00:00:00Z" });
-  insert(d, { account: "personal", id: "c9", fromEmail: "oldtimer@example.com", receivedAt: "2024-04-01T00:00:00Z" });
-  const got = suggestContacts(d, "personal", "example.com", { exclude: new Set(["robin@example.com"]), now: NOW });
-  assert.deepEqual(
-    got.map((c) => c.email),
-    ["dana@example.com", "sam@example.com", "oldtimer@example.com"],
-    "recent (dana x3, sam x1) before stale (oldtimer x4); the owner's own address excluded",
-  );
-  d.close();
-});
-
-test("row 23: fewer than two characters yields nothing, LIKE wildcards are literal, and the list is capped at 8", () => {
-  const d = contactsDb();
-  assert.deepEqual(suggestContacts(d, "personal", "d", { exclude: new Set(), now: NOW }), []);
-  assert.deepEqual(suggestContacts(d, "personal", "%%", { exclude: new Set(), now: NOW }), [], "a wildcard is a character, not a match-all");
-  for (let i = 0; i < 12; i++) {
-    insert(d, { account: "personal", id: `bulk${i}`, fromEmail: `person${i}@bulk.example`, receivedAt: "2026-08-10T00:00:00Z" });
-  }
-  assert.equal(suggestContacts(d, "personal", "bulk.example", { exclude: new Set(), now: NOW }).length, 8);
   d.close();
 });
 

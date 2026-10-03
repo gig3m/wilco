@@ -42,6 +42,7 @@ import {
   RateLimiter,
   SESSION_TTL_MS,
 } from "./auth.ts";
+import { AddressBook } from "../core/addressbook.ts";
 
 export interface Deps {
   db: DatabaseSync;
@@ -59,6 +60,11 @@ export interface Deps {
   /** Optional so existing tests that build a router directly need not supply
    *  one; buildRouter makes its own rather than leaving /api/events unusable. */
   hub?: EventHub;
+  /** The in-memory address book (core/addressbook.ts). Supplied by boot so
+   *  one instance lives for the life of the process and the supervisor can
+   *  invalidate it; omitted, the send routes build their own, which is
+   *  correct but caches nothing between registrations. */
+  book?: AddressBook;
   /** Optional so existing tests that build a router without touching
    *  credentials still get a router. When present, mounts the /api/accounts
    *  routes (registerAccountRoutes); when absent, those routes are simply
@@ -182,6 +188,7 @@ export function buildRouter(deps: Deps): Router {
     bodyBaseUrl: deps.bodyBaseUrl,
     fetchFn: deps.fetchFn,
     blobs: deps.blobs,
+    book: deps.book,
   });
 
   // /api/tokens (list/mint) and /api/tokens/:id (revoke) -- session-only,
@@ -470,10 +477,20 @@ async function main(): Promise<void> {
   const bodyTokenKey = deriveBodyTokenKey(masterKey);
   const blobs = new BlobCache(config.blobDir);
 
+  /**
+   * One address book for the life of the process. Invalidated by the
+   * supervisor's own change signal below, which is the same signal that
+   * tells the SPA something moved -- so the book is never staler than what
+   * the client has been told about, and the TTL inside it is only the
+   * backstop for a missed signal.
+   */
+  const book = new AddressBook(db);
+
   const router = buildRouter({
     db,
     passwordHash,
     origin: config.baseUrl,
+    book,
     accountStates,
     progressAt,
     accounts,
@@ -602,7 +619,12 @@ async function main(): Promise<void> {
     store,
     states: accountStates,
     progressAt,
-    onChange: (a) => hub.publish(a),
+    onChange: (a) => {
+      // A pass that stored anything may have brought a new correspondent
+      // in, or moved a message into Sent -- both change the book.
+      book.markStale();
+      hub.publish(a);
+    },
     signal: controller.signal,
     // An account that failed to come up at boot gets another chance every
     // poll cycle instead of being abandoned for the life of the process

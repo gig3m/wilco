@@ -2810,3 +2810,112 @@ def check_65(c: Ctx) -> None:
     )
     expect(len(res.body()) > 0, "the attachment served no bytes")
     r.shot("65-cid-attachment")
+
+HABIT_ADDR = "jordan.harness@example.invalid"
+HABIT_NAME = "Jordan Harness"
+
+
+def _ensure_habit(c: Ctx) -> None:
+    """One message in test-a's SENT folder addressed to a contact test-b has
+    never heard of, so there is a cross-account habit to find.
+
+    Imported over Email/import, never SENT: `.invalid` cannot be delivered
+    to, and the point is only that the message sits in Sent with that
+    address as its To -- which is exactly what "an account has written to
+    this person" means. Idempotent, and re-made after every reset, since the
+    reset's wipe destroys anything without the corpus keyword.
+    """
+    j = c.J["test-a"]
+    if j.query({"to": HABIT_ADDR}, limit=1):
+        return
+    sent = j.mailboxes()["sent"]
+    msg = "\r\n".join([
+        f"From: {j.identity['email']}",
+        f"To: {HABIT_NAME} <{HABIT_ADDR}>",
+        f"Subject: {PREFIX} habit",
+        "Date: Mon, 01 Sep 2026 09:00:00 +0000",
+        "Message-ID: <wilco-habit@example.invalid>",
+        "MIME-Version: 1.0",
+        "Content-Type: text/plain; charset=utf-8",
+        "",
+        "Standing in for a correspondence only this account has.",
+        "",
+    ]).encode()
+    j.import_messages([(msg, {"$seen": True}, {sent: True})])
+
+
+@check(66)
+def check_66(c: Ctx) -> None:
+    """One unified address book, navigable by keyboard, and a note when the
+    sending account is not the one you write to this person from.
+
+    Owner, 2026-10-03: a correspondent they had mail from was not offered as
+    a compose target. The correspondent belonged to one account, the
+    composer was on another, and the To field only ever searched the
+    SENDING account -- so they could not be found, with nothing on screen to
+    say why. The ruling: "when I write an email, my
+    first thought is 'to who', not 'from which me'."
+
+    This row walks all three parts against a contact ONLY test-a knows:
+    test-b finds him, reaches him with the arrow keys, and is told which
+    account it usually writes to him from.
+    """
+    r = c.run
+    r.guard_write(["test-a", "test-b"])
+    _ensure_habit(c)
+
+    # Wilco must have synced the Sent message before the book can know it.
+    wait_until(
+        lambda: r.api_post("/api/contacts", {"q": "jordan.harness"})["contacts"] != [],
+        f"the book to hold {HABIT_ADDR}, which only test-a knows",
+        timeout=330,
+        every=5,
+    )
+
+    r.goto("/inbox/test-b")
+    _compose_as(c, "test-b")
+
+    # 1. The unified book: a contact of ANOTHER account is offered, and the
+    #    row says which account that is.
+    to = r.page.locator('[data-testid="compose-to"]')
+    to.click()
+    to.type("jordan.harness", delay=30)
+    r.settled()
+    wait_until(
+        lambda: r.page.locator(f'[data-testid="to-autocomplete-{HABIT_ADDR}"]').count() == 1,
+        f"{HABIT_ADDR} to be offered while composing from test-b (only test-a knows them)",
+        timeout=10,
+        every=0.25,
+    )
+    dot = r.page.locator(f'[data-testid="to-autocomplete-dot-{HABIT_ADDR}-test-a"]')
+    expect(dot.count() == 1, "the suggestion does not say which account knows this contact")
+
+    # 2. The keyboard reaches it. Mouse-only was the shipped state: the items
+    #    had no key handler at all and the input's blur closed the list.
+    r.page.keyboard.press("ArrowDown")
+    r.settled()
+    expect(
+        r.page.locator(f'[data-testid="to-autocomplete-{HABIT_ADDR}"]').get_attribute("aria-selected") == "true",
+        "ArrowDown did not make the suggestion the active one",
+    )
+    r.page.keyboard.press("Enter")
+    r.settled()
+    filled = to.input_value()
+    expect(HABIT_ADDR in filled, f"Enter on the active suggestion did not fill the address: {filled!r}")
+
+    # 3. The note names the account the habit is in, and the switch moves To it.
+    note = r.page.locator('[data-testid="from-habit-note"]')
+    wait_until(lambda: note.count() == 1, "the habit note to appear for a contact test-b has never written to", timeout=10, every=0.25)
+    label = next(a for a in r.api_get("/api/accounts") if a["key"] == "test-a")["label"]
+    text = note.inner_text()
+    expect(label in text, f"the note does not name the account the habit is in ({label!r}): {text!r}")
+    r.shot("66-habit-note")
+    r.page.locator('[data-testid="from-habit-switch"]').click()
+    r.settled()
+    chosen = r.page.locator('[data-testid="from-select"]').input_value()
+    expect(chosen.split("|")[0] == "test-a", f"the switch left From on {chosen!r}")
+    wait_until(lambda: note.count() == 0, "the note to go once the sending account IS the habit", timeout=10, every=0.25)
+
+    # Nothing is sent; close without leaving a draft behind.
+    r.page.keyboard.press("Escape")
+    r.settled()

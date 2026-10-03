@@ -842,13 +842,19 @@ function fromValueFor(select: HTMLSelectElement, account: string): string {
   return opt!.value;
 }
 
+function key(el: HTMLElement, k: string): KeyboardEvent {
+  const ev = new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true });
+  el.dispatchEvent(ev);
+  return ev;
+}
+
 test("row 23: the To field looks contacts up as you type, and a suggestion fills the address", async () => {
-  const asked: { account: string; q: string }[] = [];
+  const asked: { q: string; from: string }[] = [];
   render(
     <Compose
       accounts={[{ key: "personal", label: "Personal", code: "PER" }]}
-      lookupContacts={(account, q) => {
-        asked.push({ account, q });
+      lookupContacts={(q, from) => {
+        asked.push({ q, from });
         return Promise.resolve([{ name: "Dana Ruiz", email: "dana@example.com" }]);
       }}
     />,
@@ -860,11 +866,247 @@ test("row 23: the To field looks contacts up as you type, and a suggestion fills
   assert.deepEqual(asked, [], "one character asks nothing");
   type(to, "da");
   await new Promise((r) => setTimeout(r, 250));
-  assert.deepEqual(asked, [{ account: "personal", q: "da" }], "two characters ask the server, once");
+  assert.deepEqual(
+    asked,
+    [{ q: "da", from: "personal" }],
+    "two characters ask the server once, naming the SENDING account -- only so its own addresses are left out; the book itself is unified",
+  );
   const item = byTestId("to-autocomplete-dana@example.com");
   item.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
   await tick();
   assert.equal((byTestId("compose-to") as HTMLInputElement).value, "dana@example.com, ", "picking the suggestion fills the address");
+});
+
+test("changing the From account asks again, since the addresses left out are the sender's", async () => {
+  const asked: string[] = [];
+  render(
+    <Compose
+      accounts={[
+        { key: "work", label: "Work", identities: [{ email: "me@work.test", primary: true }] },
+        { key: "personal", label: "Personal", identities: [{ email: "me@home.test", primary: true }] },
+      ]}
+      initialAccount="work"
+      lookupContacts={(_q, from) => {
+        asked.push(from);
+        return Promise.resolve([]);
+      }}
+    />,
+  );
+  const to = byTestId("compose-to") as HTMLInputElement;
+  to.dispatchEvent(new FocusEvent("focus"));
+  type(to, "me");
+  await new Promise((r) => setTimeout(r, 250));
+  const sel = byTestId("from-select") as HTMLSelectElement;
+  sel.value = "personal|me@home.test";
+  sel.dispatchEvent(new Event("change", { bubbles: true }));
+  await new Promise((r) => setTimeout(r, 250));
+  assert.deepEqual(asked, ["work", "personal"], "from work, me@home.test is a fine suggestion; from personal it is the sender");
+});
+
+test("a suggestion shows the account that knows the contact, whatever account is sending", async () => {
+  render(
+    <Compose
+      accounts={[
+        { key: "work", label: "Work", accent: "#f00", identities: [{ email: "me@work.test", primary: true }] },
+        { key: "personal", label: "Personal", accent: "#0f0", identities: [{ email: "me@home.test", primary: true }] },
+      ]}
+      lookupContacts={() => Promise.resolve([{ name: "Jordan Hale", email: "jordan@hale.test", accounts: ["personal"] }])}
+    />,
+  );
+  const to = byTestId("compose-to") as HTMLInputElement;
+  to.dispatchEvent(new FocusEvent("focus"));
+  type(to, "jordan");
+  await new Promise((r) => setTimeout(r, 250));
+  const dot = byTestId("to-autocomplete-dot-jordan@hale.test-personal");
+  assert.equal(dot.style.background, "#0f0", "the dot carries that account's sidebar accent, not the sending account's");
+});
+
+// -- Keyboard navigation of the dropdown (owner ruling 2026-10-03) ----------
+
+const TWO = [
+  { name: "Jordan Hale", email: "jordan@hale.test" },
+  { name: "Jordan Price", email: "jordan@price.test" },
+];
+
+async function openDropdown(props: Record<string, unknown> = {}) {
+  const r = render(
+    <Compose
+      accounts={[{ key: "personal", label: "Personal", identities: [{ email: "me@home.test", primary: true }] }]}
+      lookupContacts={() => Promise.resolve(TWO)}
+      {...props}
+    />,
+  );
+  const to = byTestId("compose-to") as HTMLInputElement;
+  to.dispatchEvent(new FocusEvent("focus"));
+  type(to, "jordan");
+  await new Promise((rs) => setTimeout(rs, 250));
+  return { ...r, to };
+}
+
+test("ArrowDown and ArrowUp move the active suggestion and clamp at both ends", async () => {
+  const { to } = await openDropdown();
+  assert.equal(byTestId("to-autocomplete").getAttribute("aria-activedescendant"), null, "nothing is active until a key moves");
+  key(to, "ArrowDown");
+  await tick();
+  assert.equal(byTestId(`to-autocomplete-${TWO[0]!.email}`).getAttribute("aria-selected"), "true");
+  key(to, "ArrowDown");
+  await tick();
+  assert.equal(byTestId(`to-autocomplete-${TWO[1]!.email}`).getAttribute("aria-selected"), "true");
+  key(to, "ArrowDown");
+  await tick();
+  assert.equal(byTestId(`to-autocomplete-${TWO[1]!.email}`).getAttribute("aria-selected"), "true", "the last item clamps; it does not wrap to the top");
+  key(to, "ArrowUp");
+  await tick();
+  assert.equal(byTestId(`to-autocomplete-${TWO[0]!.email}`).getAttribute("aria-selected"), "true");
+});
+
+test("Enter picks the active suggestion and does not submit", async () => {
+  const { to } = await openDropdown();
+  key(to, "ArrowDown");
+  await tick();
+  const ev = key(to, "Enter");
+  await tick();
+  assert.equal((byTestId("compose-to") as HTMLInputElement).value, "jordan@hale.test, ");
+  assert.equal(ev.defaultPrevented, true, "the keystroke is consumed by the dropdown");
+  assert.equal(byTestId("to-autocomplete", { optional: true }) === null, true, "picking closes the list");
+});
+
+test("🚨 Escape closes the dropdown WITHOUT closing the composer", async () => {
+  let closed = 0;
+  const { to } = await openDropdown({ onClose: () => void closed++ });
+  const ev = key(to, "Escape");
+  await tick();
+  assert.equal(byTestId("to-autocomplete", { optional: true }) === null, true, "the list is gone");
+  assert.equal(closed, 0, "the app's Escape handler is on window -- without stopPropagation this closes the whole composer to Drafts");
+  assert.equal(ev.cancelBubble, true, "propagation is stopped, which is the only thing keeping the composer open");
+});
+
+test("Escape with no dropdown open still closes the composer", async () => {
+  let closed = 0;
+  render(
+    <Compose accounts={[{ key: "personal", label: "Personal" }]} onClose={() => void closed++} />,
+  );
+  key(byTestId("compose-to"), "Escape");
+  await tick();
+  assert.equal(closed, 1, "with nothing to dismiss, Escape must reach the composer as it always did");
+});
+
+test("hovering a suggestion makes it the active one, so mouse and keyboard never disagree", async () => {
+  const { to } = await openDropdown();
+  key(to, "ArrowDown");
+  await tick();
+  byTestId(`to-autocomplete-${TWO[1]!.email}`).dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+  await tick();
+  assert.equal(byTestId(`to-autocomplete-${TWO[1]!.email}`).getAttribute("aria-selected"), "true");
+  assert.equal(byTestId(`to-autocomplete-${TWO[0]!.email}`).getAttribute("aria-selected"), "false");
+});
+
+test("🚨 the active suggestion resets when the PEOPLE in the list change", async () => {
+  // Two different lists for two fragments: without a reset the index would
+  // survive and Enter would send to whoever now sits in that slot -- a
+  // different person from the one that was highlighted.
+  render(
+    <Compose
+      accounts={[{ key: "personal", label: "Personal", identities: [{ email: "me@home.test", primary: true }] }]}
+      lookupContacts={(q) =>
+        Promise.resolve(
+          q === "jordan"
+            ? TWO
+            : [
+                { name: "Marion Webb", email: "marion@example.test" },
+                { name: "Mark Webb", email: "mark@example.test" },
+              ],
+        )
+      }
+    />,
+  );
+  const to = byTestId("compose-to") as HTMLInputElement;
+  to.dispatchEvent(new FocusEvent("focus"));
+  type(to, "jordan");
+  await new Promise((r) => setTimeout(r, 250));
+  key(to, "ArrowDown");
+  key(to, "ArrowDown");
+  await tick();
+  assert.equal(byTestId("to-autocomplete-jordan@price.test").getAttribute("aria-selected"), "true");
+  type(to, "webb");
+  await new Promise((r) => setTimeout(r, 250));
+  assert.equal(
+    byTestId("to-autocomplete").getAttribute("aria-activedescendant"),
+    null,
+    "a new list must not inherit the old index",
+  );
+  const ev = key(to, "Enter");
+  await tick();
+  assert.equal(ev.defaultPrevented, false, "with nothing active, Enter is not the dropdown's key");
+  assert.equal((byTestId("compose-to") as HTMLInputElement).value, "webb", "and it picks nobody");
+});
+
+// -- The habitual-account note (owner ruling 2026-10-03) --------------------
+
+const TWO_ACCOUNTS = [
+  { key: "work", label: "Work", accent: "#f00", identities: [{ email: "me@work.test", primary: true }] },
+  { key: "personal", label: "Personal", accent: "#0f0", identities: [{ email: "me@home.test", primary: true }] },
+];
+
+test("writing to someone from an account you have never used for them names the one you do use", async () => {
+  render(
+    <Compose
+      accounts={TWO_ACCOUNTS}
+      initialAccount="work"
+      initialTo="jordan@hale.test"
+      lookupHabits={() => Promise.resolve({ "jordan@hale.test": ["personal"] })}
+    />,
+  );
+  await new Promise((r) => setTimeout(r, 250));
+  const note = byTestId("from-habit-note");
+  assert.match(note.textContent ?? "", /Personal/, "the note names the account the habit is in");
+  assert.match(note.textContent ?? "", /jordan@hale\.test/, "and who it is about");
+});
+
+test("the note says NOTHING about an address no account has ever written to", async () => {
+  render(
+    <Compose
+      accounts={TWO_ACCOUNTS}
+      initialAccount="work"
+      initialTo="stranger@example.test"
+      lookupHabits={() => Promise.resolve({ "stranger@example.test": [] })}
+    />,
+  );
+  await new Promise((r) => setTimeout(r, 250));
+  assert.equal(
+    byTestId("from-habit-note", { optional: true }) === null,
+    true,
+    "🚨 a warning on every new recipient is a warning nobody reads",
+  );
+});
+
+test("the note is silent when the sending account IS one you write to them from", async () => {
+  render(
+    <Compose
+      accounts={TWO_ACCOUNTS}
+      initialAccount="work"
+      initialTo="colleague@work.test"
+      lookupHabits={() => Promise.resolve({ "colleague@work.test": ["work", "personal"] })}
+    />,
+  );
+  await new Promise((r) => setTimeout(r, 250));
+  assert.equal(byTestId("from-habit-note", { optional: true }) === null, true, "some correspondents are legitimately both");
+});
+
+test("the note's switch moves From to the habitual account", async () => {
+  render(
+    <Compose
+      accounts={TWO_ACCOUNTS}
+      initialAccount="work"
+      initialTo="jordan@hale.test"
+      lookupHabits={() => Promise.resolve({ "jordan@hale.test": ["personal"] })}
+    />,
+  );
+  await new Promise((r) => setTimeout(r, 250));
+  click(byTestId("from-habit-switch"));
+  await tick();
+  assert.equal((byTestId("from-select") as HTMLSelectElement).value, "personal|me@home.test");
+  assert.equal(byTestId("from-habit-note", { optional: true }) === null, true, "acting on the note dismisses it");
 });
 
 // -- Drop target (owner, 2026-09-08) ----------------------------------------

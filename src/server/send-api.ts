@@ -36,7 +36,8 @@ import {
   type OutgoingAttachment,
   type OutgoingMessage,
 } from "../core/send.ts";
-import { suggestContacts, writtenTo } from "../core/queries.ts";
+import { writtenTo } from "../core/queries.ts";
+import { AddressBook } from "../core/addressbook.ts";
 import { oneClickPost, planUnsubscribe, type FetchLike, type UnsubscribePlan } from "../core/unsubscribe.ts";
 import { attributionLine, buildPrefill, forwardHeader, type Addr as ReplyAddr, type ReplyMode, type SourceMessage, type SourceAttachment } from "../core/reply.ts";
 import { loadMessageBody, type BlobCache } from "../core/htmlbody.ts";
@@ -60,6 +61,10 @@ export interface SendDeps {
   /** The one-click unsubscribe POST goes out through this (row 31).
    *  Injectable so a test can watch the request; production uses fetch. */
   fetchFn?: FetchLike;
+  /** The address book (core/addressbook.ts), held across requests because
+   *  building it is a full aggregate over the archive. Absent -> one is
+   *  made here, which is correct but caches nothing between registrations. */
+  book?: AddressBook;
   /** The body cache, for the quoted original's HTML on send and a draft's
    *  own HTML on resume (HTML compose spec 3.3-3.5). Absent -> a reply
    *  quotes the text half only, and a draft resumes without HTML. */
@@ -91,6 +96,11 @@ export interface IdentityInfo {
    */
   htmlSignature: string;
 }
+
+/** How many recipient addresses one habits lookup will answer. The
+ *  composer asks about the addresses in To/Cc/Bcc; a cap keeps a pasted
+ *  distribution list from turning one keystroke into hundreds of queries. */
+const HABIT_LOOKUP_LIMIT = 20;
 
 /** Identities change rarely and a JMAP round trip per compose-window open is
  *  wasteful, so they are cached per account for the process lifetime. A new
@@ -141,6 +151,8 @@ function mailboxIdForRole(db: DatabaseSync, account: string, role: string): stri
 }
 
 export function registerSendRoutes(router: Router, deps: SendDeps): void {
+  const book = deps.book ?? new AddressBook(deps.db);
+
   router.add("GET", "/api/identities", async (c) => {
     const principal = authenticate(deps.db, c.req);
     if (!principal) return json(c.res, 401, { error: "unauthorized" });
@@ -614,11 +626,24 @@ export function registerSendRoutes(router: Router, deps: SendDeps): void {
   });
 
   /**
-   * POST /api/contacts { account, q } -- suggestions for the To field
-   * (spec 7.5, row 23). POST, never GET: the typed fragment is a search
-   * term and must not land in the proxy's access log on a URL. Own
-   * addresses come from the account's identities; with no live client
-   * nothing is excluded rather than nothing offered.
+   * POST /api/contacts { q, from? } -- suggestions for the To field (spec
+   * 7.5, row 23). POST, never GET: the typed fragment is a search term and
+   * must not land in the proxy's access log on a URL.
+   *
+   * The BOOK is unified (owner ruling 2026-10-03): `from` never narrows who
+   * can be found -- that per-account scoping was the defect. `from` only
+   * names the account doing the sending, so ITS addresses are left out:
+   * nobody writes to the address they are writing from.
+   *
+   * 🚨 ONLY the sending account's addresses, never every account's. That
+   * was tried first and board row 23 went red on it: composing from work
+   * could no longer suggest the owner's personal address, and writing from
+   * one of your accounts to another is an ordinary thing to do. Your other
+   * selves rank high only when the fragment matches them, which is exactly
+   * when you are typing your own name.
+   *
+   * An account whose identities cannot be fetched excludes nothing rather
+   * than failing the lookup: one address too many beats no suggestions.
    */
   router.add("POST", "/api/contacts", async (c) => {
     const principal = authenticate(deps.db, c.req);
@@ -630,19 +655,53 @@ export function registerSendRoutes(router: Router, deps: SendDeps): void {
     } catch {
       return json(c.res, 400, { error: "invalid json" });
     }
-    const b = payload as { account?: unknown; q?: unknown };
-    if (typeof b.account !== "string" || b.account === "") return json(c.res, 400, { error: "account required" });
+    const b = payload as { q?: unknown; from?: unknown };
     const q = typeof b.q === "string" ? b.q : "";
-    let exclude = new Set<string>();
-    const client = deps.clients.get(b.account);
-    if (client) {
+    const exclude = new Set<string>();
+    const client = typeof b.from === "string" ? deps.clients.get(b.from) : undefined;
+    if (client !== undefined) {
       try {
-        exclude = new Set((await fetchIdentities(client, b.account)).map((i) => i.email));
+        for (const i of await fetchIdentities(client, b.from as string)) exclude.add(i.email);
       } catch {
         // Offer suggestions without the exclusion rather than none at all.
       }
     }
-    json(c.res, 200, { contacts: suggestContacts(deps.db, b.account, q, { exclude }) });
+    json(c.res, 200, { contacts: book.suggest(q, { exclude }) });
+  });
+
+  /**
+   * POST /api/contacts/habits { emails } -> { habits: { [email]: accounts } }
+   * -- which accounts have ever written to each address, most recently used
+   * first, for the composer's mismatch note ("you usually write to Jordan
+   * from Personal").
+   *
+   * POST, never GET, for the same reason as search and /api/contacts: a
+   * recipient's address on a URL is a permanent record in the proxy log of
+   * who the owner writes to.
+   *
+   * Every requested address gets a key, so the client can tell "no habit"
+   * (an empty list -- the note stays silent) from "not asked".
+   */
+  router.add("POST", "/api/contacts/habits", async (c) => {
+    const principal = authenticate(deps.db, c.req);
+    if (!principal) return json(c.res, 401, { error: "unauthorized" });
+    if (!checkCsrf(c.req, deps.origin)) return json(c.res, 403, { error: "forbidden" });
+    let payload: unknown;
+    try {
+      payload = await readJson(c.req);
+    } catch {
+      return json(c.res, 400, { error: "invalid json" });
+    }
+    const b = payload as { emails?: unknown };
+    if (!Array.isArray(b.emails)) return json(c.res, 400, { error: "emails required" });
+    const habits: Record<string, string[]> = {};
+    for (const raw of b.emails.slice(0, HABIT_LOOKUP_LIMIT)) {
+      if (typeof raw !== "string" || raw === "") continue;
+      const email = raw.toLowerCase();
+      if (email in habits) continue;
+      habits[email] = book.habits(email);
+    }
+    json(c.res, 200, { habits });
   });
 
   /**

@@ -655,6 +655,7 @@ export function fakeApi(overrides: FakeApiOptions = {}): FakeApi {
       Promise.resolve({ account, blobId: `blob-${file.name}`, name: file.name, type: file.type, size: file.size }),
     send: () => Promise.resolve({ sent: true as const, emailId: 'E1', submissionId: 'S1' }),
     contacts: () => Promise.resolve({ contacts: [] }),
+    contactHabits: () => Promise.resolve({ habits: {} }),
     updateAccount: (key: string, patch: { label?: string; accent?: string; code?: string }) => Promise.resolve({ key, label: patch.label ?? 'x', accent: patch.accent ?? '#5b6ee0', provider: 'jmap', endpoint: '', code: patch.code ?? 'XXX' } as never),
     resyncAccount: () => Promise.resolve({ requested: true, note: 'runs on the next sync pass' }),
     setCredential: () => Promise.resolve({ ok: true }),
