@@ -165,7 +165,8 @@ export class KeysCliStore implements CredentialStore {
   }
 }
 
-export const DEFAULT_NAME_FOR = (account: string): string => `${account.toUpperCase()}_FASTMAIL_JMAP`;
+// keys naming grammar (keys 2.4.0): VENDOR_INSTANCE_THING, e.g. FASTMAIL_PERSONAL_TOKEN.
+export const DEFAULT_NAME_FOR = (account: string): string => `FASTMAIL_${account.toUpperCase()}_TOKEN`;
 
 export interface ChooseStoreOptions {
   db: DatabaseSync;
