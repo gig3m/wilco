@@ -31,7 +31,7 @@ test("DEFAULT_NAME_FOR follows the keys grammar: FASTMAIL_<ACCOUNT>_TOKEN", () =
   // keys 2.4.0 renamed <ACCOUNT>_FASTMAIL_JMAP to FASTMAIL_<ACCOUNT>_TOKEN; the old names are
   // only aliases now and will be removed.
   assert.equal(DEFAULT_NAME_FOR("personal"), "FASTMAIL_PERSONAL_TOKEN");
-  assert.equal(DEFAULT_NAME_FOR("mathetes"), "FASTMAIL_MATHETES_TOKEN");
+  assert.equal(DEFAULT_NAME_FOR("sideproject"), "FASTMAIL_SIDEPROJECT_TOKEN");
 });
 
 test("EncryptedDbStore round-trips a credential", async () => {

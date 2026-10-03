@@ -567,7 +567,7 @@ test("a rows update for the SAME mailbox (search-as-you-type, load-more) never r
 });
 
 test("🚨 a custom folder's TITLE arriving late never re-enters loading", () => {
-  // The live regression (Brian's instance, 2026-09-22). A custom folder's
+  // The live regression (a second instance, 2026-09-22). A custom folder's
   // route carries only the mailbox id, so App titles it from
   // `/api/mailboxes` -- and passes "Folder" until that resolves. Once the
   // list read path got fast, rows landed in ~30ms while `/api/mailboxes`

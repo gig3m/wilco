@@ -321,7 +321,7 @@ test("POST validates the endpoint BEFORE probing it, so a non-https endpoint nev
         headers: mutHeaders(cookie),
         body: JSON.stringify({
           ...SPEC,
-          endpoint: "http://10.10.10.68:8081/",
+          endpoint: "http://192.168.1.20:8081/",
           credential: "super-secret-jmap-token",
         }),
       });

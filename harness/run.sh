@@ -60,17 +60,26 @@ fi
 # Secrets: the login password and the two TEST-account tokens. From the keys
 # service when its CLI is present (never written to disk); otherwise they
 # must already be in the environment (a contributor's own accounts).
-need=(WILCO_KYLE_PASSWORD FASTMAIL_TESTA_WILCO_TOKEN FASTMAIL_TESTB_WILCO_TOKEN)
+#
+# The board reads the password as WILCO_HARNESS_PASSWORD. A keys store that
+# files it under another name maps it with WILCO_HARNESS_PASSWORD_KEY in .env
+# (gitignored), so a maintainer's own naming never reaches this repo.
+pw_key="${WILCO_HARNESS_PASSWORD_KEY:-$(envval WILCO_HARNESS_PASSWORD_KEY)}"
+pw_key="${pw_key:-WILCO_HARNESS_PASSWORD}"
+[[ "$pw_key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || { echo "WILCO_HARNESS_PASSWORD_KEY is not a variable name: $pw_key" >&2; exit 2; }
+tokens=(FASTMAIL_TESTA_WILCO_TOKEN FASTMAIL_TESTB_WILCO_TOKEN)
 if command -v keys >/dev/null 2>&1; then
-  inject=(keys exec "${need[@]}" --)
+  inject=(keys exec "$pw_key" "${tokens[@]}" --)
 else
-  for v in "${need[@]}"; do [[ -n "${!v:-}" ]] || { echo "$v is not set and no keys CLI is present" >&2; exit 2; }; done
+  pw_key=WILCO_HARNESS_PASSWORD
+  for v in WILCO_HARNESS_PASSWORD "${tokens[@]}"; do [[ -n "${!v:-}" ]] || { echo "$v is not set and no keys CLI is present" >&2; exit 2; }; done
   inject=(env)
 fi
 
 exec flock -w 3600 "$lock" "${inject[@]}" sh -c '
+  WILCO_HARNESS_PASSWORD="$(printenv '"$pw_key"')"; export WILCO_HARNESS_PASSWORD
   docker run --rm --network host --memory=4g --memory-swap=4g \
-    -e WILCO_KYLE_PASSWORD -e FASTMAIL_TESTA_WILCO_TOKEN -e FASTMAIL_TESTB_WILCO_TOKEN \
+    -e WILCO_HARNESS_PASSWORD -e FASTMAIL_TESTA_WILCO_TOKEN -e FASTMAIL_TESTB_WILCO_TOKEN \
     -e WILCO_BASE -e WILCO_BODY_BASE \
     -e WILCO_HARNESS_OUT=/out \
     -v "'"$here"':/h:ro" -w /h \

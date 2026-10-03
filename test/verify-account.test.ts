@@ -153,7 +153,7 @@ test("verifyEndpoint: a JSON-parse failure on a captive-portal/WAF HTML page doe
 
 test("verifyEndpoint: a non-HttpStatusError message names the endpoint and, where available, the error's code -- never err.message verbatim", async () => {
   const fetcher: Fetcher = async () => {
-    const err = new Error("connect ECONNREFUSED 10.10.10.68:8081 -- some arbitrary remote-controlled detail") as Error & { code?: string };
+    const err = new Error("connect ECONNREFUSED 192.168.1.20:8081 -- some arbitrary remote-controlled detail") as Error & { code?: string };
     err.code = "ECONNREFUSED";
     throw err;
   };
