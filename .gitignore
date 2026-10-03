@@ -11,4 +11,5 @@ db-snapshot/
 .superpowers/
 secrets/
 CLAUDE.md
+CLAUDE.md.bak*
 __pycache__/
