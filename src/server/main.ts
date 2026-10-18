@@ -875,6 +875,9 @@ export function applyAppCsp(res: ServerResponse, bodyBaseUrl: string): void {
       // An image is not a document: nothing in it runs.
       `img-src 'self' data: blob: ${bodyBaseUrl}`,
       "font-src 'self' data:",
+      // The web manifest (install as an app). `default-src 'none'` would
+      // otherwise refuse it.
+      "manifest-src 'self'",
       "connect-src 'self'",
       `frame-src ${bodyBaseUrl}`,
       "form-action 'none'",

@@ -17,6 +17,11 @@
   --flag: #f29a00;
   --danger: #cf222e;
   --success: #00b894;
+  /* Text-weight versions of --flag/--success. The bright values stay for
+   * icons, dots and fills, but as TEXT on a light surface they read at
+   * 2.2:1 and 2.5:1. On dark surfaces the bright values clear 7:1. */
+  --warn-ink: #a35f00;
+  --success-ink: #007f66;
 
   /* Radii: deliberately squared, no pill shapes. */
   --radius-sm: 2px; /* chips, kbd */
@@ -66,6 +71,8 @@
     --flag: #f29a00;
     --danger: #cf5f5f;
     --success: #00b894;
+    --warn-ink: #f29a00;
+    --success-ink: #00b894;
   }
 }
 
@@ -86,6 +93,8 @@
   --flag: #f29a00;
   --danger: #cf5f5f;
   --success: #00b894;
+  --warn-ink: #f29a00;
+  --success-ink: #00b894;
 }
 
 /*

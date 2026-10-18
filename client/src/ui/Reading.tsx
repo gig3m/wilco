@@ -224,6 +224,20 @@ function avatarBg(msg: ReadingMessage, index: number): string {
   return AVATAR_COLORS[n]!;
 }
 
+/** The initial's colour on that background. A fixed white was 2.3:1 on the
+ *  brighter palette's aqua and cyan, so each colour takes whichever of white
+ *  or near-black contrasts more (WCAG relative luminance; the crossover sits
+ *  at 0.196). `var(--accent)` has its own `--accent-ink`. */
+function avatarInk(bg: string): string {
+  if (!bg.startsWith("#")) return "var(--accent-ink)";
+  const lin = (i: number): number => {
+    const c = parseInt(bg.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = 0.2126 * lin(1) + 0.7152 * lin(3) + 0.0722 * lin(5);
+  return lum > 0.196 ? "#141519" : "#ffffff";
+}
+
 /** Renders one line of plaintext body as a mix of escaped text and safe
  *  `<a>` links. Deliberately whitespace-tokenized rather than regex-global
  *  matched: `safeExternalHref` is the single source of truth for "is this
@@ -437,7 +451,7 @@ function MessageCard({
   return (
     <div class="reading-card">
       <div class="reading-card-header" onClick={onHeaderClick}>
-        <span aria-hidden="true" class="reading-card-avatar" style={{ background: avatarBg(msg, index) }}>
+        <span aria-hidden="true" class="reading-card-avatar" style={{ background: avatarBg(msg, index), color: avatarInk(avatarBg(msg, index)) }}>
           {initials(msg.fromName)}
         </span>
         <span class="reading-card-name">{text(msg.fromName || msg.fromEmail || "")}</span>

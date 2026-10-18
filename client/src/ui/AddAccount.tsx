@@ -166,9 +166,9 @@ export function AddAccount({ api, onClose, onCreated }: AddAccountProps): JSX.El
       });
       setLog((prev) => [
         ...prev,
-        { mark: "✓", color: "var(--success)", text: `connected as ${created.username ?? "(no username)"}` },
-        { mark: "✓", color: "var(--success)", text: `endpoint ${created.endpoint}` },
-        { mark: "✓", color: "var(--success)", text: "syncing — messages appear as they arrive" },
+        { mark: "✓", color: "var(--success-ink)", text: `connected as ${created.username ?? "(no username)"}` },
+        { mark: "✓", color: "var(--success-ink)", text: `endpoint ${created.endpoint}` },
+        { mark: "✓", color: "var(--success-ink)", text: "syncing — messages appear as they arrive" },
       ]);
       setConnecting(false);
       setDone(true);

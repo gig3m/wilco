@@ -99,7 +99,7 @@ command palette for the rest:
   button or drag and drop, autosaved drafts, and your provider's HTML
   signatures, placed above or below the quote by preference. Images in a
   signature are sent as inline parts so recipients' clients keep them.
-- **Accounts and settings:** per-account label, code, spam folder and
+- **Accounts and settings:** per-account label, colour, code, spam folder and
   signature; desktop notifications for new mail; light and dark themes
   painted from the first frame; layouts for wide screens, tablets and phones.
 - **API:** the app's own JSON API, usable with scoped, expiring bearer tokens

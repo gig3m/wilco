@@ -241,7 +241,7 @@
   animation: spin 1.2s linear infinite;
 }
 .sidebar-account-sync--error {
-  color: #f29a00;
+  color: var(--warn-ink);
   font-weight: 700;
 }
 .sidebar-account-sync--pending {
@@ -539,7 +539,7 @@
 .msg-reauth-icon {
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 11px;
-  color: #f29a00;
+  color: var(--warn-ink);
   font-weight: 700;
 }
 .msg-reauth-text {
@@ -557,7 +557,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: #f29a00;
-  color: #fff;
+  color: #241a00; /* white on #f29a00 is 2.2:1 */
   cursor: pointer;
   font-size: 11px;
   font-weight: 600;
@@ -1939,7 +1939,7 @@
   color: var(--faint);
 }
 .settings-account-status--amber {
-  color: #f29a00;
+  color: var(--warn-ink);
 }
 .settings-account-manage {
   font: inherit;
@@ -1964,7 +1964,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: #f29a00;
-  color: #fff;
+  color: #241a00;
   cursor: not-allowed;
   font-size: 11.5px;
   font-weight: 600;
@@ -3357,7 +3357,7 @@
 }
 /* v1.1 #6: dirty status is #f29a00, the same amber as the star/flag. */
 .settings-signature-status--dirty {
-  color: #f29a00;
+  color: var(--warn-ink);
 }
 /* v1.1 #6: "[Save signature] button (accent fill when dirty; bordered
    --faint ghost when clean)". 🚨 These two classes were applied by the
