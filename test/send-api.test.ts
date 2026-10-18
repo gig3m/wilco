@@ -81,3 +81,25 @@ test("a non-string body is treated as empty rather than stringified", () => {
   assert.equal(appendSignature(undefined, "Robin"), "Robin");
   assert.equal(appendSignature(null, "Robin"), "Robin");
 });
+
+test("row 67: forgetIdentities makes the next read fetch the identities again", async () => {
+  const { fetchIdentities, forgetIdentities } = await import("../src/server/send-api.ts");
+  const { JmapClient } = await import("../src/core/client.ts");
+  const { resolveSession } = await import("../src/core/session.ts");
+  const { personalSession } = await import("./fixtures/session.ts");
+  let signature = "old";
+  let gets = 0;
+  const client = new JmapClient(resolveSession("personal", personalSession), "t", async () => {
+    gets += 1;
+    return new Response(JSON.stringify({ methodResponses: [["Identity/get", {
+      list: [{ id: "I1", email: "me@example.com", name: "Me", mayDelete: false, textSignature: signature, htmlSignature: "" }],
+    }, "i0"]] }), { status: 200, headers: { "content-type": "application/json" } });
+  });
+  const account = "row67-forget";
+  assert.equal((await fetchIdentities(client, account))[0]?.textSignature, "old");
+  signature = "new";
+  assert.equal((await fetchIdentities(client, account))[0]?.textSignature, "old", "cached until told otherwise");
+  forgetIdentities(account);
+  assert.equal((await fetchIdentities(client, account))[0]?.textSignature, "new");
+  assert.equal(gets, 2);
+});

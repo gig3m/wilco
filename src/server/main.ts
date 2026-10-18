@@ -9,7 +9,7 @@ import { registerAccountRoutes } from "./accounts-api.ts";
 import { registerReadRoutes } from "./read-api.ts";
 import { registerTriageRoutes } from "./triage-api.ts";
 import { registerTrashRoutes } from "./trash-api.ts";
-import { htmlSignatureFor, registerSendRoutes } from "./send-api.ts";
+import { forgetIdentities, htmlSignatureFor, registerSendRoutes } from "./send-api.ts";
 import { registerPreferenceRoutes } from "./preferences-api.ts";
 import { registerTokenRoutes } from "./tokens-api.ts";
 import { readJson } from "./body.ts";
@@ -625,6 +625,7 @@ async function main(): Promise<void> {
       book.markStale();
       hub.publish(a);
     },
+    onIdentitiesChanged: forgetIdentities,
     signal: controller.signal,
     // An account that failed to come up at boot gets another chance every
     // poll cycle instead of being abandoned for the life of the process

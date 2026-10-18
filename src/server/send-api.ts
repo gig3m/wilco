@@ -103,10 +103,15 @@ export interface IdentityInfo {
 const HABIT_LOOKUP_LIMIT = 20;
 
 /** Identities change rarely and a JMAP round trip per compose-window open is
- *  wasteful, so they are cached per account for the process lifetime. A new
- *  alias appearing requires a restart, which is the right trade for a list
- *  that changes a few times a year. */
+ *  wasteful, so they are cached per account until something says they moved:
+ *  our own signature PUT, or a pushed Identity state (row 67 -- a signature
+ *  edited in Fastmail used to wait for a container restart). */
 const identityCache = new Map<string, IdentityInfo[]>();
+
+/** Drops one account's cached identities; the next read fetches them. */
+export function forgetIdentities(account: string): void {
+  identityCache.delete(account);
+}
 
 export async function fetchIdentities(client: JmapClient, account: string): Promise<IdentityInfo[]> {
   const cached = identityCache.get(account);

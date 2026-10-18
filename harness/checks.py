@@ -2919,3 +2919,50 @@ def check_66(c: Ctx) -> None:
     # Nothing is sent; close without leaving a draft behind.
     r.page.keyboard.press("Escape")
     r.settled()
+
+
+@check(67)
+def check_67(c: Ctx) -> None:
+    """A signature edited on Fastmail reaches the composer with no restart.
+
+    Owner, 2026-10-18: "I have added a signature on an email account, but I
+    can't force the account to update in order to grab it." The server
+    cached each account's identities for the life of the process, and only
+    its own signature PUT cleared that cache -- so an HTML signature, which
+    is edited in Fastmail and nowhere else, waited for a container restart.
+    Push now carries Identity, and a new Identity state drops the cache.
+
+    The row warms the cache through Wilco, changes the signature BEHIND
+    Wilco's back over JMAP, and waits for a new compose to insert it.
+    """
+    r = c.run
+    j = c.J["test-a"]
+    r.guard_write(["test-a"])
+    ident = j.identity["id"]
+    marker = f"Row 67 signature {int(time.time())}"
+    try:
+        _set_signature(c, "-- \nTest A signature", "")
+        # Warm the server's identity cache with the baseline, exactly as an
+        # earlier compose window would have.
+        before = {i["id"]: i for i in r.api_get("/api/identities")["identities"]["test-a"]}
+        expect("Row 67" not in before[ident]["htmlSignature"], "the baseline signature did not take")
+
+        res = j.call([["Identity/set", {"accountId": j.account_id, "update": {ident: {
+            "textSignature": f"-- \n{marker}",
+            "htmlSignature": f"<div>{marker}</div>",
+        }}}, "u"]])[0][1]
+        expect(ident in (res.get("updated") or {}), f"Fastmail did not take the signature: {res}")
+
+        def served() -> bool:
+            ids = r.api_get("/api/identities")["identities"]["test-a"]
+            return any(i["id"] == ident and marker in i["htmlSignature"] for i in ids)
+        wait_until(served, "Wilco to serve the signature set on Fastmail, with no restart", timeout=60, every=2)
+
+        r.goto("/inbox/test-a")
+        _compose_as(c, "test-a")
+        block = r.page.locator('[data-testid="compose-body"] [data-testid="compose-signature"]')
+        wait_until(lambda: block.count() == 1, "the signature block to appear in the editor", timeout=10, every=0.5)
+        expect(marker in block.inner_text(), f"a new compose inserted {block.inner_text()!r}, not the signature set on Fastmail")
+        r.page.locator('[data-testid="compose-close"]').click(); r.settled()
+    finally:
+        _set_signature(c, "-- \nTest A signature", "")

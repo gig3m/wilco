@@ -712,6 +712,57 @@ test("row 22: a pushed Mailbox state equal to ours does not refetch the tree", a
   d.close();
 });
 
+/** Runs one supervisor cycle whose push reader delivers `frames` in order
+ *  for the client's own account, and returns the accounts the supervisor
+ *  reported as having new identities. */
+async function identityPushes(frames: Record<string, string>[]): Promise<{ forgotten: string[]; identityGets: number }> {
+  const d = db();
+  setSyncState(d, "personal", "email", "S0");
+  setSyncState(d, "personal", "walk", "done");
+  setSyncState(d, "personal", "mailbox", "M1");
+  setSyncState(d, "personal", "mailbox_at", "0");
+  let identityGets = 0;
+  const client = quietClient((name) => { if (name === "Identity/get") identityGets += 1; });
+  const forgotten: string[] = [];
+  const ac = new AbortController();
+  let passes = 0;
+  await startSupervisor({
+    store: SILENT_STORE,
+    db: d,
+    accounts: TEST_ACCOUNTS,
+    clients: new Map([["personal", client]]),
+    tokens: new Map([["personal", "t"]]),
+    states: new Map<string, AccountState>(),
+    onChange: () => {},
+    onIdentitiesChanged: (a) => { forgotten.push(a); },
+    signal: ac.signal,
+    now: () => 1,
+    sleep: async () => { passes += 1; if (passes > 1) ac.abort(); },
+    startPushFn: async (_s, _t, opts) => {
+      await new Promise((r) => setTimeout(r, 5));
+      for (const f of frames) await opts.onStateChange(client.session.submissionAccountId, f);
+    },
+  });
+  d.close();
+  return { forgotten, identityGets };
+}
+
+test("row 67: a pushed Identity state reports the account's identities as changed", async () => {
+  const { forgotten } = await identityPushes([{ Identity: "I2" }]);
+  assert.deepEqual(forgotten, ["personal"],
+    "a signature edited on Fastmail must reach the identity cache without a restart");
+});
+
+test("row 67: the same Identity state pushed again is not a change", async () => {
+  const { forgotten } = await identityPushes([{ Identity: "I2" }, { Email: "S0" }, { Identity: "I2" }]);
+  assert.deepEqual(forgotten, ["personal"], "only a state not seen before means the identities moved");
+});
+
+test("row 67: a frame without Identity leaves the identities alone", async () => {
+  const { forgotten } = await identityPushes([{ Email: "S0", Mailbox: "M1" }]);
+  assert.deepEqual(forgotten, []);
+});
+
 test("a pass that hangs is abandoned at the deadline: the other account still syncs, the hung one says so, and the next cycle starts a fresh pass", async () => {
   // 2026-09-08: one JMAP request parked forever inside Node's fetch held the
   // sequential poll loop at `fetchChanges` for four and a half hours, and all

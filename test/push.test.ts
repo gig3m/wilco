@@ -259,6 +259,10 @@ test("row 22: the subscription covers Mailbox, and a StateChange hands over each
   assert.deepEqual(seen[0], { id: "u02214062", changed: { Email: "J1", Mailbox: "M7" } });
 });
 
+test("row 67: the subscription covers Identity, so a signature edited on Fastmail is pushed", () => {
+  assert.match(expandEventSourceUrl(session), /types=Email(%2C|,)Mailbox(%2C|,)Identity/);
+});
+
 test("a stream silent past the idle limit is dropped and reconnected; the URL asks for pings", async () => {
   assert.match(expandEventSourceUrl(session), /ping=30/);
   const opens: number[] = [];

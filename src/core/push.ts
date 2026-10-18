@@ -70,7 +70,7 @@ export interface PushOptions {
 
 export function expandEventSourceUrl(s: ResolvedSession): string {
   return s.eventSourceUrl
-    .replaceAll("{types}", "Email,Mailbox")
+    .replaceAll("{types}", "Email,Mailbox,Identity")
     .replaceAll("{closeafter}", "no")
     .replaceAll("{ping}", String(PUSH_PING_S));
 }

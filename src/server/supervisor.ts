@@ -71,6 +71,13 @@ export interface SupervisorDeps {
    */
   progressAt?: Map<string, number>;
   onChange: (account: string) => void;
+  /**
+   * Called when push reports an Identity state for an account that this run
+   * has not seen -- an identity or its signature was edited outside Wilco
+   * (row 67). The caller drops whatever it caches about the account's
+   * identities. Optional so tests that do not care need not supply one.
+   */
+  onIdentitiesChanged?: (account: string) => void;
   now?: () => number;
   sleep?: Sleep;
   signal?: AbortSignal;
@@ -169,6 +176,11 @@ export async function startSupervisor(deps: SupervisorDeps): Promise<void> {
     }
   }
 
+  // The last Identity state push reported per account. In memory only: a
+  // restart starts with an empty identity cache anyway, so the first state
+  // after one is a change that costs one Identity/get at most.
+  const identityStates = new Map<string, string>();
+
   const pushers: Promise<void>[] = [];
   function startPusher(account: string, client: JmapClient): void {
     pushers.push(push(client.session, deps.tokens.get(account) ?? "", {
@@ -178,7 +190,21 @@ export async function startSupervisor(deps: SupervisorDeps): Promise<void> {
       // otherwise fire a pass for THIS account too -- N passes for one
       // change. Compare against this client's own mail account.
       onStateChange: (accountId, changed = {}) => {
+        // Identities live in the SUBMISSION account, which a provider may
+        // keep apart from the mail account, so this is checked before the
+        // mail-account guard below. Fastmail's identity editor is where an
+        // HTML signature is changed; without this the new one waited for a
+        // container restart (row 67).
+        const identityState = changed["Identity"];
+        if (accountId === client.session.submissionAccountId && identityState !== undefined
+          && identityState !== identityStates.get(account)) {
+          identityStates.set(account, identityState);
+          ownAddressesCache.delete(account);
+          deps.onIdentitiesChanged?.(account);
+        }
         if (accountId !== client.session.mailAccountId) return;
+        // An identity edit changes no mail: nothing to sync.
+        if (Object.keys(changed).every((type) => type === "Identity") && identityState !== undefined) return;
         // A Mailbox state we have not seen means the folder tree changed
         // on the server (a folder created, renamed, moved). The tree is
         // otherwise refreshed on a 10-minute cadence; clearing the
