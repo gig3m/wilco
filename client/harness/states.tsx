@@ -37,6 +37,7 @@ import {
   FIXTURE_SAVED_SEARCHES,
   FIXTURE_THREAD,
 } from "./fixtures";
+import { showcase } from "./showcase";
 
 export interface HarnessState {
   id: string;
@@ -113,7 +114,7 @@ function sidebarApi() {
 // account for the "soon" pending chip DESIGN.md names for Personal.
 function sidebarSyncApi() {
   return fakeApi({
-    accountsData: [...FIXTURE_ACCOUNTS, { key: "personal", label: "Personal", accent: "#b05fc9", code: "PER", provider: "imap" }],
+    accountsData: [...FIXTURE_ACCOUNTS, { key: "personal", label: "Personal", accent: "#8b5cff", code: "PER", provider: "imap" }],
     mailboxesData: FIXTURE_MAILBOXES,
     savedSearches: () => Promise.resolve({ savedSearches: FIXTURE_SAVED_SEARCHES }),
     healthData: [
@@ -653,5 +654,10 @@ export const STATES: HarnessState[] = [
         />
       </div>
     ),
+  },
+  {
+    id: "showcase",
+    viewport: { width: 1440, height: 900 },
+    node: showcase(),
   },
 ];

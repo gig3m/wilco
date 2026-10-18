@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f3f4f5;--panel:#ffffff;--panel2:#fafbfb;--ink:#191b1e;--muted:#5f666e;--faint:#959ba3;--line:#dde0e3;--line2:#eaecee;--accent:#5b6ee0;--accent-ink:#ffffff;--hover:#eef0f2;--sel:#e8eafa;--row-pad:9px;--scrim:rgba(18,20,24,.36)}
-[data-theme="dark"]{--bg:#121316;--panel:#1a1c1f;--panel2:#16171a;--ink:#e6e8ea;--muted:#9aa0a7;--faint:#686e75;--line:#2b2e32;--line2:#222428;--accent:#7b8cf0;--accent-ink:#141519;--hover:#222428;--sel:#262a3c;--scrim:rgba(0,0,0,.55)}
+:root{--bg:#f3f4f5;--panel:#ffffff;--panel2:#fafbfb;--ink:#191b1e;--muted:#5f666e;--faint:#959ba3;--line:#dde0e3;--line2:#eaecee;--accent:#2f6bff;--accent-ink:#ffffff;--hover:#eef0f2;--sel:#e8eeff;--row-pad:9px;--scrim:rgba(18,20,24,.36)}
+[data-theme="dark"]{--bg:#121316;--panel:#1a1c1f;--panel2:#16171a;--ink:#e6e8ea;--muted:#9aa0a7;--faint:#686e75;--line:#2b2e32;--line2:#222428;--accent:#5b8cff;--accent-ink:#141519;--hover:#222428;--sel:#1f2945;--scrim:rgba(0,0,0,.55)}
 html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 *{box-sizing:border-box}
@@ -61,7 +61,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
             <span style="flex:1; min-width:0; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ a.name }}</span>
             <span style="font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ a.code }}</span>
             <sc-if value="{{ a.syncing }}" hint-placeholder-val="{{ false }}"><span title="Syncing" style="font-size:10px; color:var(--faint); display:inline-block; animation:spin 1.2s linear infinite">⟳</span></sc-if>
-            <sc-if value="{{ a.error }}" hint-placeholder-val="{{ false }}"><span title="Authentication expired" style="font-size:10px; color:#c9903a; font-weight:700">⚠</span></sc-if>
+            <sc-if value="{{ a.error }}" hint-placeholder-val="{{ false }}"><span title="Authentication expired" style="font-size:10px; color:#f29a00; font-weight:700">⚠</span></sc-if>
             <sc-if value="{{ a.pending }}" hint-placeholder-val="{{ false }}"><span title="IMAP support coming" style="font-size:9px; color:var(--faint); font-family:'IBM Plex Mono',monospace; border:1px solid var(--line); border-radius:2px; padding:0 3px">soon</span></sc-if>
             <span style="font-size:9px; color:var(--faint); width:10px; text-align:center">{{ a.chev }}</span>
           </button>
@@ -124,7 +124,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
               <span style="font-size:10px; font-weight:600; letter-spacing:.05em; padding:2px 7px; border-radius:2px; border:1px solid var(--line); color: {{ a.protoColor }}; font-family:'IBM Plex Mono',monospace">{{ a.proto }}</span>
               <span style="font-size:10.5px; font-family:'IBM Plex Mono',monospace; color: {{ a.statusColor }}">{{ a.statusLabel }}</span>
               <sc-if value="{{ a.needsAuth }}" hint-placeholder-val="{{ false }}">
-                <button onClick="{{ a.reauth }}" style="padding:5px 11px; border:none; border-radius:3px; background:#c9903a; color:#fff; cursor:pointer; font-size:11.5px; font-weight:600">Reauthorize</button>
+                <button onClick="{{ a.reauth }}" style="padding:5px 11px; border:none; border-radius:3px; background:#f29a00; color:#fff; cursor:pointer; font-size:11.5px; font-weight:600">Reauthorize</button>
               </sc-if>
               <sc-if value="{{ a.noAuth }}" hint-placeholder-val="{{ true }}">
                 <button onClick="{{ a.manage }}" style="padding:5px 11px; border:1px solid var(--line); border-radius:3px; background:none; cursor:pointer; font-size:11.5px; color:var(--muted)" style-hover="background: var(--hover)">Manage</button>
@@ -297,9 +297,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
         </sc-if>
         <sc-if value="{{ bannerError }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex; align-items:center; gap:8px; margin-top:9px; padding:7px 10px; border:1px solid rgba(201,144,58,.45); border-radius:3px; background:rgba(201,144,58,.1)">
-            <span style="font-size:11px; color:#c9903a; font-weight:700">⚠</span>
+            <span style="font-size:11px; color:#f29a00; font-weight:700">⚠</span>
             <span style="flex:1; min-width:0; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ bannerErrorText }}</span>
-            <button onClick="{{ reauth }}" style="flex:none; padding:3px 10px; border:none; border-radius:2px; background:#c9903a; color:#fff; cursor:pointer; font-size:11px; font-weight:600">Reauthorize</button>
+            <button onClick="{{ reauth }}" style="flex:none; padding:3px 10px; border:none; border-radius:2px; background:#f29a00; color:#fff; cursor:pointer; font-size:11px; font-weight:600">Reauthorize</button>
           </div>
         </sc-if>
         <sc-if value="{{ bannerPending }}" hint-placeholder-val="{{ false }}">
@@ -331,7 +331,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
               <span style="flex:none; width:168px; min-width:0; font-size:12.5px; font-weight: {{ t.fromWeight }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.from }}</span>
               <sc-if value="{{ t.multi }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:9.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.msgCount }}</span></sc-if>
               <span style="flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis"><span style="font-size:12.5px; font-weight: {{ t.subjWeight }}; color: {{ t.subjColor }}">{{ t.subject }}</span><span style="font-size:12px; color:var(--faint)">&nbsp;&nbsp;—&nbsp;&nbsp;{{ t.snippet }}</span></span>
-              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#f29a00">★</span></sc-if>
               <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
               <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
               <span style="flex:none; width:38px; text-align:right; font-size:10.5px; color:var(--faint); font-family:'IBM Plex Mono',monospace">{{ t.time }}</span>
@@ -350,7 +350,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
             <div style="font-size:12.5px; font-weight: {{ t.subjWeight }}; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: {{ t.subjColor }}">{{ t.subject }}</div>
             <div style="display:flex; align-items:center; gap:6px; margin-top:1px">
               <span style="flex:1; min-width:0; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ t.snippet }}</span>
-              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#c9903a">★</span></sc-if>
+              <sc-if value="{{ t.star }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:#f29a00">★</span></sc-if>
               <sc-if value="{{ t.attach }}" hint-placeholder-val="{{ false }}"><span style="flex:none; font-size:10px; color:var(--faint)">📎</span></sc-if>
               <sc-if value="{{ t.unread }}" hint-placeholder-val="{{ false }}"><span style="flex:none; width:6px; height:6px; border-radius:50%; background:var(--accent)"></span></sc-if>
             </div>
@@ -831,7 +831,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
   </sc-for>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;light&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b6ee0&quot;,&quot;options&quot;:[&quot;#5b6ee0&quot;,&quot;#2a9d6e&quot;,&quot;#c96a3a&quot;,&quot;#a35bc9&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'comfortable'|'compact'&quot;,&quot;section&quot;:&quot;List&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;columns&quot;,&quot;options&quot;:[&quot;columns&quot;,&quot;rows&quot;],&quot;tsType&quot;:&quot;'columns'|'rows'&quot;,&quot;section&quot;:&quot;List&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;light&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2f6bff&quot;,&quot;options&quot;:[&quot;#2f6bff&quot;,&quot;#00b894&quot;,&quot;#c96a3a&quot;,&quot;#a35bc9&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;comfortable&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;tsType&quot;:&quot;'comfortable'|'compact'&quot;,&quot;section&quot;:&quot;List&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;columns&quot;,&quot;options&quot;:[&quot;columns&quot;,&quot;rows&quot;],&quot;tsType&quot;:&quot;'columns'|'rows'&quot;,&quot;section&quot;:&quot;List&quot;}}">
 class Component extends DCLogic {
   state = {
     scope: 'all', folder: 'inbox', selId: 3, searchQ: '', settingsOpen: false,
@@ -860,16 +860,16 @@ class Component extends DCLogic {
   patchSig(id, p) { this.sigs[id] = { ...this.sigFor(id), ...p }; this.forceUpdate(); }
   curLayout() { return this.state.layout ?? this.props.layout ?? 'columns'; }
   toggleLayout = () => this.setState({ layout: this.curLayout() === 'columns' ? 'rows' : 'columns' });
-  obStart = () => this.setState({ ob: { step: 1, email: '', url: '', color: '#4a9bb8', log: [], done: false } });
+  obStart = () => this.setState({ ob: { step: 1, email: '', url: '', color: '#19b8ff', log: [], done: false } });
   obPatch(p) { this.setState(s => ({ ob: { ...s.ob, ...p } })); }
   obConnect = () => {
     if (!(this.state.ob.email || '').includes('@')) return;
     this.obPatch({ step: 3, log: [], done: false });
     const lines = [
       { mark: '·', c: 'var(--faint)', text: 'resolving ' + (this.state.ob.url || this.obUrlGuess()) },
-      { mark: '✓', c: '#2a9d6e', text: 'session established · JMAP 1.0' },
-      { mark: '✓', c: '#2a9d6e', text: 'capabilities: mail, submission, push' },
-      { mark: '✓', c: '#2a9d6e', text: '6 mailboxes · syncing headers first' },
+      { mark: '✓', c: '#00b894', text: 'session established · JMAP 1.0' },
+      { mark: '✓', c: '#00b894', text: 'capabilities: mail, submission, push' },
+      { mark: '✓', c: '#00b894', text: '6 mailboxes · syncing headers first' },
     ];
     lines.forEach((ln, i) => setTimeout(() => this.obPatch({ log: [...this.state.ob.log, ln] }), 450 + i * 620));
     setTimeout(() => this.obPatch({ done: true }), 450 + lines.length * 620);
@@ -966,10 +966,10 @@ class Component extends DCLogic {
     }, ms);
   };
   accounts = [
-    { id: 'work', name: 'Halden', code: 'HAL', email: 'kai@halden.example', color: '#5b6ee0', proto: 'JMAP', custom: [['clients', 'Clients'], ['receipts', 'Receipts']], aliases: ['press@halden.example', 'kai+lists@halden.example'] },
-    { id: 'wilco', name: 'Wilco', code: 'WIL', email: 'kai@wilco.dev', color: '#2a9d6e', proto: 'JMAP', custom: [['github', 'GitHub'], ['linear', 'Linear']], aliases: ['hello@wilco.dev'] },
-    { id: 'mer', name: 'Meridian', code: 'MER', email: 'kai@meridianlabs.io', color: '#c9903a', proto: 'JMAP', custom: [['invoices', 'Invoices']] },
-    { id: 'gmail', name: 'Personal', code: 'GML', email: 'kai.personal@example.net', color: '#b05fc9', proto: 'IMAP · soon', custom: [['travel', 'Travel']] },
+    { id: 'work', name: 'Halden', code: 'HAL', email: 'kai@halden.example', color: '#2f6bff', proto: 'JMAP', custom: [['clients', 'Clients'], ['receipts', 'Receipts']], aliases: ['press@halden.example', 'kai+lists@halden.example'] },
+    { id: 'wilco', name: 'Wilco', code: 'WIL', email: 'kai@wilco.dev', color: '#00b894', proto: 'JMAP', custom: [['github', 'GitHub'], ['linear', 'Linear']], aliases: ['hello@wilco.dev'] },
+    { id: 'mer', name: 'Meridian', code: 'MER', email: 'kai@meridianlabs.io', color: '#f29a00', proto: 'JMAP', custom: [['invoices', 'Invoices']] },
+    { id: 'gmail', name: 'Personal', code: 'GML', email: 'kai.personal@example.net', color: '#8b5cff', proto: 'IMAP · soon', custom: [['travel', 'Travel']] },
   ];
   threads = [
     { id: 1, acct: 'work', from: 'Mira Chen', email: 'mira@halden.example', subject: 'Q4 infra budget review', snippet: 'Before Thursday — can you sanity-check the JMAP hosting line? It doubled and I want to know why before finance asks.', time: '9:41', unread: true, folder: 'inbox',
@@ -992,7 +992,7 @@ class Component extends DCLogic {
     { id: 5, acct: 'work', from: 'Sam Alvarez', email: 'sam@halden.example', subject: 'Design tokens for compose view', snippet: 'Attached the updated spacing scale. The 4px grid holds everywhere except the chip row — see notes.', time: 'Mon', unread: false, attach: true, folder: 'inbox',
       msgs: [{ from: 'Sam Alvarez', email: 'sam@halden.example', time: 'Mon 16:04', body: 'Attached the updated spacing scale. The 4px grid holds everywhere except the chip row — see notes in the file.', files: [{ name: 'tokens-compose-v3.json', size: '4 KB' }] }] },
     { id: 6, acct: 'wilco', from: 'Linear', email: 'notifications@linear.app', subject: '12 issues updated in WIL — Sprint 34', snippet: 'WIL-291 moved to Done · WIL-302 assigned to you · WIL-307 blocked on IMAP bridge spec.', time: 'Mon', unread: false, folder: 'linear',
-      msgs: [{ from: 'Linear', email: 'notifications@linear.app', time: 'Mon 14:30', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">12 issues updated in <span style="font-family:\'IBM Plex Mono\',monospace;font-size:12.5px">WIL — Sprint 34</span></div><div style="display:flex;flex-direction:column;gap:1px;border:1px solid var(--line2);border-radius:4px;overflow:hidden;margin-bottom:14px"><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-291</span><span style="flex:1;font-size:12.5px">Search result ranking</span><span style="font-size:10.5px;font-weight:600;color:#2da44e">Done</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-302</span><span style="flex:1;font-size:12.5px">Chip parser edge cases</span><span style="font-size:10.5px;font-weight:600;color:#5b6ee0">Assigned to you</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-307</span><span style="flex:1;font-size:12.5px">Offline queue</span><span style="font-size:10.5px;font-weight:600;color:#cf222e">Blocked</span></div></div><a href="#" style="font-size:12.5px;font-weight:600">View all in Linear →</a>' }] },
+      msgs: [{ from: 'Linear', email: 'notifications@linear.app', time: 'Mon 14:30', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">12 issues updated in <span style="font-family:\'IBM Plex Mono\',monospace;font-size:12.5px">WIL — Sprint 34</span></div><div style="display:flex;flex-direction:column;gap:1px;border:1px solid var(--line2);border-radius:4px;overflow:hidden;margin-bottom:14px"><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-291</span><span style="flex:1;font-size:12.5px">Search result ranking</span><span style="font-size:10.5px;font-weight:600;color:#2da44e">Done</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-302</span><span style="flex:1;font-size:12.5px">Chip parser edge cases</span><span style="font-size:10.5px;font-weight:600;color:#2f6bff">Assigned to you</span></div><div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel2)"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--faint)">WIL-307</span><span style="flex:1;font-size:12.5px">Offline queue</span><span style="font-size:10.5px;font-weight:600;color:#cf222e">Blocked</span></div></div><a href="#" style="font-size:12.5px;font-weight:600">View all in Linear →</a>' }] },
     { id: 14, acct: 'mer', from: 'Meridian Billing', email: 'billing@meridianlabs.io', subject: 'Remittance advice — invoice #8841', snippet: '$2,400.00 sent via ACH, expect settlement in 1–2 business days.', time: 'Mon', unread: false, folder: 'invoices',
       msgs: [{ from: 'Meridian Billing', email: 'billing@meridianlabs.io', time: 'Mon 11:00', html: '<div style="font-size:14px;font-weight:700;margin-bottom:12px">Remittance advice</div><table style="border-collapse:collapse;font-size:12.5px;margin-bottom:14px"><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Invoice</td><td style="font-family:\'IBM Plex Mono\',monospace;font-size:12px">#8841</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Amount</td><td style="font-family:\'IBM Plex Mono\',monospace;font-size:12px">$2,400.00 USD</td></tr><tr><td style="color:var(--muted);padding:3px 24px 3px 0">Method</td><td>ACH · settles in 1–2 business days</td></tr></table><div style="color:var(--faint);font-size:10.5px;border-top:1px solid var(--line2);padding-top:12px">Meridian Labs · Accounts Payable</div>' }] },
     { id: 7, acct: 'gmail', from: 'Mom', email: 'mom@example.net', subject: 'Sunday?', snippet: 'Roast at 1. Bring the good bread from that place near you. Dad says hi.', time: 'Sun', unread: false, folder: 'inbox',
@@ -1247,7 +1247,7 @@ class Component extends DCLogic {
     const searching = !!S.searchQ.trim();
     const rows = this.curLayout() === 'rows';
     const saved = [...this.baseSaved.filter(x => !S.removedSaved.includes(x.id)), ...S.savedCustom];
-    const avatarColors = ['#5b6ee0', '#2a9d6e', '#c9903a', '#b05fc9', '#4a9bb8'];
+    const avatarColors = ['#2f6bff', '#00b894', '#f29a00', '#8b5cff', '#19b8ff'];
     const baseFolders = [['inbox', 'Inbox', '▤'], ['drafts', 'Drafts', '✎'], ['sent', 'Sent', '↗'], ['archive', 'Archive', '▣']];
     const folderName = (fid) => { const all = [...baseFolders.map(f => [f[0], f[1]]), ...this.accounts.flatMap(a => a.custom)]; const hit = all.find(f => f[0] === fid); return hit ? hit[1] : 'Inbox'; };
     const freeToks = S.searchQ.trim().toLowerCase().split(/\s+/).filter(x => x && !x.includes(':'));
@@ -1392,7 +1392,7 @@ class Component extends DCLogic {
         const st = S.acctStatus[a.id];
         return { ...a, divider: i === this.accounts.length - 1 ? 'transparent' : 'var(--line2)', protoColor: a.proto === 'JMAP' ? 'var(--accent)' : 'var(--faint)',
           statusLabel: st === 'ok' ? 'connected' : st === 'syncing' ? 'syncing…' : st === 'error' ? 'auth expired' : 'waiting on IMAP',
-          statusColor: st === 'error' ? '#c9903a' : 'var(--faint)',
+          statusColor: st === 'error' ? '#f29a00' : 'var(--faint)',
           needsAuth: st === 'error', noAuth: st !== 'error', reauth: () => this.reauth(a.id),
           manage: () => this.setState({ acctEdit: a.id }) };
       }),
@@ -1414,7 +1414,7 @@ class Component extends DCLogic {
           aeName: a.name, aeEmail: a.email, aeCode: a.code, aeColor: a.color,
           aeStatus: st === 'ok' ? 'connected' : st === 'syncing' ? 'syncing…' : st === 'error' ? 'auth expired' : 'waiting on IMAP',
           aeSetName: (e) => { a.name = e.target.value; this.forceUpdate(); },
-          aeColors: ['#5b6ee0', '#2a9d6e', '#c9903a', '#b05fc9', '#4a9bb8', '#cf5f5f'].map(c => ({ c, ring: a.color === c ? 'var(--ink)' : 'transparent', pick: () => { a.color = c; this.forceUpdate(); } })),
+          aeColors: ['#2f6bff', '#00b894', '#f29a00', '#8b5cff', '#19b8ff', '#cf5f5f'].map(c => ({ c, ring: a.color === c ? 'var(--ink)' : 'transparent', pick: () => { a.color = c; this.forceUpdate(); } })),
           aeProtoLabel: a.proto === 'JMAP' ? 'JMAP session' : 'IMAP (bridge pending)',
           aeServer: a.proto === 'JMAP' ? 'https://' + a.email.split('@')[1] + '/.well-known/jmap' : '— not connected yet',
           aeSyncSub: st === 'ok' ? 'Push connected · full index' : st === 'error' ? 'Stale since Mon 14:02' : st === 'syncing' ? 'Syncing…' : 'Snapshot only',
@@ -1431,7 +1431,7 @@ class Component extends DCLogic {
             : React.createElement('div', { style: { fontSize: '12.5px', lineHeight: 1.6, whiteSpace: 'pre-line', color: 'var(--muted)' } }, sig.text),
           aeSigModeLabel: isHtml ? 'text/html' : 'text/plain',
           aeSigStat: S.sigDirty[a.id] ? 'unsaved changes' : (S.sigSaved[a.id] ? 'saved ' + S.sigSaved[a.id] : 'saved'),
-          aeSigStatColor: S.sigDirty[a.id] ? '#c9903a' : 'var(--faint)',
+          aeSigStatColor: S.sigDirty[a.id] ? '#f29a00' : 'var(--faint)',
           aeSigSave: () => this.setState(s => ({ sigDirty: { ...s.sigDirty, [a.id]: false }, sigSaved: { ...s.sigSaved, [a.id]: new Date().toTimeString().slice(0, 5) } })),
           aeSigSaveBorder: S.sigDirty[a.id] ? 'none' : '1px solid var(--line)',
           aeSigSaveBg: S.sigDirty[a.id] ? 'var(--accent)' : 'transparent',
@@ -1448,7 +1448,7 @@ class Component extends DCLogic {
           },
         };
       })(),
-      statusDot: Object.values(S.acctStatus).includes('error') ? '#c9903a' : Object.values(S.acctStatus).includes('syncing') ? 'var(--faint)' : '#2a9d6e',
+      statusDot: Object.values(S.acctStatus).includes('error') ? '#f29a00' : Object.values(S.acctStatus).includes('syncing') ? 'var(--faint)' : '#00b894',
       statusLine: (() => {
         if (S.outbox.length) return S.outbox.length + ' queued · sending soon';
         const errs = this.accounts.filter(a => S.acctStatus[a.id] === 'error');
@@ -1476,7 +1476,7 @@ class Component extends DCLogic {
       obUrl: S.ob ? S.ob.url : '',
       obSetUrl: (e) => this.obPatch({ url: e.target.value }),
       obUrlPlaceholder: S.ob && S.ob.email.includes('@') ? this.obUrlGuess() : 'https://…/.well-known/jmap (auto)',
-      obColors: S.ob ? ['#4a9bb8', '#cf5f5f', '#7aa843', '#8d6ac9', '#c9903a', '#5b6ee0'].map(c => ({ c, ring: S.ob.color === c ? 'var(--ink)' : 'transparent', pick: () => this.obPatch({ color: c }) })) : [],
+      obColors: S.ob ? ['#19b8ff', '#cf5f5f', '#ff9f1a', '#8b5cff', '#f29a00', '#2f6bff'].map(c => ({ c, ring: S.ob.color === c ? 'var(--ink)' : 'transparent', pick: () => this.obPatch({ color: c }) })) : [],
       obCode: S.ob ? this.obCode() : '',
       obConnect: this.obConnect,
       obConnectOpacity: S.ob && S.ob.email.includes('@') ? 1 : 0.45,
@@ -1746,7 +1746,7 @@ class Component extends DCLogic {
       spamSel: () => this.sendTo('spam', 'Marked spam'),
       selStarred: sel ? S.starred.includes(sel.id) : false,
       starGlyph: sel && S.starred.includes(sel.id) ? '★' : '☆',
-      starColor: sel && S.starred.includes(sel.id) ? '#c9903a' : 'var(--faint)',
+      starColor: sel && S.starred.includes(sel.id) ? '#f29a00' : 'var(--faint)',
       toggleStarSel: () => this.toggleStar(S.selId),
       prevThread: () => { const i = vis.findIndex(t => t.id === S.selId); if (i > 0) this.select(vis[i - 1].id); },
       nextThread: () => { const i = vis.findIndex(t => t.id === S.selId); if (i >= 0 && i < vis.length - 1) this.select(vis[i + 1].id); },

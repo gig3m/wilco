@@ -9,7 +9,7 @@ test("each account renders as a card with its code, address and badge", () => {
   render(
     <Settings
       accounts={[
-        { key: "work", label: "Work", code: "HAL", accent: "#2a9d6e", provider: "jmap", endpoint: "https://api.fastmail.com/jmap/session" },
+        { key: "work", label: "Work", code: "HAL", accent: "#00b894", provider: "jmap", endpoint: "https://api.fastmail.com/jmap/session" },
       ]}
     />,
   );
@@ -45,7 +45,7 @@ test("REMOVE ACCOUNT IS DISABLED EVEN THOUGH THE API EXISTS", () => {
   // remove button next to four live mailboxes is how mail gets lost.
   render(
     <Settings
-      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#2a9d6e", provider: "jmap", endpoint: "https://x.test/jmap" }]}
+      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#00b894", provider: "jmap", endpoint: "https://x.test/jmap" }]}
     />,
   );
   click(byTestId("acct-manage-work"));
@@ -90,7 +90,7 @@ test("Settings is reachable and shows the accounts + all five global sections", 
 test("Manage opens a per-account page; Settings link goes back", () => {
   render(
     <Settings
-      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#2a9d6e", provider: "jmap", endpoint: "https://x.test/jmap" }]}
+      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#00b894", provider: "jmap", endpoint: "https://x.test/jmap" }]}
     />,
   );
   click(byTestId("acct-manage-work"));
@@ -104,7 +104,7 @@ test("Manage opens a per-account page; Settings link goes back", () => {
 test("no email is invented for an account -- AccountSpec has no email field", () => {
   render(
     <Settings
-      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#2a9d6e", provider: "jmap", endpoint: "https://x.test/jmap" }]}
+      accounts={[{ key: "work", label: "Work", code: "HAL", accent: "#00b894", provider: "jmap", endpoint: "https://x.test/jmap" }]}
     />,
   );
   assert.equal(document.body.textContent?.includes("@"), false, "no @ anywhere -- nothing that looks like a guessed email address");
@@ -114,7 +114,7 @@ test("a hostile account label is text, not markup", () => {
   render(
     <Settings
       accounts={[
-        { key: "work", label: "<img src=x onerror=alert(1)>", code: "HAL", accent: "#2a9d6e", provider: "jmap", endpoint: "https://x.test/jmap" },
+        { key: "work", label: "<img src=x onerror=alert(1)>", code: "HAL", accent: "#00b894", provider: "jmap", endpoint: "https://x.test/jmap" },
       ]}
     />,
   );
@@ -131,7 +131,7 @@ test("the signature textarea holds the identity's REAL signature and saves it", 
         {
           key: "work",
           label: "Work",
-          accent: "#5b6ee0",
+          accent: "#2f6bff",
           provider: "fastmail",
           endpoint: "https://api.fastmail.com",
           identities: [
@@ -186,7 +186,7 @@ test("the signature textarea holds the identity's REAL signature and saves it", 
 test("the signature textarea stays disabled when there is no way to save it", async () => {
   render(
     <Settings
-      accounts={[{ key: "work", label: "Work", accent: "#5b6ee0", provider: "fastmail", endpoint: "https://api.fastmail.com" }]}
+      accounts={[{ key: "work", label: "Work", accent: "#2f6bff", provider: "fastmail", endpoint: "https://api.fastmail.com" }]}
       api={fakeApi()}
     />,
   );
@@ -202,7 +202,7 @@ test("an identity with no HTML signature opens in plain-text mode", async () => 
     <Settings
       accounts={[
         {
-          key: "work", label: "Work", accent: "#5b6ee0", provider: "fastmail", endpoint: "https://api.fastmail.com",
+          key: "work", label: "Work", accent: "#2f6bff", provider: "fastmail", endpoint: "https://api.fastmail.com",
           identities: [{ id: "I1", email: "me@work.test", primary: true, textSignature: "Robin", htmlSignature: "" }],
         },
       ]}
@@ -224,7 +224,7 @@ test("row 38: the HTML half is never edited here -- a plain-text save omits it",
     <Settings
       accounts={[
         {
-          key: "work", label: "Work", accent: "#5b6ee0", provider: "fastmail", endpoint: "https://api.fastmail.com",
+          key: "work", label: "Work", accent: "#2f6bff", provider: "fastmail", endpoint: "https://api.fastmail.com",
           identities: [{ id: "I1", email: "me@work.test", primary: true, textSignature: "Robin", htmlSignature: '<p>Robin</p><img src="data:image/png;base64,AAAA">' }],
         },
       ]}
@@ -277,7 +277,7 @@ test("v1.1 #6: the preview is visible in BOTH formats, labelled with the type", 
     <Settings
       accounts={[
         {
-          key: "work", label: "Work", accent: "#5b6ee0", provider: "fastmail", endpoint: "https://api.fastmail.com",
+          key: "work", label: "Work", accent: "#2f6bff", provider: "fastmail", endpoint: "https://api.fastmail.com",
           identities: [{ id: "I1", email: "me@work.test", primary: true, textSignature: "Robin\nCEO", htmlSignature: "<p>Robin</p>" }],
         },
       ]}
@@ -310,7 +310,7 @@ test("🚨 v1.1 #6: a format flip does NOT dirty the signature; a text edit does
     <Settings
       accounts={[
         {
-          key: "work", label: "Work", accent: "#5b6ee0", provider: "fastmail", endpoint: "https://api.fastmail.com",
+          key: "work", label: "Work", accent: "#2f6bff", provider: "fastmail", endpoint: "https://api.fastmail.com",
           identities: [{ id: "I1", email: "me@work.test", primary: true, textSignature: "Robin", htmlSignature: "<p>Robin</p>" }],
         },
       ]}
@@ -349,7 +349,7 @@ test("🚨 send-as aliases render as chips, with the primary marked (pass 3 D2)"
         {
           key: "work",
           label: "Work",
-          accent: "#2a9d6e",
+          accent: "#00b894",
           provider: "jmap",
           endpoint: "https://api.example/jmap",
           code: "WOR",
@@ -385,7 +385,7 @@ test("🚨 send-as aliases render as chips, with the primary marked (pass 3 D2)"
 test("🚨 THE ACCOUNT ORDER IS THE OWNER'S: up/down hand back the whole new order, ends are disabled, no handler means disabled with a reason", () => {
   // Rows 34 and 15. Accounts were alphabetical, so compose defaulted to
   // `atelier` and every reply went out from it.
-  const spec = (key: string) => ({ key, label: key, code: key.slice(0, 3).toUpperCase(), accent: "#2a9d6e", provider: "jmap", endpoint: "https://api.fastmail.com/jmap/session" });
+  const spec = (key: string) => ({ key, label: key, code: key.slice(0, 3).toUpperCase(), accent: "#00b894", provider: "jmap", endpoint: "https://api.fastmail.com/jmap/session" });
   const orders: string[][] = [];
   render(<Settings accounts={[spec("atelier"), spec("personal"), spec("work")]} onReorder={(o) => orders.push(o)} />);
   assert.ok((byTestId("acct-up-atelier") as HTMLButtonElement).disabled, "the first account cannot move up");
@@ -442,7 +442,7 @@ test("row 37: the notification switches call the handler; the signature switches
   const saved: [string, string, string][] = [];
   render(
     <Settings
-      accounts={[{ key: "personal", label: "Personal", accent: "#5b6ee0", provider: "jmap", endpoint: "", code: "PER", identities: [{ id: "i1", name: null, email: "k@x.test", primary: true, textSignature: "", htmlSignature: "" }] } as never]}
+      accounts={[{ key: "personal", label: "Personal", accent: "#2f6bff", provider: "jmap", endpoint: "", code: "PER", identities: [{ id: "i1", name: null, email: "k@x.test", primary: true, textSignature: "", htmlSignature: "" }] } as never]}
       api={fakeApi({
         accountSettings: () => Promise.resolve({ settings: { signatureReplies: "off" }, mailboxes: [] }),
         setAccountSetting: (a: string, k: string, v: string) => {
@@ -476,14 +476,14 @@ test("row 37: the account page's name, colour, token, resync and remove controls
   const calls: string[] = [];
   let changed = 0;
   const api = fakeApi({
-    updateAccount: (key: string, patch: { label?: string; accent?: string }) => { calls.push(`update ${key} ${JSON.stringify(patch)}`); return Promise.resolve({ key, label: patch.label ?? "Personal", accent: patch.accent ?? "#5b6ee0", provider: "jmap", endpoint: "", code: "PER" } as never); },
+    updateAccount: (key: string, patch: { label?: string; accent?: string }) => { calls.push(`update ${key} ${JSON.stringify(patch)}`); return Promise.resolve({ key, label: patch.label ?? "Personal", accent: patch.accent ?? "#2f6bff", provider: "jmap", endpoint: "", code: "PER" } as never); },
     resyncAccount: (key: string) => { calls.push(`resync ${key}`); return Promise.resolve({ requested: true, note: "runs on the next sync pass" }); },
     setCredential: (key: string, cred: string) => { calls.push(`credential ${key} ${cred.length}`); return Promise.resolve({ ok: true }); },
     removeAccount: (key: string) => { calls.push(`remove ${key}`); return Promise.resolve({ ok: true }); },
   });
   render(
     <Settings
-      accounts={[{ key: "personal", label: "Personal", accent: "#5b6ee0", provider: "jmap", endpoint: "", code: "PER", identities: [] } as never]}
+      accounts={[{ key: "personal", label: "Personal", accent: "#2f6bff", provider: "jmap", endpoint: "", code: "PER", identities: [] } as never]}
       api={api}
       onAccountsChanged={() => void (changed += 1)}
     />,
@@ -498,7 +498,7 @@ test("row 37: the account page's name, colour, token, resync and remove controls
   type(name, "Robin's mail");
   name.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   await tick();
-  click(byTestId("swatch-2a9d6e"));
+  click(byTestId("swatch-00b894"));
   await tick();
   type(byTestId("settings-token"), "fmu1-secret-token");
   click(byTestId("settings-token-save"));
@@ -518,7 +518,7 @@ test("row 37: the account page's name, colour, token, resync and remove controls
 
   assert.deepEqual(calls, [
     'update personal {"label":"Robin\'s mail"}',
-    'update personal {"accent":"#2a9d6e"}',
+    'update personal {"accent":"#00b894"}',
     "credential personal 17",
     "resync personal",
     "remove personal",

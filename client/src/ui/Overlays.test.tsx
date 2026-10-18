@@ -46,10 +46,10 @@ test("the notification toast carries the account colour on its edge", () => {
     <Overlays
       open="none"
       onClose={() => {}}
-      toast={{ kind: "notification", account: "work", accent: "#2a9d6e", from: "Priya Raman", subject: "Bridge spec" }}
+      toast={{ kind: "notification", account: "work", accent: "#00b894", from: "Priya Raman", subject: "Bridge spec" }}
     />,
   );
-  assert.equal(getComputedStyle(byTestId("toast")).borderLeftColor, "rgb(42, 157, 110)");
+  assert.equal(getComputedStyle(byTestId("toast")).borderLeftColor, "rgb(0, 184, 148)");
 });
 
 test("A TOAST'S SUBJECT AND SENDER RENDER AS TEXT", () => {
@@ -217,7 +217,7 @@ test("dismissing a notification toast does not also open it", () => {
     <Overlays
       open="none"
       onClose={() => {}}
-      toast={{ kind: "notification", account: "w", accent: "#5b6ee0", from: "A", subject: "B", onOpen, onDismiss }}
+      toast={{ kind: "notification", account: "w", accent: "#2f6bff", from: "A", subject: "B", onOpen, onDismiss }}
     />,
   );
   byTestId("toast-dismiss").dispatchEvent(new MouseEvent("click", { bubbles: true }));

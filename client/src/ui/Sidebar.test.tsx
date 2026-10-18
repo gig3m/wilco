@@ -27,8 +27,8 @@ test("the sidebar is 242px and renders an account block per account with its cod
     <Sidebar
       api={fakeApi({
         accountsData: [
-          { key: "personal", label: "Personal", accent: "#b05fc9", code: "PER" },
-          { key: "work", label: "Work", accent: "#2a9d6e", code: "HAL" },
+          { key: "personal", label: "Personal", accent: "#8b5cff", code: "PER" },
+          { key: "work", label: "Work", accent: "#00b894", code: "HAL" },
         ],
       })}
     />,
@@ -128,15 +128,15 @@ test("each account block renders its own accent from the API, not a constant", a
     <Sidebar
       api={fakeApi({
         accountsData: [
-          { key: "personal", label: "Personal", accent: "#b05fc9" },
-          { key: "work", label: "Work", accent: "#2a9d6e" },
+          { key: "personal", label: "Personal", accent: "#8b5cff" },
+          { key: "work", label: "Work", accent: "#00b894" },
         ],
       })}
     />,
   );
   await tick();
-  assert.equal(bar("personal").style.background, "rgb(176, 95, 201)");
-  assert.equal(bar("work").style.background, "rgb(42, 157, 110)");
+  assert.equal(bar("personal").style.background, "rgb(139, 92, 255)");
+  assert.equal(bar("work").style.background, "rgb(0, 184, 148)");
 });
 
 test("total unread is the sum across accounts, from the junction-backed API", async () => {

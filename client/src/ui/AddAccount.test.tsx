@@ -60,7 +60,7 @@ test("a successful submit calls the real API with the derived fields and the typ
   assert.deepEqual(call!.args[0], {
     key: "haldenexample",
     label: "Halden",
-    accent: "#4a9bb8",
+    accent: "#2f6bff",
     provider: "jmap",
     endpoint: "https://halden.example/.well-known/jmap",
     credential: "secret-token-value",
@@ -85,7 +85,7 @@ test("the modal reports what the server verified, not a canned success", async (
       Promise.resolve({
         key: "haldenexample",
         label: "Halden",
-        accent: "#4a9bb8",
+        accent: "#2f6bff",
         provider: "jmap",
         endpoint: "https://api.fastmail.com/jmap/session",
         username: "pat@example.com",

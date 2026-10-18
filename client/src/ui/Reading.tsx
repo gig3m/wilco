@@ -194,7 +194,7 @@ const FALLBACK_ACCENT = "#8a8f97";
 
 /** Transcribed verbatim from Wilco.dc.html line ~1205 -- the design's
  *  fixed five-color avatar palette for anyone who isn't "You". */
-const AVATAR_COLORS = ["#5b6ee0", "#2a9d6e", "#c9903a", "#b05fc9", "#4a9bb8"];
+const AVATAR_COLORS = ["#2f6bff", "#00b894", "#ff4d8d", "#8b5cff", "#19b8ff"];
 
 const MENU_REASON = "Not yet available -- per-message actions arrive in a later plan.";
 

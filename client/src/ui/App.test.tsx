@@ -197,12 +197,12 @@ test("the real sidebar is what's mounted in the shell, not the old placeholder",
   render(
     <App
       api={fakeApi({
-        accountsData: [{ key: "personal", label: "Personal", accent: "#b05fc9" }],
+        accountsData: [{ key: "personal", label: "Personal", accent: "#8b5cff" }],
       })}
     />,
   );
   await tick();
-  assert.equal(byTestId("account-bar-personal").style.background, "rgb(176, 95, 201)");
+  assert.equal(byTestId("account-bar-personal").style.background, "rgb(139, 92, 255)");
 });
 
 test("the real message list is what's mounted in the list pane, not an empty placeholder", async () => {

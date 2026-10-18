@@ -1,16 +1,31 @@
-# Wilco
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/wilco-lockup-dark.svg">
+    <img alt="Wilco" src="docs/brand/wilco-lockup-light.svg" height="80">
+  </picture>
+</p>
 
-A self-hosted, single-user email client over JMAP. It puts several mail
+<p align="center">
+  Every mail account in one fast, keyboard-driven inbox.<br>
+  Self-hosted, single-user, over JMAP.
+</p>
+
+<p align="center">
+  <a href="INSTALL.md">Install</a> ·
+  <a href="CONTRIBUTING.md">Develop</a> ·
+  <a href="docs/design/">Design</a>
+</p>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="Wilco's three-column layout: the unified inbox mixing mail from three accounts, each marked by its colour and code, beside an open conversation" src="docs/screenshot-light.png">
+</picture>
+
+Wilco is a self-hosted, single-user email client over JMAP. It puts several mail
 accounts into one fast, keyboard-driven inbox, keeps a full local copy of your
 mail so search is instant, and renders other people's HTML where it cannot
 touch the app. Node server with zero runtime dependencies, SQLite + FTS5,
 Preact client. Tested against Fastmail.
-
-- **Install:** [INSTALL.md](INSTALL.md) — one container plus a TLS proxy with two hostnames.
-- **Develop:** [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Design:** [docs/design/](docs/design/) — the visual design and its reference renders.
-
-![Wilco's three-column layout: the unified inbox mixing mail from three accounts, each marked by its color and code, beside an open conversation](docs/screenshot.png)
 
 ## What sets it apart
 
