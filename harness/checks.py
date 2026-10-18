@@ -2923,7 +2923,8 @@ def check_66(c: Ctx) -> None:
 
 @check(67)
 def check_67(c: Ctx) -> None:
-    """A signature edited on Fastmail reaches the composer with no restart.
+    """A signature edited on Fastmail reaches the composer within about a
+    minute, with no restart.
 
     Owner, 2026-10-18: "I have added a signature on an email account, but I
     can't force the account to update in order to grab it." The server
@@ -2956,7 +2957,11 @@ def check_67(c: Ctx) -> None:
         def served() -> bool:
             ids = r.api_get("/api/identities")["identities"]["test-a"]
             return any(i["id"] == ident and marker in i["htmlSignature"] for i in ids)
-        wait_until(served, "Wilco to serve the signature set on Fastmail, with no restart", timeout=60, every=2)
+        # Fastmail's push is a long poll: the new Identity state rides the
+        # next reconnect's connect frame, and the backoff tops out at 60s.
+        t0 = time.time()
+        wait_until(served, "Wilco to serve the signature set on Fastmail, with no restart", timeout=90, every=2)
+        print(f"  signature served {time.time() - t0:.0f}s after the Fastmail edit", flush=True)
 
         r.goto("/inbox/test-a")
         _compose_as(c, "test-a")
