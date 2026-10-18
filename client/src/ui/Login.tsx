@@ -9,6 +9,7 @@ import { useState } from "preact/hooks";
 import type { JSX } from "preact";
 import type { Api } from "../lib/api";
 import { ApiError } from "../lib/api";
+import { Mark } from "./Mark";
 
 export interface LoginProps {
   api: Api;
@@ -72,7 +73,7 @@ export function Login({ api, onSuccess }: LoginProps): JSX.Element {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span aria-hidden="true" style={{ display: "inline-block", width: "20px", height: "20px", background: "#000000" }} />
+          <Mark size={24} />
           <span style={{ fontWeight: 600 }}>Wilco</span>
         </div>
         <p data-testid="login-message" style={{ margin: 0, color: "var(--muted)", fontSize: "13px" }}>

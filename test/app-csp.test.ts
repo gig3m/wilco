@@ -130,6 +130,16 @@ test("🚨 NOTHING MAY FRAME THE SPA", async () => {
   });
 });
 
+test("the web manifest is allowed, from this origin only", async () => {
+  // `default-src 'none'` covers `manifest-src`, so without its own directive
+  // the browser refuses `<link rel="manifest">` and the app cannot be
+  // installed -- silently, apart from a console error.
+  await withApp(async (base) => {
+    const d = directives((await fetch(`${base}/`)).headers.get("content-security-policy")!);
+    assert.equal(d.get("manifest-src"), "'self'");
+  });
+});
+
 test("nosniff and a same-origin referrer policy ride with it", async () => {
   // `referrer-policy: same-origin` keeps the path of a deep link -- which
   // carries an account key and a message id -- off any foreign request.

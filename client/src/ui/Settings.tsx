@@ -118,10 +118,11 @@ function statusLabelFor(badge: SyncBadge | null): { label: string; amber: boolea
   }
 }
 
-// The design's own accent palette (Wilco.dc.html line 1372) -- a fixed,
-// literal set of swatch colors, not per-account data. Editing an
-// account's color is unwired regardless, so this is display-only.
-const ACCENT_SWATCHES = ["#5b6ee0", "#2a9d6e", "#c9903a", "#b05fc9", "#4a9bb8", "#cf5f5f"];
+// The accent palette offered on the account page -- a fixed set of swatch
+// colors, not per-account data. Picking one saves it through `onUpdate`
+// (PUT /api/accounts/:key { accent }); an account keeps whatever it was
+// given until then, including colors from an earlier palette.
+const ACCENT_SWATCHES = ["#2f6bff", "#00b894", "#ff4d8d", "#8b5cff", "#ff9f1a", "#19b8ff"];
 
 export interface SettingsProps {
   /** Row 48: told after a per-account setting is saved, so the app can

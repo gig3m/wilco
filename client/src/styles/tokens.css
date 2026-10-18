@@ -9,14 +9,19 @@
   --faint: #959ba3;
   --line: #dde0e3;
   --line2: #eaecee;
-  --accent: #5b6ee0;
+  --accent: #2f6bff;
   --accent-ink: #ffffff;
   --hover: #eef0f2;
-  --sel: #e8eafa;
+  --sel: #e8eeff;
   --scrim: rgba(18, 20, 24, 0.36);
-  --flag: #c9903a;
+  --flag: #f29a00;
   --danger: #cf222e;
-  --success: #2a9d6e;
+  --success: #00b894;
+  /* Text-weight versions of --flag/--success. The bright values stay for
+   * icons, dots and fills, but as TEXT on a light surface they read at
+   * 2.2:1 and 2.5:1. On dark surfaces the bright values clear 7:1. */
+  --warn-ink: #a35f00;
+  --success-ink: #007f66;
 
   /* Radii: deliberately squared, no pill shapes. */
   --radius-sm: 2px; /* chips, kbd */
@@ -58,14 +63,16 @@
     --faint: #686e75;
     --line: #2b2e32;
     --line2: #222428;
-    --accent: #7b8cf0;
+    --accent: #5b8cff;
     --accent-ink: #141519;
     --hover: #222428;
-    --sel: #262a3c;
+    --sel: #1f2945;
     --scrim: rgba(0, 0, 0, 0.55);
-    --flag: #c9903a;
+    --flag: #f29a00;
     --danger: #cf5f5f;
-    --success: #2a9d6e;
+    --success: #00b894;
+    --warn-ink: #f29a00;
+    --success-ink: #00b894;
   }
 }
 
@@ -78,14 +85,16 @@
   --faint: #686e75;
   --line: #2b2e32;
   --line2: #222428;
-  --accent: #7b8cf0;
+  --accent: #5b8cff;
   --accent-ink: #141519;
   --hover: #222428;
-  --sel: #262a3c;
+  --sel: #1f2945;
   --scrim: rgba(0, 0, 0, 0.55);
-  --flag: #c9903a;
+  --flag: #f29a00;
   --danger: #cf5f5f;
-  --success: #2a9d6e;
+  --success: #00b894;
+  --warn-ink: #f29a00;
+  --success-ink: #00b894;
 }
 
 /*

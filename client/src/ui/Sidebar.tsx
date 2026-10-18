@@ -62,6 +62,7 @@
 // (`"MER needs attention"`, `"N queued"`) describe a different design
 // field this endpoint doesn't carry (a queue depth), so that line is left
 // as a prior pass found it.
+import { Mark } from "./Mark";
 import { useEffect, useState } from "preact/hooks";
 import type { JSX } from "preact";
 import {
@@ -681,9 +682,7 @@ export function Sidebar({
   return (
     <aside data-testid="sidebar" class="sidebar" style={sidebarStyle}>
       <div class="sidebar-header">
-        <span aria-hidden="true" class="sidebar-logo">
-          W
-        </span>
+        <Mark class="sidebar-logo" size={22} />
         <span class="sidebar-wordmark">Wilco</span>
         <span data-testid="total-unread" class="sidebar-total-unread" style={{ fontFamily: FONT_MONO }}>
           {totalUnread} unread

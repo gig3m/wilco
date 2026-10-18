@@ -22,13 +22,13 @@ The files in this bundle are **design references created in HTML** — a working
 | --faint | #959ba3 | #686e75 | tertiary/meta text |
 | --line | #dde0e3 | #2b2e32 | borders |
 | --line2 | #eaecee | #222428 | hairline dividers |
-| --accent | #5b6ee0 | #7b8cf0 | actions, unread, selection (user-tweakable) |
+| --accent | #2f6bff | #5b8cff | actions, unread, selection (user-tweakable) |
 | --accent-ink | #ffffff | #141519 | text on accent |
 | --hover | #eef0f2 | #222428 | row hover |
-| --sel | #e8eafa | #262a3c | selected row / active nav |
+| --sel | #e8eeff | #1f2945 | selected row / active nav |
 | --scrim | rgba(18,20,24,.36) | rgba(0,0,0,.55) | overlay backdrop |
 
-Account identity colors (left-edge on rows, avatar, settings): Halden #5b6ee0, Wilco #2a9d6e, Meridian #c9903a, Personal #b05fc9. Star/flag: #c9903a. Danger: #cf222e (light) / #cf5f5f. Success: #2a9d6e.
+Account identity colors (left-edge on rows, avatar, settings) — the Electric set, offered in this order wherever a colour is picked: #2f6bff blue, #00b894 aqua, #ff4d8d pink, #8b5cff violet, #ff9f1a orange, #19b8ff cyan. Star/flag: #f29a00. Danger: #cf222e (light) / #cf5f5f. Success: #00b894.
 
 ### Typography
 - **UI**: IBM Plex Sans (400/500/600/700), fallback Helvetica/Arial.
@@ -47,7 +47,7 @@ Root: full-viewport flex row. **Sidebar 242px** (fixed) · **message list 392px*
 ## Screens / Views
 
 ### 1. Sidebar (always visible)
-- Header: 20px black square "N" logo, app name, total-unread mono count.
+- Header: 22px Wilco mark (see Brand), app name, total-unread mono count.
 - Compose button (accent, full width, `C` kbd hint right-aligned).
 - "All inboxes" row, then **4 stacked account blocks**: 3×14px color bar + uppercase name + mono code + collapse chevron. Folders per account: Inbox (unread count in accent), Drafts, Sent, Archive, Spam, Trash + custom folders (Clients, GitHub, Linear, Invoices, Travel). Active folder = --sel background, weight 600.
 - "＋ Add account" row → onboarding modal.
@@ -104,7 +104,13 @@ Keyboard shortcuts (?), raw message source (mono, headers + body), attachment pr
 - Optimistic updates with undo window; move = keyword/mailbox patch.
 
 ## Assets
-None. Logo is a typographic "N" square. Icons are unicode glyphs (⌕ ◎ ★ ✎ ↗ ▤ ▣ ◐ 📎) — replace with a real icon set (e.g. Lucide) at implementation, keeping the compact 11–13px scale.
+Icons are unicode glyphs (⌕ ◎ ★ ✎ ↗ ▤ ▣ ◐ 📎) — replace with a real icon set (e.g. Lucide) at implementation, keeping the compact 11–13px scale.
+
+## Brand
+- **Mark:** two overlapping chevrons, electric blue `#2f6bff` (left) and pink `#ff4d8d` (right), round-capped 8/64 strokes, forming a W on a `#16181c` plate with 14/64 corner radius. Where they cross, the overlap is `#ff98ff` (the two screen-blended), drawn explicitly rather than with a blend mode so every renderer agrees. The plate stays dark in both themes.
+- **Sources:** `docs/brand/` — `wilco-mark.svg` (app icon), `wilco-glyph.svg` (chevrons only, transparent), `wilco-maskable.svg` (full-bleed plate for Android), `wilco-lockup-light|dark.svg` (mark + "Wilco" in IBM Plex Sans Bold, outlined to paths), `social-preview.png` (GitHub social card, 1280×640).
+- **In the app:** `client/src/ui/Mark.tsx` (sidebar header, sign-in). Favicon (`favicon.svg`, `favicon-32.png`), `apple-touch-icon.png`, `icon-192/512.png`, `icon-maskable-512.png` and `manifest.webmanifest` live in `client/public/`.
+- The prototype `Wilco.dc.html` still draws the old "N" square; the mark above supersedes it.
 
 ## Files
 - `Wilco.dc.html` — full prototype: template (all screens, inline styles) + logic class (all behavior, mock data, search parser, JMAP-shaped account objects).
@@ -128,7 +134,7 @@ improvised v1 implementation.**
    - *Done*: solid --line border, name + --faint size + ✕ (unchanged from v1).
 4. **Compose draft status** (header, mono 10.5px): "not saved · esc" (--faint) → "saving…" (--muted) while typing (any field edit, ~900ms debounce) → "draft saved HH:MM · esc" (--faint).
 5. **Compose signature block, HTML mode** — inside the dashed signature box, the rendered HTML sits in an inset frame: --bg background, 1px --line2 border, radius 3, padding 9×12, max-height 110px w/ scroll. Label reads "signature · text/html · {CODE}". Plain-text mode stays frameless (pre-line, --muted).
-6. **Settings signature editor** — preview section is always visible (both formats), labelled "preview · text/html|text/plain" with the same inset frame as #5. Below it a status row: left mono status text — "unsaved changes" (#c9903a) while dirty, "saved HH:MM" (--faint) after save — and a right-aligned [Save signature] button (accent fill when dirty; bordered --faint ghost when clean). Format flips and toggles do not dirty the signature; text edits do.
+6. **Settings signature editor** — preview section is always visible (both formats), labelled "preview · text/html|text/plain" with the same inset frame as #5. Below it a status row: left mono status text — "unsaved changes" (#f29a00) while dirty, "saved HH:MM" (--faint) after save — and a right-aligned [Save signature] button (accent fill when dirty; bordered --faint ghost when clean). Format flips and toggles do not dirty the signature; text edits do.
 
 
 ## Deviations by owner ruling
@@ -143,3 +149,10 @@ improvised v1 implementation.**
   original read-only below in the sandboxed body frame. The
   Settings signature editor (v1.1 #6) is also superseded: HTML previewed
   whole, edited in Fastmail (ruling 2026-09-06, row 38).
+
+- **2026-10-18 — brighter accents and a real mark.** The muted, earthy accent
+  set (#5b6ee0 / #2a9d6e / #c9903a / #b05fc9 / #4a9bb8 / #cf5f5f) is replaced
+  by the Electric set above; --accent is #2f6bff light / #5b8cff dark, --sel
+  re-tinted to match, flag/star #f29a00, success #00b894. Layout, neutrals,
+  type and shape are unchanged. The "N" square logo is replaced by the
+  chevron mark (see Brand).

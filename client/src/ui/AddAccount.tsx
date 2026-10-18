@@ -64,7 +64,7 @@ const FONT_MONO = '"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Conso
 // design line 1372). The two pickers are not the same control and the
 // design does not give them the same six colors; this file transcribes
 // its own literally rather than reusing Settings' constant.
-const OB_COLORS = ["#4a9bb8", "#cf5f5f", "#7aa843", "#8d6ac9", "#c9903a", "#5b6ee0"];
+const OB_COLORS = ["#2f6bff", "#00b894", "#ff4d8d", "#8b5cff", "#ff9f1a", "#19b8ff"];
 
 const IMAP_REASON = "Via the Wilco bridge. On the roadmap.";
 
@@ -166,9 +166,9 @@ export function AddAccount({ api, onClose, onCreated }: AddAccountProps): JSX.El
       });
       setLog((prev) => [
         ...prev,
-        { mark: "✓", color: "var(--success)", text: `connected as ${created.username ?? "(no username)"}` },
-        { mark: "✓", color: "var(--success)", text: `endpoint ${created.endpoint}` },
-        { mark: "✓", color: "var(--success)", text: "syncing — messages appear as they arrive" },
+        { mark: "✓", color: "var(--success-ink)", text: `connected as ${created.username ?? "(no username)"}` },
+        { mark: "✓", color: "var(--success-ink)", text: `endpoint ${created.endpoint}` },
+        { mark: "✓", color: "var(--success-ink)", text: "syncing — messages appear as they arrive" },
       ]);
       setConnecting(false);
       setDone(true);

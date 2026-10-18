@@ -13,6 +13,7 @@ const CONTENT_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
 };
 
 async function statOrNull(path: string): Promise<import("node:fs").Stats | null> {

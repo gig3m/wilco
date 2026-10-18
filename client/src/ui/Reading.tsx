@@ -194,7 +194,7 @@ const FALLBACK_ACCENT = "#8a8f97";
 
 /** Transcribed verbatim from Wilco.dc.html line ~1205 -- the design's
  *  fixed five-color avatar palette for anyone who isn't "You". */
-const AVATAR_COLORS = ["#5b6ee0", "#2a9d6e", "#c9903a", "#b05fc9", "#4a9bb8"];
+const AVATAR_COLORS = ["#2f6bff", "#00b894", "#ff4d8d", "#8b5cff", "#19b8ff"];
 
 const MENU_REASON = "Not yet available -- per-message actions arrive in a later plan.";
 
@@ -222,6 +222,20 @@ function avatarBg(msg: ReadingMessage, index: number): string {
   const email = msg.fromEmail ?? "";
   const n = (email.length + index) % AVATAR_COLORS.length;
   return AVATAR_COLORS[n]!;
+}
+
+/** The initial's colour on that background. A fixed white was 2.3:1 on the
+ *  brighter palette's aqua and cyan, so each colour takes whichever of white
+ *  or near-black contrasts more (WCAG relative luminance; the crossover sits
+ *  at 0.196). `var(--accent)` has its own `--accent-ink`. */
+function avatarInk(bg: string): string {
+  if (!bg.startsWith("#")) return "var(--accent-ink)";
+  const lin = (i: number): number => {
+    const c = parseInt(bg.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = 0.2126 * lin(1) + 0.7152 * lin(3) + 0.0722 * lin(5);
+  return lum > 0.196 ? "#141519" : "#ffffff";
 }
 
 /** Renders one line of plaintext body as a mix of escaped text and safe
@@ -437,7 +451,7 @@ function MessageCard({
   return (
     <div class="reading-card">
       <div class="reading-card-header" onClick={onHeaderClick}>
-        <span aria-hidden="true" class="reading-card-avatar" style={{ background: avatarBg(msg, index) }}>
+        <span aria-hidden="true" class="reading-card-avatar" style={{ background: avatarBg(msg, index), color: avatarInk(avatarBg(msg, index)) }}>
           {initials(msg.fromName)}
         </span>
         <span class="reading-card-name">{text(msg.fromName || msg.fromEmail || "")}</span>

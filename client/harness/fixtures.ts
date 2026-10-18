@@ -13,8 +13,8 @@ import type { MessageListRow } from "../src/ui/MessageList";
 import type { ReadingMessage } from "../src/ui/Reading";
 
 export const FIXTURE_ACCOUNTS: FakeAccountSpec[] = [
-  { key: "halden", label: "Halden", accent: "#5b6ee0", code: "HAL" },
-  { key: "wilco", label: "Wilco Dev", accent: "#2a9d6e", code: "WIL" },
+  { key: "halden", label: "Halden", accent: "#2f6bff", code: "HAL" },
+  { key: "wilco", label: "Wilco Dev", accent: "#00b894", code: "WIL" },
 ];
 
 export const FIXTURE_ACCOUNT_SPECS: AccountSpec[] = FIXTURE_ACCOUNTS.map((a) => ({

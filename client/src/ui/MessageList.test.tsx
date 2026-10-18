@@ -110,8 +110,8 @@ test("EVERY SENDER-CONTROLLED FIELD RENDERS AS TEXT", () => {
 });
 
 test("rows carry the account colour on the left edge", () => {
-  render(<MessageList rows={[{ account: "work", id: "M1", subject: "s" }]} accents={{ work: "#2a9d6e" }} mailbox="inbox" />);
-  assert.equal(getComputedStyle(byTestId("row-work-M1")).borderLeftColor, "rgb(42, 157, 110)");
+  render(<MessageList rows={[{ account: "work", id: "M1", subject: "s" }]} accents={{ work: "#00b894" }} mailbox="inbox" />);
+  assert.equal(getComputedStyle(byTestId("row-work-M1")).borderLeftColor, "rgb(0, 184, 148)");
 });
 
 test("selection is by (account,id), so the same id in two accounts selects one row", () => {
@@ -181,7 +181,7 @@ test("the subject sits on its own line, below the sender line, and the snippet b
         },
       ]}
       mailbox="inbox"
-      accents={{ work: "#2a9d6e" }}
+      accents={{ work: "#00b894" }}
       codes={{ work: "WIL" }}
     />,
   );
@@ -233,7 +233,7 @@ test("the account code is mono and carries the account colour", () => {
     <MessageList
       rows={[{ account: "work", id: "M1", subject: "s" }]}
       mailbox="inbox"
-      accents={{ work: "#2a9d6e" }}
+      accents={{ work: "#00b894" }}
       codes={{ work: "WIL" }}
     />,
   );
@@ -262,12 +262,12 @@ test("EVERY SENDER-CONTROLLED FIELD RENDERS AS TEXT (three-line row)", () => {
 
 test("the account-colour edge runs the full row height via a left border, not a decoration", () => {
   render(
-    <MessageList rows={[{ account: "work", id: "M1", subject: "s" }]} mailbox="inbox" accents={{ work: "#2a9d6e" }} />,
+    <MessageList rows={[{ account: "work", id: "M1", subject: "s" }]} mailbox="inbox" accents={{ work: "#00b894" }} />,
   );
   const row = byTestId("row-work-M1");
   const style = getComputedStyle(row);
   assert.equal(style.borderLeftWidth, "3px");
-  assert.equal(style.borderLeftColor, "rgb(42, 157, 110)");
+  assert.equal(style.borderLeftColor, "rgb(0, 184, 148)");
 });
 
 test("group headers are small-caps mono in --faint", () => {
