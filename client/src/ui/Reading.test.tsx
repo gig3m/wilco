@@ -424,3 +424,39 @@ test("a sender with no display name is shown by address, not as a blank (2026-09
   const card = document.querySelector(".reading-card-name")!;
   assert.equal(card.textContent, "billing@example.test");
 });
+
+test("the card names who the message went to: to, cc, and bcc when there is one", () => {
+  render(
+    <Reading
+      message={{
+        account: "work",
+        id: "M1",
+        subject: "s",
+        bodyText: "b",
+        fromName: "Kyle",
+        fromEmail: "kyle@halden.example",
+        to: [{ name: "Dana Okafor", email: "dana@halden.example" }, { name: "", email: "ops@halden.example" }],
+        cc: [{ name: "Lee", email: "lee@halden.example" }],
+        bcc: [{ name: "", email: "boss@halden.example" }],
+      }}
+    />,
+  );
+  const r = byTestId("recipients");
+  assert.match(byTestId("recipients-to").textContent!, /Dana Okafor/);
+  assert.match(byTestId("recipients-to").textContent!, /ops@halden\.example/, "a nameless recipient is shown by address");
+  assert.match(byTestId("recipients-cc").textContent!, /Lee/);
+  assert.match(byTestId("recipients-bcc").textContent!, /boss@halden\.example/);
+  assert.ok(r.querySelector('[title="dana@halden.example"]'), "a named recipient's address is on hover");
+});
+
+test("an empty cc or bcc is not shown, and a message with no recipients shows no line", () => {
+  render(<Reading message={{ account: "work", id: "M1", subject: "s", bodyText: "b", to: [{ name: "Dana", email: "d@x.example" }], cc: [], bcc: [] }} />);
+  assert.ok(byTestId("recipients-to"));
+  assert.equal(byTestId("recipients-cc", { optional: true }), null);
+  assert.equal(byTestId("recipients-bcc", { optional: true }), null);
+});
+
+test("no recipient data at all renders no recipients line", () => {
+  render(<Reading message={{ account: "work", id: "M1", subject: "s", bodyText: "b" }} />);
+  assert.equal(byTestId("recipients", { optional: true }), null);
+});

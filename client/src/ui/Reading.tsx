@@ -44,7 +44,7 @@ import { safeExternalHref, text } from "../lib/escape";
 import { COMPOSE_REASON, TRIAGE_REASON } from "../lib/keymap";
 import { formatDetailTime } from "../lib/time";
 import { BodyFrame, useMessageBody } from "./BodyFrame";
-import type { BodyUrlResult } from "../lib/api";
+import type { Addr, BodyUrlResult } from "../lib/api";
 
 /** Deliberately NOT `AttachmentMeta` from api.ts -- that type requires
  *  `partId`/`cid`, which is more than this pane needs to display a chip
@@ -88,6 +88,12 @@ export interface ReadingMessage {
   subject?: string;
   fromName?: string;
   fromEmail?: string;
+  /** Who the message went to (`MessageDetail.to`/`cc`/`bcc`). Optional:
+   *  a collapsed thread row needs none of them. `bcc` is only ever known
+   *  for the owner's own sent mail -- a received copy does not carry it. */
+  to?: Addr[];
+  cc?: Addr[];
+  bcc?: Addr[];
   /** Real data when present -- `MessageDetail.isFlagged` (api.ts) carries
    *  JMAP's `$flagged` keyword, and `App.tsx` passes its fetched
    *  `MessageDetail` straight through as `ReadingProps.message` (see this
@@ -257,6 +263,36 @@ export function linkifyLine(line: string, keyPrefix: string): (string | JSX.Elem
       </a>
     );
   });
+}
+
+/** The card's to / cc / bcc line. A recipient is shown by name with the
+ *  address on hover, or by address when the header gave no name. An empty
+ *  list is left out, and a message with no recipient data at all (a
+ *  collapsed row, or a test) renders nothing. */
+function Recipients({ msg, suffix }: { msg: ReadingMessage; suffix: string }) {
+  const groups = (
+    [
+      ["to", msg.to],
+      ["cc", msg.cc],
+      ["bcc", msg.bcc],
+    ] as const
+  ).filter(([, list]) => list !== undefined && list.length > 0) as [string, Addr[]][];
+  if (groups.length === 0) return null;
+  return (
+    <div data-testid={`recipients${suffix}`} class="reading-card-recipients" style={{ fontFamily: FONT_MONO }}>
+      {groups.map(([kind, list]) => (
+        <span key={kind} data-testid={`recipients-${kind}${suffix}`} class="reading-card-recipients-group">
+          <span class="reading-card-recipients-kind">{kind}</span>{" "}
+          {list.map((a, i) => (
+            <span key={`${a.email}-${i}`}>
+              {i > 0 && ", "}
+              <span title={a.name ? a.email : undefined}>{text(a.name || a.email)}</span>
+            </span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 /** Splits a plaintext body into "main" text and a trailing "quoted
@@ -503,6 +539,8 @@ function MessageCard({
           ···
         </button>
       </div>
+
+      <Recipients msg={msg} suffix={suffix} />
 
       {/* The old placeholder notice ("HTML formatting arrives with the body
           pipeline") is gone: the pipeline is here. It survives only for a
